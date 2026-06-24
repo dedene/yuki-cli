@@ -164,6 +164,7 @@ type ArchiveDocumentsCmd struct {
 	InTab            ArchiveDocumentsInTabCmd            `cmd:"" name:"in-tab" help:"List archive documents in a tab."`
 	ByType           ArchiveDocumentsByTypeCmd           `cmd:"" name:"by-type" help:"List archive documents by document type."`
 	ModifiedInFolder ArchiveDocumentsModifiedInFolderCmd `cmd:"" name:"modified-in-folder" help:"List archive documents modified since a date in a folder."`
+	ModifiedByType   ArchiveDocumentsModifiedByTypeCmd   `cmd:"" name:"modified-by-type" help:"List archive documents modified since a date by document type."`
 	Search           ArchiveDocumentsSearchCmd           `cmd:"" help:"Search archive documents."`
 	Find             ArchiveDocumentsFindCmd             `cmd:"" help:"Find document metadata by document ID."`
 	Download         ArchiveDocumentsDownloadCmd         `cmd:"" help:"Download a document file by document ID."`
@@ -294,6 +295,32 @@ func (c *ArchiveDocumentsModifiedInFolderCmd) Run(rt *Runtime, globals *Globals)
 	}
 	documents, err := client.ModifiedDocumentsInFolder(rt.Context, sessionID, api.ModifiedDocumentsInFolderOptions{
 		FolderID:        c.FolderID,
+		SortOrder:       c.SortOrder,
+		ModifiedSince:   c.ModifiedSince,
+		NumberOfRecords: c.Limit,
+		StartRecord:     c.StartRecord,
+	})
+	if err != nil {
+		return err
+	}
+	return renderDocuments(rt, globals, documents)
+}
+
+type ArchiveDocumentsModifiedByTypeCmd struct {
+	DocumentType  int    `name:"type" required:"" help:"Document type ID, e.g. 2 for purchase invoices in the Yuki examples."`
+	SortOrder     string `name:"sort-order" default:"CreatedDesc" help:"Yuki document sort order."`
+	ModifiedSince string `name:"modified-since" required:"" help:"Return documents modified since this date, YYYY-MM-DD."`
+	Limit         int    `name:"limit" default:"100" help:"Number of records to request."`
+	StartRecord   int    `name:"start-record" default:"1" help:"Start record to request."`
+}
+
+func (c *ArchiveDocumentsModifiedByTypeCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	documents, err := client.ModifiedDocumentsByType(rt.Context, sessionID, api.ModifiedDocumentsByTypeOptions{
+		DocumentType:    c.DocumentType,
 		SortOrder:       c.SortOrder,
 		ModifiedSince:   c.ModifiedSince,
 		NumberOfRecords: c.Limit,

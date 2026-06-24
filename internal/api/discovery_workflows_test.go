@@ -314,6 +314,42 @@ func TestModifiedDocumentsInFolderParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestModifiedDocumentsByTypeParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "ModifiedDocumentsByType", modifiedDocumentsByTypeResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:documentType>2</they:documentType>",
+			"<they:sortOrder>CreatedDesc</they:sortOrder>",
+			"<they:modifiedSince>2018-01-01</they:modifiedSince>",
+			"<they:numberOfRecords>100</they:numberOfRecords>",
+			"<they:startRecord>1</they:startRecord>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	documents, err := client.ModifiedDocumentsByType(context.Background(), "session-1", ModifiedDocumentsByTypeOptions{
+		DocumentType:    2,
+		SortOrder:       "CreatedDesc",
+		ModifiedSince:   "2018-01-01",
+		NumberOfRecords: 100,
+		StartRecord:     1,
+	})
+	if err != nil {
+		t.Fatalf("ModifiedDocumentsByType: %v", err)
+	}
+	if len(documents) != 3 {
+		t.Fatalf("len(documents) = %d, want 3", len(documents))
+	}
+	if documents[0].ID != "a13af33d-dc15-4469-8723-4401895ff790" ||
+		documents[0].Folder.Text != "Aankoop" ||
+		documents[2].Modified != "2021-09-16T14:25:05" {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
 const transactionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -624,6 +660,63 @@ const modifiedDocumentsInFolderResponse = `<?xml version="1.0" encoding="utf-8"?
         </Documents>
       </ModifiedDocumentsInFolderResult>
     </ModifiedDocumentsInFolderResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const modifiedDocumentsByTypeResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <ModifiedDocumentsByTypeResponse xmlns="http://www.theyukicompany.com/">
+      <ModifiedDocumentsByTypeResult>
+        <Documents xmlns="">
+          <Document ID="a13af33d-dc15-4469-8723-4401895ff790">
+            <DocumentDate>2021-09-29</DocumentDate>
+            <Amount>0.00</Amount>
+            <Folder ID="1">Aankoop</Folder>
+            <Tab ID="101">Facturen</Tab>
+            <Type>2</Type>
+            <TypeDescription>Aankoopfactuur</TypeDescription>
+            <FileName>document.htm</FileName>
+            <ContentType>text/html</ContentType>
+            <FileSize>0</FileSize>
+            <Created>2021-09-29T17:34:53</Created>
+            <Creator>yuki</Creator>
+            <Modified>2021-09-29T17:34:53</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+          <Document ID="72f1bd57-365c-4b3b-b4f8-14f702480380">
+            <DocumentDate>2021-09-22</DocumentDate>
+            <Amount>0.00</Amount>
+            <Folder ID="1">Aankoop</Folder>
+            <Tab ID="101">Facturen</Tab>
+            <Type>2</Type>
+            <TypeDescription>Aankoopfactuur</TypeDescription>
+            <FileName>document.htm</FileName>
+            <ContentType>text/html</ContentType>
+            <FileSize>0</FileSize>
+            <Created>2021-09-22T14:40:39</Created>
+            <Creator>yuki</Creator>
+            <Modified>2021-09-22T14:40:39</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+          <Document ID="7bca00b0-5f2e-493f-814d-fd5e7399b779">
+            <DocumentDate>2021-09-16</DocumentDate>
+            <Amount>0.00</Amount>
+            <Folder ID="1">Aankoop</Folder>
+            <Tab ID="101">Facturen</Tab>
+            <Type>2</Type>
+            <TypeDescription>Aankoopfactuur</TypeDescription>
+            <FileName>document.htm</FileName>
+            <ContentType>text/html</ContentType>
+            <FileSize>0</FileSize>
+            <Created>2021-09-16T14:25:05</Created>
+            <Creator>yuki</Creator>
+            <Modified>2021-09-16T14:25:05</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+        </Documents>
+      </ModifiedDocumentsByTypeResult>
+    </ModifiedDocumentsByTypeResponse>
   </soap:Body>
 </soap:Envelope>`
 

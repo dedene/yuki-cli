@@ -342,6 +342,51 @@ func TestArchiveDocumentsModifiedInFolderJSONUsesPagingFlags(t *testing.T) {
 	}
 }
 
+func TestArchiveDocumentsModifiedByTypeJSONUsesPagingFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		documents: []api.Document{{
+			ID:              "doc-1",
+			Type:            "2",
+			TypeDescription: "Aankoopfactuur",
+			Modified:        "2021-09-29T17:34:53",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"archive", "documents", "modified-by-type",
+		"--type", "2",
+		"--modified-since", "2018-01-01",
+		"--sort-order", "CreatedDesc",
+		"--limit", "100",
+		"--start-record", "1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	opts := client.modifiedByTypeOpts
+	if opts.DocumentType != 2 ||
+		opts.SortOrder != "CreatedDesc" ||
+		opts.ModifiedSince != "2018-01-01" ||
+		opts.NumberOfRecords != 100 ||
+		opts.StartRecord != 1 {
+		t.Fatalf("modifiedByTypeOpts = %#v", opts)
+	}
+	var documents []api.Document
+	if err := json.Unmarshal(out.Bytes(), &documents); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(documents) != 1 || documents[0].TypeDescription != "Aankoopfactuur" {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
 func TestArchiveFoldersListPrintsRows(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{

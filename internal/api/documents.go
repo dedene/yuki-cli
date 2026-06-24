@@ -63,6 +63,14 @@ type ModifiedDocumentsInFolderOptions struct {
 	StartRecord     int
 }
 
+type ModifiedDocumentsByTypeOptions struct {
+	DocumentType    int
+	SortOrder       string
+	ModifiedSince   string
+	NumberOfRecords int
+	StartRecord     int
+}
+
 func (c *Client) DocumentFolders(ctx context.Context, sessionID string) ([]DocumentFolder, error) {
 	data, err := c.call(ctx, "Archive", "DocumentFolders", sessionParams(sessionID))
 	if err != nil {
@@ -190,6 +198,26 @@ func (c *Client) ModifiedDocumentsInFolder(ctx context.Context, sessionID string
 	var env modifiedDocumentsInFolderEnvelope
 	if err := xml.Unmarshal(data, &env); err != nil {
 		return nil, fmt.Errorf("parse ModifiedDocumentsInFolder response: %w", err)
+	}
+	return env.Body.Response.Result.Documents.Documents, nil
+}
+
+func (c *Client) ModifiedDocumentsByType(ctx context.Context, sessionID string, opts ModifiedDocumentsByTypeOptions) ([]Document, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "documentType", Value: strconv.Itoa(opts.DocumentType)},
+		{Name: "sortOrder", Value: opts.SortOrder},
+		{Name: "modifiedSince", Value: opts.ModifiedSince},
+		{Name: "numberOfRecords", Value: strconv.Itoa(opts.NumberOfRecords)},
+		{Name: "startRecord", Value: strconv.Itoa(opts.StartRecord)},
+	}
+	data, err := c.call(ctx, "Archive", "ModifiedDocumentsByType", params)
+	if err != nil {
+		return nil, err
+	}
+	var env modifiedDocumentsByTypeEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse ModifiedDocumentsByType response: %w", err)
 	}
 	return env.Body.Response.Result.Documents.Documents, nil
 }
@@ -422,6 +450,18 @@ type modifiedDocumentsInFolderEnvelope struct {
 				} `xml:"Documents"`
 			} `xml:"ModifiedDocumentsInFolderResult"`
 		} `xml:"ModifiedDocumentsInFolderResponse"`
+	} `xml:"Body"`
+}
+
+type modifiedDocumentsByTypeEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Documents struct {
+					Documents []Document `xml:"Document"`
+				} `xml:"Documents"`
+			} `xml:"ModifiedDocumentsByTypeResult"`
+		} `xml:"ModifiedDocumentsByTypeResponse"`
 	} `xml:"Body"`
 }
 
