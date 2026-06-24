@@ -24,6 +24,7 @@ type Client interface {
 	Authenticate(context.Context, string) (string, error)
 	Domains(context.Context, string) ([]api.Domain, error)
 	CurrentDomain(context.Context, string) (api.Domain, error)
+	DomainFunctions(context.Context, string, string) ([]api.DomainFunctionAssignment, error)
 	Administrations(context.Context, string) ([]api.Administration, error)
 	Companies(context.Context, string) ([]api.Company, error)
 	GLAccounts(context.Context, string, string) ([]api.GLAccount, error)

@@ -27,6 +27,13 @@ type Domain struct {
 	URL  string `json:"url,omitempty" xml:"URL"`
 }
 
+type DomainFunctionAssignment struct {
+	DomainID string `json:"domain_id,omitempty"`
+	Function string `json:"function"`
+	FullName string `json:"full_name,omitempty"`
+	Login    string `json:"login,omitempty"`
+}
+
 type Company struct {
 	ID     string `json:"id" xml:"ID,attr"`
 	Name   string `json:"name" xml:"Name"`

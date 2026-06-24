@@ -111,6 +111,38 @@ func TestDomainsListAuthenticatesAndPrintsTable(t *testing.T) {
 	}
 }
 
+func TestDomainsFunctionsJSONUsesDomainFlag(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		domainFunctions: []api.DomainFunctionAssignment{{
+			DomainID: "domain-1",
+			Function: "BOResponsible",
+			FullName: "Oliver Test",
+			Login:    "oliver.test@test.com",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{"--json", "domains", "functions", "--domain", "domain-1"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.domainID != "domain-1" {
+		t.Fatalf("domainID = %q", client.domainID)
+	}
+	var assignments []api.DomainFunctionAssignment
+	if err := json.Unmarshal(out.Bytes(), &assignments); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(assignments) != 1 || assignments[0].Function != "BOResponsible" || assignments[0].Login != "oliver.test@test.com" {
+		t.Fatalf("assignments = %#v", assignments)
+	}
+}
+
 func TestGLAccountsListJSONUsesAdministrationFlag(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1647,7 +1679,9 @@ type cmdFakeClient struct {
 	companyID                   string
 	documentID                  string
 	transactionID               string
+	domainID                    string
 	domains                     []api.Domain
+	domainFunctions             []api.DomainFunctionAssignment
 	accounts                    []api.GLAccount
 	rgsEntries                  []api.RGSEntry
 	rgsOpts                     api.RGSSchemeOptions
@@ -1732,6 +1766,11 @@ func (c *cmdFakeClient) Domains(context.Context, string) ([]api.Domain, error) {
 
 func (c *cmdFakeClient) CurrentDomain(context.Context, string) (api.Domain, error) {
 	return api.Domain{ID: "domain-1", Name: "Acme"}, nil
+}
+
+func (c *cmdFakeClient) DomainFunctions(_ context.Context, _ string, domainID string) ([]api.DomainFunctionAssignment, error) {
+	c.domainID = domainID
+	return c.domainFunctions, nil
 }
 
 func (c *cmdFakeClient) Administrations(context.Context, string) ([]api.Administration, error) {
