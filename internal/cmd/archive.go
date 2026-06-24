@@ -160,6 +160,7 @@ func (c *ArchiveFoldersTabsCmd) Run(rt *Runtime, globals *Globals) error {
 
 type ArchiveDocumentsCmd struct {
 	List     ArchiveDocumentsListCmd     `cmd:"" help:"List archive documents by document date range."`
+	InFolder ArchiveDocumentsInFolderCmd `cmd:"" name:"in-folder" help:"List archive documents in a folder."`
 	Search   ArchiveDocumentsSearchCmd   `cmd:"" help:"Search archive documents."`
 	Find     ArchiveDocumentsFindCmd     `cmd:"" help:"Find document metadata by document ID."`
 	Download ArchiveDocumentsDownloadCmd `cmd:"" help:"Download a document file by document ID."`
@@ -179,6 +180,34 @@ func (c *ArchiveDocumentsListCmd) Run(rt *Runtime, globals *Globals) error {
 		return err
 	}
 	documents, err := client.Documents(rt.Context, sessionID, api.DocumentsOptions{
+		SortOrder:       c.SortOrder,
+		StartDate:       c.From,
+		EndDate:         c.To,
+		NumberOfRecords: c.Limit,
+		StartRecord:     c.StartRecord,
+	})
+	if err != nil {
+		return err
+	}
+	return renderDocuments(rt, globals, documents)
+}
+
+type ArchiveDocumentsInFolderCmd struct {
+	FolderID    int    `name:"folder" required:"" help:"Folder ID."`
+	SortOrder   string `name:"sort-order" default:"CreatedAsc" help:"Yuki document sort order."`
+	From        string `name:"from" required:"" help:"Start date, YYYY-MM-DD."`
+	To          string `name:"to" required:"" help:"End date, YYYY-MM-DD."`
+	Limit       int    `name:"limit" default:"25" help:"Number of records to request."`
+	StartRecord int    `name:"start-record" default:"0" help:"Start record to request."`
+}
+
+func (c *ArchiveDocumentsInFolderCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	documents, err := client.DocumentsInFolder(rt.Context, sessionID, api.DocumentsInFolderOptions{
+		FolderID:        c.FolderID,
 		SortOrder:       c.SortOrder,
 		StartDate:       c.From,
 		EndDate:         c.To,

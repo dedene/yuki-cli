@@ -303,34 +303,35 @@ func (s *cmdFakeStore) DeleteAccessKey(context.Context, string) error {
 }
 
 type cmdFakeClient struct {
-	sessionID           string
-	accessKey           string
-	administrationID    string
-	documentID          string
-	transactionID       string
-	domains             []api.Domain
-	accounts            []api.GLAccount
-	creditorItems       []api.CreditorItem
-	creditorOpts        api.CreditorItemsOptions
-	richTransactions    []api.Transaction
-	transactionsOpts    api.TransactionsOptions
-	transactions        []api.TransactionInfo
-	transactionOpts     api.TransactionDetailsOptions
-	customMethods       []api.PaymentMethod
-	archiveMethods      []api.PaymentMethod
-	folders             []api.DocumentFolder
-	tabs                []api.DocumentFolderTab
-	currencies          []api.Currency
-	costCategories      []api.CostCategory
-	menuEntries         []api.MenuEntry
-	folderID            string
-	documents           []api.Document
-	documentsOpts       api.DocumentsOptions
-	searchDocuments     []api.Document
-	searchDocumentsOpts api.SearchDocumentsOptions
-	document            api.Document
-	documentFile        api.DocumentFile
-	transactionDocument api.TransactionDocument
+	sessionID             string
+	accessKey             string
+	administrationID      string
+	documentID            string
+	transactionID         string
+	domains               []api.Domain
+	accounts              []api.GLAccount
+	creditorItems         []api.CreditorItem
+	creditorOpts          api.CreditorItemsOptions
+	richTransactions      []api.Transaction
+	transactionsOpts      api.TransactionsOptions
+	transactions          []api.TransactionInfo
+	transactionOpts       api.TransactionDetailsOptions
+	customMethods         []api.PaymentMethod
+	archiveMethods        []api.PaymentMethod
+	folders               []api.DocumentFolder
+	tabs                  []api.DocumentFolderTab
+	currencies            []api.Currency
+	costCategories        []api.CostCategory
+	menuEntries           []api.MenuEntry
+	folderID              string
+	documents             []api.Document
+	documentsOpts         api.DocumentsOptions
+	documentsInFolderOpts api.DocumentsInFolderOptions
+	searchDocuments       []api.Document
+	searchDocumentsOpts   api.SearchDocumentsOptions
+	document              api.Document
+	documentFile          api.DocumentFile
+	transactionDocument   api.TransactionDocument
 }
 
 func (c *cmdFakeClient) Authenticate(_ context.Context, accessKey string) (string, error) {
@@ -396,6 +397,11 @@ func (c *cmdFakeClient) DocumentFolderTabs(_ context.Context, _ string, folderID
 
 func (c *cmdFakeClient) Documents(_ context.Context, _ string, opts api.DocumentsOptions) ([]api.Document, error) {
 	c.documentsOpts = opts
+	return c.documents, nil
+}
+
+func (c *cmdFakeClient) DocumentsInFolder(_ context.Context, _ string, opts api.DocumentsInFolderOptions) ([]api.Document, error) {
+	c.documentsInFolderOpts = opts
 	return c.documents, nil
 }
 

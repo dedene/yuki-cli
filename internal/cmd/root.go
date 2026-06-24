@@ -35,6 +35,7 @@ type Client interface {
 	DocumentFolders(context.Context, string) ([]api.DocumentFolder, error)
 	DocumentFolderTabs(context.Context, string, string) ([]api.DocumentFolderTab, error)
 	Documents(context.Context, string, api.DocumentsOptions) ([]api.Document, error)
+	DocumentsInFolder(context.Context, string, api.DocumentsInFolderOptions) ([]api.Document, error)
 	SearchDocuments(context.Context, string, api.SearchDocumentsOptions) ([]api.Document, error)
 	FindDocument(context.Context, string, string) (api.Document, error)
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)

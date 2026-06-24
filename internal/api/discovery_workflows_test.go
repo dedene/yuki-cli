@@ -164,6 +164,44 @@ func TestDocumentsParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentsInFolderParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentsInFolder", documentsInFolderResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:folderID>2</they:folderID>",
+			"<they:sortOrder>CreatedAsc</they:sortOrder>",
+			"<they:startDate>2020-01-01</they:startDate>",
+			"<they:endDate>2020-01-31</they:endDate>",
+			"<they:numberOfRecords>10</they:numberOfRecords>",
+			"<they:startRecord>0</they:startRecord>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	documents, err := client.DocumentsInFolder(context.Background(), "session-1", DocumentsInFolderOptions{
+		FolderID:        2,
+		SortOrder:       "CreatedAsc",
+		StartDate:       "2020-01-01",
+		EndDate:         "2020-01-31",
+		NumberOfRecords: 10,
+		StartRecord:     0,
+	})
+	if err != nil {
+		t.Fatalf("DocumentsInFolder: %v", err)
+	}
+	if len(documents) != 2 {
+		t.Fatalf("len(documents) = %d, want 2", len(documents))
+	}
+	if documents[0].ID != "9878e187-7541-4607-8339-f94d4791d735" ||
+		documents[0].FileName != "Invoice XX-12534.pdf" ||
+		documents[1].ContactName != "Belgian Shell S.A." {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
 const transactionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -294,6 +332,48 @@ const documentsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Documents>
       </DocumentsResult>
     </DocumentsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentsInFolderResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentsInFolderResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentsInFolderResult>
+        <Documents xmlns="">
+          <Document ID="9878e187-7541-4607-8339-f94d4791d735">
+            <Subject>Testfactuur - 1</Subject>
+            <DocumentDate>2020-01-31</DocumentDate>
+            <Amount>29.76</Amount>
+            <Type>6</Type>
+            <TypeDescription>Verkoopfactuur</TypeDescription>
+            <FileName>Invoice XX-12534.pdf</FileName>
+            <ContentType>application/pdf</ContentType>
+            <FileSize>90576</FileSize>
+            <ContactName>Apple Sales International</ContactName>
+            <Created>2020-01-31T16:13:28</Created>
+            <Creator>yuki</Creator>
+            <Modified>2020-01-31T16:45:37</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+          <Document ID="840af189-fe57-4c20-bb79-c9ba65ca5460">
+            <Subject>Factuur voor Belgian Shell S.A. (Voor alle verrichtingen in België)</Subject>
+            <DocumentDate>2019-01-31</DocumentDate>
+            <Amount>300.00</Amount>
+            <Type>31</Type>
+            <TypeDescription>Verkoopfactuur</TypeDescription>
+            <FileName>document.htm</FileName>
+            <ContentType>text/html</ContentType>
+            <FileSize>0</FileSize>
+            <ContactName>Belgian Shell S.A.</ContactName>
+            <Created>2020-01-31T09:42:47</Created>
+            <Creator>yuki</Creator>
+            <Modified>2020-01-31T09:43:25</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+        </Documents>
+      </DocumentsInFolderResult>
+    </DocumentsInFolderResponse>
   </soap:Body>
 </soap:Envelope>`
 
