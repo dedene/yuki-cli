@@ -4,7 +4,7 @@ Date: 2026-06-24
 
 ## Product Shape
 
-`yuki` is a Go CLI for Yuki SOAP webservices. The first useful slice is a read-only foundation: authenticate, discover accessible domains and administrations, inspect the current domain, and list GL accounts for an administration.
+`yuki` is a Go CLI for Yuki SOAP webservices. The first useful slice was a read-only foundation: authenticate, discover accessible domains and administrations, inspect the current domain, and list GL accounts for an administration. The current command surface has expanded to cover the refreshed Postman collection plus the unique live WSDL operations tracked in `docs/proofs/2026-06-24-docs-parity.md`.
 
 The CLI should be useful to humans at a terminal and reliable for agents/scripts:
 
@@ -12,7 +12,7 @@ The CLI should be useful to humans at a terminal and reliable for agents/scripts
 - Stable `--json` output for every command.
 - Secrets stored in OS keyring, with `YUKI_ACCESS_KEY` as an agent/CI escape hatch.
 - `--no-input` for non-interactive runs.
-- `--readonly` as a global guard for future mutating commands.
+- `--readonly` as a global guard for mutating commands.
 - Fixture-backed tests before live API calls.
 
 ## Primary Sources
@@ -25,22 +25,22 @@ The CLI should be useful to humans at a terminal and reliable for agents/scripts
 
 ## Source Map
 
-| Service | Endpoint | WSDL status | First-slice use |
+| Service | Endpoint | WSDL status | Current coverage note |
 | --- | --- | --- | --- |
 | General operations | Postman examples use `Sales.asmx`; first read-only slice uses `AccountingInfo.asmx` because the same operations are present there | fetched via `Sales.wsdl` and `AccountingInfo.wsdl` | `Authenticate`, `Domains`, `Administrations`, `Companies`, `GetCurrentDomain` |
 | AccountingInfo | `AccountingInfo.asmx` | fetched | `GetGLAccountScheme` |
-| Accounting | `Accounting.asmx` | fetched | deferred read-only reports |
-| Archive | `Archive.asmx` | fetched | deferred document search/download/upload |
-| Contact | `Contact.asmx` | fetched | deferred contact search/update |
-| Sales | `Sales.asmx` | fetched | deferred invoice creation |
-| PettyCash | `Pettycash.asmx` / `PettyCash.asmx` | fetched | deferred cash imports |
-| Projects | `Projects.asmx` | fetched | deferred project upsert |
-| Backoffice | `Backoffice.asmx` | fetched | deferred backoffice status commands |
-| Integration | `Integration.asmx` | fetched | deferred company info |
-| VAT | `Vat.asmx` | fetched | deferred VAT lookups |
-| FiscalTable | `FiscalTable.asmx` | fetched | deferred fiscal table lookup |
-| ChangeDigest | `ChangeDigest.asmx` | fetched | deferred sync/change tracking |
-| Domains | `Domains.asmx` | fetched | deferred domain function management |
+| Accounting | `Accounting.asmx` | fetched | covered; see parity matrix |
+| Archive | `Archive.asmx` | fetched | covered; see parity matrix |
+| Contact | `Contact.asmx` | fetched | covered; see parity matrix |
+| Sales | `Sales.asmx` | fetched | covered; see parity matrix |
+| PettyCash | `Pettycash.asmx` / `PettyCash.asmx` | fetched | covered; see parity matrix |
+| Projects | `Projects.asmx` | fetched | covered; see parity matrix |
+| Backoffice | `Backoffice.asmx` | fetched | covered; see parity matrix |
+| Integration | `Integration.asmx` | fetched | covered; see parity matrix |
+| VAT | `Vat.asmx` | fetched | covered; see parity matrix |
+| FiscalTable | `FiscalTable.asmx` | fetched | covered; see parity matrix |
+| ChangeDigest | `ChangeDigest.asmx` | fetched | covered; see parity matrix |
+| Domains | `Domains.asmx` | fetched | covered; see parity matrix |
 | Legacy Upload | not linked as supported in current Postman overview | not fetched | skipped; use Archive upload operations instead |
 
 ## API Notes
@@ -53,7 +53,7 @@ The CLI should be useful to humans at a terminal and reliable for agents/scripts
 - Yuki support docs state the free default limit is 1000 webservice calls per day per domain.
 - Postman docs list common errors for missing webservice rights, daily limit exceeded, inactive domains, missing bundle/functionality, over-precise sales prices, and unknown petty cash accounts.
 
-## Accepted v0 Scope
+## Initial v0 Scope
 
 - `yuki auth login --access-key ...` stores the key locally; `auth doctor` performs the live validation call.
 - `yuki auth status`
@@ -65,13 +65,4 @@ The CLI should be useful to humans at a terminal and reliable for agents/scripts
 - `yuki accounting gl-accounts list --administration <id>`
 - `yuki version`
 
-Deferred:
-
-- Sales invoice creation.
-- Archive document upload/download/search workflows beyond source mapping.
-- Journal creation.
-- Contact update/create.
-- Petty cash imports.
-- Project updates.
-- Backoffice/domain administration mutations.
-- GoReleaser/Homebrew.
+The original follow-on service work is now covered in the command surface and reconciled in the parity matrix. GoReleaser/Homebrew packaging remains outside the SOAP endpoint coverage goal.
