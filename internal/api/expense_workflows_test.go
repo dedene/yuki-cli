@@ -241,6 +241,24 @@ func TestDocumentFileParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentDownloadURLParsesWSDLResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentDownloadUrl", documentDownloadURLResponse, func(t *testing.T, body string) {
+		t.Helper()
+		if !strings.Contains(body, "<they:documentID>doc-1</they:documentID>") {
+			t.Fatalf("request body missing document ID:\n%s", body)
+		}
+	})
+
+	downloadURL, err := client.DocumentDownloadURL(context.Background(), "session-1", "doc-1")
+	if err != nil {
+		t.Fatalf("DocumentDownloadURL: %v", err)
+	}
+	if downloadURL.DocumentID != "doc-1" ||
+		downloadURL.URL != "https://api.yukiworks.be/download/document/doc-1?token=abc" {
+		t.Fatalf("downloadURL = %#v", downloadURL)
+	}
+}
+
 func TestDocumentBinaryDataParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClientForService(t, "Archive", "DocumentBinaryData", documentBinaryDataResponse, func(t *testing.T, body string) {
 		t.Helper()
@@ -485,6 +503,15 @@ const documentFileResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Document>
       </DocumentFileResult>
     </DocumentFileResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentDownloadURLResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentDownloadUrlResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentDownloadUrlResult>https://api.yukiworks.be/download/document/doc-1?token=abc</DocumentDownloadUrlResult>
+    </DocumentDownloadUrlResponse>
   </soap:Body>
 </soap:Envelope>`
 

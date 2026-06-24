@@ -84,6 +84,7 @@ type Client interface {
 	FindDocument(context.Context, string, string) (api.Document, error)
 	DocumentBundle(context.Context, string, string) ([]api.Document, error)
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)
+	DocumentDownloadURL(context.Context, string, string) (api.DocumentDownloadURL, error)
 	DocumentBinaryData(context.Context, string, string) (api.DocumentBinaryData, error)
 	DocumentImage(context.Context, string, string, int, int) (api.DocumentImageData, error)
 	DocumentImageCount(context.Context, string, string) (api.DocumentImageCount, error)

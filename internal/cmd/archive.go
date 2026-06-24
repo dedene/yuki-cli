@@ -203,6 +203,7 @@ type ArchiveDocumentsCmd struct {
 	UploadData       ArchiveDocumentsUploadDataCmd       `cmd:"" name:"upload-data" help:"Upload a document file with invoice or receipt data."`
 	UploadAttachment ArchiveDocumentsUploadAttachmentCmd `cmd:"" name:"upload-attachment" help:"Upload two linked document files."`
 	Download         ArchiveDocumentsDownloadCmd         `cmd:"" help:"Download a document file by document ID."`
+	DownloadURL      ArchiveDocumentsDownloadURLCmd      `cmd:"" name:"download-url" help:"Get a presigned document download URL."`
 	Binary           ArchiveDocumentsBinaryCmd           `cmd:"" help:"Download raw document binary data by document ID."`
 	Image            ArchiveDocumentsImageCmd            `cmd:"" help:"Download a rendered document image by document ID."`
 	ImageCount       ArchiveDocumentsImageCountCmd       `cmd:"" name:"image-count" help:"Count rendered images for a document."`
@@ -447,6 +448,25 @@ func (c *ArchiveDocumentsDownloadCmd) Run(rt *Runtime, globals *Globals) error {
 		return errors.New("missing --output; pass --output <path> or use --json to print the base64 payload")
 	}
 	return writeBase64File(rt.Out, c.Output, file.FileName, file.FileData)
+}
+
+type ArchiveDocumentsDownloadURLCmd struct {
+	Document string `name:"document" required:"" help:"Document ID."`
+}
+
+func (c *ArchiveDocumentsDownloadURLCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	downloadURL, err := client.DocumentDownloadURL(rt.Context, sessionID, c.Document)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, downloadURL)
+	}
+	return output.Table(rt.Out, []string{"DOCUMENT", "URL"}, [][]string{{downloadURL.DocumentID, downloadURL.URL}})
 }
 
 type ArchiveDocumentsBinaryCmd struct {

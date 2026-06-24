@@ -297,6 +297,25 @@ func (c *Client) DocumentFile(ctx context.Context, sessionID, documentID string)
 	return env.Body.Response.Result.File, nil
 }
 
+func (c *Client) DocumentDownloadURL(ctx context.Context, sessionID, documentID string) (DocumentDownloadURL, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "documentID", Value: documentID},
+	}
+	data, err := c.call(ctx, "Archive", "DocumentDownloadUrl", params)
+	if err != nil {
+		return DocumentDownloadURL{}, err
+	}
+	var env documentDownloadURLEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return DocumentDownloadURL{}, fmt.Errorf("parse DocumentDownloadUrl response: %w", err)
+	}
+	return DocumentDownloadURL{
+		DocumentID: documentID,
+		URL:        env.Body.Response.Result,
+	}, nil
+}
+
 func (c *Client) DocumentBinaryData(ctx context.Context, sessionID, documentID string) (DocumentBinaryData, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -628,6 +647,14 @@ type documentFileEnvelope struct {
 				File DocumentFile `xml:"Document"`
 			} `xml:"DocumentFileResult"`
 		} `xml:"DocumentFileResponse"`
+	} `xml:"Body"`
+}
+
+type documentDownloadURLEnvelope struct {
+	Body struct {
+		Response struct {
+			Result string `xml:"DocumentDownloadUrlResult"`
+		} `xml:"DocumentDownloadUrlResponse"`
 	} `xml:"Body"`
 }
 

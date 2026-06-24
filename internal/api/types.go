@@ -503,6 +503,11 @@ type DocumentFile struct {
 	FileData string `json:"file_data" xml:"FileData"`
 }
 
+type DocumentDownloadURL struct {
+	DocumentID string `json:"document_id"`
+	URL        string `json:"url"`
+}
+
 type DocumentImageCount struct {
 	DocumentID string `json:"document_id"`
 	ImageCount int    `json:"image_count"`
