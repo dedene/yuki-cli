@@ -37,6 +37,35 @@ func TestGLAccountBalanceParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestNetRevenueParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Accounting", "NetRevenue", netRevenueResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:StartDate>2020-01-01</they:StartDate>",
+			"<they:EndDate>2020-01-31</they:EndDate>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	report, err := client.NetRevenue(context.Background(), "session-1", RevenueOptions{
+		AdministrationID: "admin-1",
+		StartDate:        "2020-01-01",
+		EndDate:          "2020-01-31",
+	})
+	if err != nil {
+		t.Fatalf("NetRevenue: %v", err)
+	}
+	if report.Amount != "1868.36" ||
+		report.StartDate != "2020-01-01" ||
+		report.EndDate != "2020-01-31" {
+		t.Fatalf("report = %#v", report)
+	}
+}
+
 func TestGLAccountBalanceFiscalParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClientForService(t, "Accounting", "GLAccountBalanceFiscal", glAccountBalanceFiscalResponse, func(t *testing.T, body string) {
 		t.Helper()
@@ -114,6 +143,15 @@ const glAccountBalanceResponse = `<?xml version="1.0" encoding="utf-8"?>
         </GLAccountBalance>
       </GLAccountBalanceResult>
     </GLAccountBalanceResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const netRevenueResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <NetRevenueResponse xmlns="http://www.theyukicompany.com/">
+      <NetRevenueResult>1868.36</NetRevenueResult>
+    </NetRevenueResponse>
   </soap:Body>
 </soap:Envelope>`
 

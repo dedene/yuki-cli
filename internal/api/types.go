@@ -59,6 +59,13 @@ type GLAccountBalanceItem struct {
 	Amount      string `json:"amount" xml:"Amount"`
 }
 
+type RevenueReport struct {
+	AdministrationID string `json:"administration_id,omitempty"`
+	StartDate        string `json:"start_date"`
+	EndDate          string `json:"end_date"`
+	Amount           string `json:"amount"`
+}
+
 type CreditorItem struct {
 	ID             string  `json:"id" xml:"ID,attr"`
 	Date           string  `json:"date" xml:"Date"`

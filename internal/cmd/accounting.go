@@ -9,6 +9,7 @@ import (
 
 type AccountingCmd struct {
 	GLAccounts     GLAccountsCmd               `cmd:"" name:"gl-accounts" help:"Inspect GL accounts."`
+	Revenue        RevenueCmd                  `cmd:"" help:"Inspect revenue reports."`
 	CreditorItems  CreditorItemsCmd            `cmd:"" name:"creditor-items" help:"Inspect outstanding creditor purchase invoices."`
 	Transactions   TransactionsCmd             `cmd:"" help:"Inspect accounting transactions."`
 	PaymentMethods AccountingPaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect accounting payment methods."`
@@ -139,6 +140,40 @@ func renderGLAccountBalances(rt *Runtime, balances []api.GLAccountBalanceItem) e
 		rows = append(rows, []string{balance.Code, balance.BalanceType, balance.Amount, balance.Description})
 	}
 	return output.Table(rt.Out, []string{"CODE", "TYPE", "AMOUNT", "DESCRIPTION"}, rows)
+}
+
+type RevenueCmd struct {
+	Net RevenueNetCmd `cmd:"" help:"Get net revenue for a date range."`
+}
+
+type RevenueNetCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	From           string `name:"from" required:"" help:"Start date, YYYY-MM-DD."`
+	To             string `name:"to" required:"" help:"End date, YYYY-MM-DD."`
+}
+
+func (c *RevenueNetCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	report, err := client.NetRevenue(rt.Context, sessionID, api.RevenueOptions{
+		AdministrationID: administrationID,
+		StartDate:        c.From,
+		EndDate:          c.To,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, report)
+	}
+	return output.Table(rt.Out, []string{"FROM", "TO", "AMOUNT"}, [][]string{{report.StartDate, report.EndDate, report.Amount}})
 }
 
 func resolveAdministrationID(globals *Globals, explicit string) (string, error) {
