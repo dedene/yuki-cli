@@ -2255,6 +2255,8 @@ type cmdFakeClient struct {
 	balanceOpts                 api.GLAccountBalanceOptions
 	glTransactions              []api.GLAccountTransaction
 	glTransactionOpts           api.GLAccountTransactionsOptions
+	journalImportOpts           api.JournalImportOptions
+	journalProcessResult        api.JournalProcessResult
 	revenueReport               api.RevenueReport
 	revenueOpts                 api.RevenueOptions
 	period                      api.AdministrationPeriod
@@ -2436,6 +2438,14 @@ func (c *cmdFakeClient) GLAccountTransactionsFiscal(_ context.Context, _ string,
 func (c *cmdFakeClient) GLAccountTransactionsAndContact(_ context.Context, _ string, opts api.GLAccountTransactionsOptions) ([]api.GLAccountTransaction, error) {
 	c.glTransactionOpts = opts
 	return c.glTransactions, nil
+}
+
+func (c *cmdFakeClient) ProcessJournal(_ context.Context, _ string, opts api.JournalImportOptions) (api.JournalProcessResult, error) {
+	c.journalImportOpts = opts
+	if c.journalProcessResult.AdministrationID == "" {
+		c.journalProcessResult.AdministrationID = opts.AdministrationID
+	}
+	return c.journalProcessResult, nil
 }
 
 func (c *cmdFakeClient) CheckOutstandingItem(_ context.Context, _ string, reference string) ([]api.OutstandingItem, error) {

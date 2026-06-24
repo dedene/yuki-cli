@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/dedene/yuki-cli/internal/api"
@@ -14,6 +16,7 @@ type AccountingCmd struct {
 	CreditorItems   CreditorItemsCmd            `cmd:"" name:"creditor-items" help:"Inspect outstanding creditor purchase invoices."`
 	DebtorItems     DebtorItemsCmd              `cmd:"" name:"debtor-items" help:"Inspect outstanding debtor sales invoices."`
 	Outstanding     OutstandingCmd              `cmd:"" help:"Inspect outstanding items."`
+	Journals        JournalsCmd                 `cmd:"" help:"Process general journal entries."`
 	Transactions    TransactionsCmd             `cmd:"" help:"Inspect accounting transactions."`
 	ChangeDigest    ChangeDigestCmd             `cmd:"" name:"change-digest" help:"Inspect change digest feeds."`
 	Projects        ProjectsCmd                 `cmd:"" help:"Inspect accounting projects."`
@@ -345,6 +348,116 @@ func renderGLAccountTransactionsWithFile(rt *Runtime, transactions []api.GLAccou
 		rows = append(rows, []string{tx.Date, tx.GLAccountCode, tx.Amount, tx.Contact, project, tx.FileName, tx.Description})
 	}
 	return output.Table(rt.Out, []string{"DATE", "GL", "AMOUNT", "CONTACT", "PROJECT", "FILE", "DESCRIPTION"}, rows)
+}
+
+type JournalsCmd struct {
+	Process JournalsProcessCmd `cmd:"" help:"Process a general journal XML file."`
+}
+
+type JournalsProcessCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	File           string `name:"file" required:"" help:"Journal XML file to process." type:"existingfile"`
+	DryRun         bool   `name:"dry-run" help:"Validate and preview the journal without authenticating or sending it."`
+}
+
+type journalXMLDocument struct {
+	Path    string
+	Content string
+	Bytes   int
+	Root    string
+}
+
+type journalProcessDryRun struct {
+	DryRun           bool   `json:"dry_run"`
+	Operation        string `json:"operation"`
+	AdministrationID string `json:"administration_id"`
+	File             string `json:"file"`
+	Bytes            int    `json:"bytes"`
+	Root             string `json:"root"`
+	Message          string `json:"message"`
+}
+
+func (c *JournalsProcessCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+	doc, err := readJournalXML(c.File)
+	if err != nil {
+		return err
+	}
+	if c.DryRun {
+		return renderJournalDryRun(rt, globals, journalProcessDryRun{
+			DryRun:           true,
+			Operation:        "ProcessJournal",
+			AdministrationID: administrationID,
+			File:             doc.Path,
+			Bytes:            doc.Bytes,
+			Root:             doc.Root,
+			Message:          "dry run; no journal sent",
+		})
+	}
+	if globals.Readonly {
+		return errors.New("--readonly blocks mutating command: accounting journals process")
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	result, err := client.ProcessJournal(rt.Context, sessionID, api.JournalImportOptions{
+		AdministrationID: administrationID,
+		XMLDoc:           doc.Content,
+	})
+	if err != nil {
+		return err
+	}
+	return renderJournalProcessResult(rt, globals, result)
+}
+
+func readJournalXML(path string) (journalXMLDocument, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return journalXMLDocument{}, fmt.Errorf("read %s: %w", path, err)
+	}
+	root, err := validateXMLDocument(data)
+	if err != nil {
+		return journalXMLDocument{}, fmt.Errorf("validate %s: %w", path, err)
+	}
+	if root != "Journal" {
+		return journalXMLDocument{}, fmt.Errorf("validate %s: expected root element Journal, got %s", path, root)
+	}
+	data = stripXMLDeclaration(data)
+	return journalXMLDocument{
+		Path:    path,
+		Content: string(data),
+		Bytes:   len(data),
+		Root:    root,
+	}, nil
+}
+
+func renderJournalDryRun(rt *Runtime, globals *Globals, result journalProcessDryRun) error {
+	if globals.JSON {
+		return output.JSON(rt.Out, result)
+	}
+	return output.Table(rt.Out, []string{"OPERATION", "ADMINISTRATION", "FILE", "BYTES", "ROOT", "MESSAGE"}, [][]string{{
+		result.Operation,
+		result.AdministrationID,
+		result.File,
+		strconv.Itoa(result.Bytes),
+		result.Root,
+		result.Message,
+	}})
+}
+
+func renderJournalProcessResult(rt *Runtime, globals *Globals, result api.JournalProcessResult) error {
+	if globals.JSON {
+		return output.JSON(rt.Out, result)
+	}
+	return output.Table(rt.Out, []string{"ADMINISTRATION", "DOCUMENT"}, [][]string{{
+		result.AdministrationID,
+		result.DocumentID,
+	}})
 }
 
 type PeriodsCmd struct {

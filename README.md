@@ -53,6 +53,7 @@ yuki accounting gl-accounts start-balance --administration <administration-id> -
 yuki accounting gl-accounts transactions --administration <administration-id> --gl-account 700000 --from 2026-01-01 --to 2026-01-31 --json
 yuki accounting gl-accounts transactions-fiscal --administration <administration-id> --gl-account 700000 --from 2026-01-01 --to 2026-01-31 --json
 yuki accounting gl-accounts transactions-with-contact --administration <administration-id> --gl-account 700000 --from 2026-01-01 --to 2026-01-31 --json
+yuki accounting journals process --administration <administration-id> --file journal.xml --dry-run --json
 yuki accounting revenue net --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --json
 yuki accounting revenue net-fiscal --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --json
 yuki accounting payment-methods list --administration <administration-id>
