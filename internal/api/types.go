@@ -215,6 +215,11 @@ type Currency struct {
 	Description string `json:"description" xml:"Description"`
 }
 
+type CostCategory struct {
+	ID          string `json:"id" xml:"ID,attr"`
+	Description string `json:"description" xml:"Description"`
+}
+
 type PaymentMethod struct {
 	ID          string `json:"id" xml:"ID"`
 	Description string `json:"description" xml:"Description"`

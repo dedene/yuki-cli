@@ -135,6 +135,18 @@ func (c *Client) Currencies(ctx context.Context, sessionID string) ([]Currency, 
 	return env.Body.Response.Result.Currencies.Currencies, nil
 }
 
+func (c *Client) CostCategories(ctx context.Context, sessionID string) ([]CostCategory, error) {
+	data, err := c.call(ctx, "Archive", "CostCategories", sessionParams(sessionID))
+	if err != nil {
+		return nil, err
+	}
+	var env costCategoriesEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse CostCategories response: %w", err)
+	}
+	return env.Body.Response.Result.CostCategories.CostCategories, nil
+}
+
 type documentFoldersEnvelope struct {
 	Body struct {
 		Response struct {
@@ -168,6 +180,18 @@ type currenciesEnvelope struct {
 				} `xml:"Currencies"`
 			} `xml:"CurrenciesResult"`
 		} `xml:"CurrenciesResponse"`
+	} `xml:"Body"`
+}
+
+type costCategoriesEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				CostCategories struct {
+					CostCategories []CostCategory `xml:"CostCategory"`
+				} `xml:"CostCategories"`
+			} `xml:"CostCategoriesResult"`
+		} `xml:"CostCategoriesResponse"`
 	} `xml:"Body"`
 }
 

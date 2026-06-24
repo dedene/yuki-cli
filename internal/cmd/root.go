@@ -39,6 +39,7 @@ type Client interface {
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)
 	PaymentMethods(context.Context, string) ([]api.PaymentMethod, error)
 	Currencies(context.Context, string) ([]api.Currency, error)
+	CostCategories(context.Context, string) ([]api.CostCategory, error)
 }
 
 type Runtime struct {

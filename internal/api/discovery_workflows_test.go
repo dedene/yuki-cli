@@ -207,6 +207,24 @@ func TestCurrenciesParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestCostCategoriesParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "CostCategories", costCategoriesResponse, nil)
+
+	categories, err := client.CostCategories(context.Background(), "session-1")
+	if err != nil {
+		t.Fatalf("CostCategories: %v", err)
+	}
+	if len(categories) != 2 {
+		t.Fatalf("len(categories) = %d, want 2", len(categories))
+	}
+	if categories[0].ID != "40300" ||
+		categories[0].Description != "Training costs" ||
+		categories[1].ID != "40600" ||
+		categories[1].Description != "Canteen supplies" {
+		t.Fatalf("categories = %#v", categories)
+	}
+}
+
 const transactionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -430,5 +448,23 @@ const currenciesResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Currencies>
       </CurrenciesResult>
     </CurrenciesResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const costCategoriesResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <CostCategoriesResponse xmlns="http://www.theyukicompany.com/">
+      <CostCategoriesResult>
+        <CostCategories xmlns="">
+          <CostCategory ID="40300">
+            <Description>Training costs</Description>
+          </CostCategory>
+          <CostCategory ID="40600">
+            <Description>Canteen supplies</Description>
+          </CostCategory>
+        </CostCategories>
+      </CostCategoriesResult>
+    </CostCategoriesResponse>
   </soap:Body>
 </soap:Envelope>`

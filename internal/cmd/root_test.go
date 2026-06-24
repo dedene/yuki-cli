@@ -321,6 +321,7 @@ type cmdFakeClient struct {
 	folders             []api.DocumentFolder
 	tabs                []api.DocumentFolderTab
 	currencies          []api.Currency
+	costCategories      []api.CostCategory
 	folderID            string
 	searchDocuments     []api.Document
 	searchDocumentsOpts api.SearchDocumentsOptions
@@ -411,4 +412,8 @@ func (c *cmdFakeClient) PaymentMethods(context.Context, string) ([]api.PaymentMe
 
 func (c *cmdFakeClient) Currencies(context.Context, string) ([]api.Currency, error) {
 	return c.currencies, nil
+}
+
+func (c *cmdFakeClient) CostCategories(context.Context, string) ([]api.CostCategory, error) {
+	return c.costCategories, nil
 }
