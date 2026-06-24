@@ -148,7 +148,7 @@ type CLI struct {
 
 	VersionCmd      VersionCmd         `cmd:"" name:"version" help:"Print version information."`
 	Auth            AuthCmd            `cmd:"" help:"Manage authentication."`
-	Domains         DomainsCmd         `cmd:"" help:"Inspect accessible domains."`
+	Domains         DomainsCmd         `cmd:"" help:"Manage accessible domains."`
 	Administrations AdministrationsCmd `cmd:"" help:"Inspect accessible administrations."`
 	Companies       CompaniesCmd       `cmd:"" help:"Inspect accessible companies."`
 	Language        LanguageCmd        `cmd:"" help:"Inspect session language."`
