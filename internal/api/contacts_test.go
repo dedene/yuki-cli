@@ -91,6 +91,35 @@ func TestSuppliersAndCustomersParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestUpdateContactPostsRawXMLAndParsesDocumentedResponse(t *testing.T) {
+	xmlDoc := `<Contact xmlns="urn:xmlns:http://www.theyukicompany.com:contact"><ID/><Type>0</Type><Code>1</Code><FullName>A van B</FullName><EmailHome>support@yuki.nl</EmailHome></Contact>`
+	client := fixtureClientForService(t, "Contact", "UpdateContact", updateContactResponse, func(t *testing.T, body string) {
+		t.Helper()
+		if !strings.Contains(body, "<they:domainID>domain-1</they:domainID>") {
+			t.Fatalf("request body missing domain ID:\n%s", body)
+		}
+		if !strings.Contains(body, "<they:xmlDoc>"+xmlDoc+"</they:xmlDoc>") {
+			t.Fatalf("request body missing raw xmlDoc:\n%s", body)
+		}
+		if strings.Contains(body, "&lt;Contact") {
+			t.Fatalf("request body escaped xmlDoc:\n%s", body)
+		}
+	})
+
+	result, err := client.UpdateContact(context.Background(), "session-1", ContactUpdateOptions{
+		DomainID: "domain-1",
+		XMLDoc:   xmlDoc,
+	})
+	if err != nil {
+		t.Fatalf("UpdateContact: %v", err)
+	}
+	if result.DomainID != "domain-1" ||
+		result.Timestamp != "2021-03-08" ||
+		result.Succeeded != "Succesfully updated Contact 97b30afc-xxxx-xxxx-xxxx-37487cbb6799" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
 const searchContactsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <soap:Body>
@@ -126,6 +155,20 @@ const searchContactsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Contacts>
       </SearchContactsResult>
     </SearchContactsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const updateContactResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <UpdateContactResponse xmlns="http://www.theyukicompany.com/">
+      <UpdateContactResult>
+        <ContactResponse xmlns="urn:xmlns:http://www.theyukicompany.com:contactResponse">
+          <TimeStamp xmlns="">2021-03-08</TimeStamp>
+          <Succeeded xmlns="">Succesfully updated Contact 97b30afc-xxxx-xxxx-xxxx-37487cbb6799</Succeeded>
+        </ContactResponse>
+      </UpdateContactResult>
+    </UpdateContactResponse>
   </soap:Body>
 </soap:Envelope>`
 

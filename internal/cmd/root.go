@@ -28,6 +28,7 @@ type Client interface {
 	UpdateDomainFunction(context.Context, string, api.UpdateDomainFunctionOptions) (api.DomainFunctionUpdateResult, error)
 	SearchContacts(context.Context, string, api.ContactSearchOptions) ([]api.Contact, error)
 	SuppliersAndCustomers(context.Context, string, api.ContactSearchOptions) ([]api.Contact, error)
+	UpdateContact(context.Context, string, api.ContactUpdateOptions) (api.ContactUpdateResult, error)
 	Administrations(context.Context, string) ([]api.Administration, error)
 	AdministrationID(context.Context, string, string) (string, error)
 	AdministrationsWithInternalCustomerCode(context.Context, string) ([]api.Administration, error)
@@ -139,7 +140,7 @@ type CLI struct {
 	Language        LanguageCmd        `cmd:"" help:"Inspect session language."`
 	Accounting      AccountingCmd      `cmd:"" help:"Read accounting information."`
 	Archive         ArchiveCmd         `cmd:"" help:"Read archive document information."`
-	Contacts        ContactsCmd        `cmd:"" help:"Read contact information."`
+	Contacts        ContactsCmd        `cmd:"" help:"Manage contact information."`
 	VAT             VATCmd             `cmd:"" name:"vat" help:"Read VAT information."`
 	Integration     IntegrationCmd     `cmd:"" help:"Read integration information."`
 	FiscalTable     FiscalTableCmd     `cmd:"" name:"fiscal-table" help:"Read fiscal table information."`

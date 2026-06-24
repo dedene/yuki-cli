@@ -2240,6 +2240,8 @@ type cmdFakeClient struct {
 	domainFunctionUpdateResult  api.DomainFunctionUpdateResult
 	contacts                    []api.Contact
 	contactSearchOpts           api.ContactSearchOptions
+	contactUpdateOpts           api.ContactUpdateOptions
+	contactUpdateResult         api.ContactUpdateResult
 	admins                      []api.Administration
 	administrationName          string
 	administrationResolvedID    string
@@ -2378,6 +2380,11 @@ func (c *cmdFakeClient) SearchContacts(_ context.Context, _ string, opts api.Con
 func (c *cmdFakeClient) SuppliersAndCustomers(_ context.Context, _ string, opts api.ContactSearchOptions) ([]api.Contact, error) {
 	c.contactSearchOpts = opts
 	return c.contacts, nil
+}
+
+func (c *cmdFakeClient) UpdateContact(_ context.Context, _ string, opts api.ContactUpdateOptions) (api.ContactUpdateResult, error) {
+	c.contactUpdateOpts = opts
+	return c.contactUpdateResult, nil
 }
 
 func (c *cmdFakeClient) Administrations(context.Context, string) ([]api.Administration, error) {

@@ -37,6 +37,7 @@ yuki administrations id --name "Highpro NV" --json
 yuki administrations with-customer-code --json
 yuki contacts search --domain <domain-id> --search-option Email --search-value billing@example.com --json
 yuki contacts suppliers-customers --domain <domain-id> --contact-type Supplier --search-option ContactType --search-value Supplier --json
+yuki contacts upsert --domain <domain-id> --file contact.xml --dry-run --json
 yuki companies list --json
 yuki language current --json
 yuki language supported --json

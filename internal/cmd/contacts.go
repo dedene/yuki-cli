@@ -8,6 +8,7 @@ import (
 type ContactsCmd struct {
 	Search             ContactsSearchCmd                `cmd:"" help:"Search contacts in a domain."`
 	SuppliersCustomers ContactsSuppliersAndCustomersCmd `cmd:"" name:"suppliers-customers" help:"Search supplier and customer contacts in a domain."`
+	Upsert             ContactsUpsertCmd                `cmd:"" help:"Create or update a contact from Yuki contact XML."`
 }
 
 type ContactsSearchCmd struct {
