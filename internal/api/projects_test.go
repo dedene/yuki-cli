@@ -73,6 +73,28 @@ func TestProjectsAndIDParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestArchiveProjectsParsesWSDLResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "Projects", archiveProjectsResponse, func(t *testing.T, body string) {
+		t.Helper()
+		if !strings.Contains(body, "<they:administrationID>admin-1</they:administrationID>") {
+			t.Fatalf("request body missing administration ID:\n%s", body)
+		}
+	})
+
+	projects, err := client.ArchiveProjects(context.Background(), "session-1", "admin-1")
+	if err != nil {
+		t.Fatalf("ArchiveProjects: %v", err)
+	}
+	if len(projects) != 1 {
+		t.Fatalf("len(projects) = %d, want 1", len(projects))
+	}
+	if projects[0].HID != "5" ||
+		projects[0].Code != "ARCHIVE" ||
+		projects[0].Description != "Archive Project" {
+		t.Fatalf("projects = %#v", projects)
+	}
+}
+
 func TestProjectBalanceParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClientForService(t, "AccountingInfo", "GetProjectBalance", projectBalanceResponse, func(t *testing.T, body string) {
 		t.Helper()
@@ -232,6 +254,28 @@ const updateProjectResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <UpdateProjectResponse xmlns="http://www.theyukicompany.com/" />
+  </soap:Body>
+</soap:Envelope>`
+
+const archiveProjectsResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <ProjectsResponse xmlns="http://www.theyukicompany.com/">
+      <ProjectsResult>
+        <Projects>
+          <Project>
+            <description>Archive Project</description>
+            <HID>5</HID>
+            <code>ARCHIVE</code>
+            <startDate>2020-01-01T00:00:00</startDate>
+            <endDate>0001-01-01T00:00:00</endDate>
+            <company>Highpro BV</company>
+            <budgetSales>0</budgetSales>
+            <budgetPurchase>0</budgetPurchase>
+          </Project>
+        </Projects>
+      </ProjectsResult>
+    </ProjectsResponse>
   </soap:Body>
 </soap:Envelope>`
 

@@ -12,10 +12,51 @@ import (
 type ArchiveCmd struct {
 	Documents      ArchiveDocumentsCmd      `cmd:"" help:"Inspect and download archive documents."`
 	Folders        ArchiveFoldersCmd        `cmd:"" help:"Inspect archive folders."`
+	Projects       ArchiveProjectsCmd       `cmd:"" help:"Inspect archive projects."`
 	Currencies     ArchiveCurrenciesCmd     `cmd:"" help:"Inspect archive currencies."`
 	CostCategories ArchiveCostCategoriesCmd `cmd:"" name:"cost-categories" help:"Inspect archive cost categories."`
 	Menu           ArchiveMenuCmd           `cmd:"" help:"Inspect archive menu entries."`
 	PaymentMethods ArchivePaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect archive payment methods."`
+}
+
+type ArchiveProjectsCmd struct {
+	List ArchiveProjectsListCmd `cmd:"" help:"List archive projects for an administration."`
+}
+
+type ArchiveProjectsListCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+}
+
+func (c *ArchiveProjectsListCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	projects, err := client.ArchiveProjects(rt.Context, sessionID, administrationID)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, projects)
+	}
+
+	rows := make([][]string, 0, len(projects))
+	for _, project := range projects {
+		rows = append(rows, []string{
+			project.HID,
+			project.Code,
+			project.Description,
+			project.Company,
+			project.Contact,
+			project.StartDate,
+			project.EndDate,
+		})
+	}
+	return output.Table(rt.Out, []string{"HID", "CODE", "DESCRIPTION", "COMPANY", "CONTACT", "START", "END"}, rows)
 }
 
 type ArchiveMenuCmd struct {

@@ -86,6 +86,22 @@ func (c *Client) ProjectsAndID(ctx context.Context, sessionID string, opts Proje
 	return env.Body.Response.Result.Projects, nil
 }
 
+func (c *Client) ArchiveProjects(ctx context.Context, sessionID, administrationID string) ([]AccountingProject, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: administrationID},
+	}
+	data, err := c.call(ctx, "Archive", "Projects", params)
+	if err != nil {
+		return nil, err
+	}
+	var env archiveProjectsEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse Projects response: %w", err)
+	}
+	return env.Body.Response.Result.projects(), nil
+}
+
 func (c *Client) ProjectBalance(ctx context.Context, sessionID string, opts ProjectBalanceOptions) ([]ProjectBalance, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -181,6 +197,28 @@ type projectsAndIDEnvelope struct {
 			} `xml:"GetProjectsAndIDResult"`
 		} `xml:"GetProjectsAndIDResponse"`
 	} `xml:"Body"`
+}
+
+type archiveProjectsEnvelope struct {
+	Body struct {
+		Response struct {
+			Result archiveProjectsResult `xml:"ProjectsResult"`
+		} `xml:"ProjectsResponse"`
+	} `xml:"Body"`
+}
+
+type archiveProjectsResult struct {
+	Direct []AccountingProject `xml:"Project"`
+	Nested struct {
+		Projects []AccountingProject `xml:"Project"`
+	} `xml:"Projects"`
+}
+
+func (r archiveProjectsResult) projects() []AccountingProject {
+	if len(r.Nested.Projects) > 0 {
+		return r.Nested.Projects
+	}
+	return r.Direct
 }
 
 type projectBalanceEnvelope struct {

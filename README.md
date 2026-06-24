@@ -99,6 +99,7 @@ yuki archive payment-methods list
 yuki archive currencies list
 yuki archive cost-categories list
 yuki archive menu list
+yuki archive projects list --administration <administration-id> --json
 yuki archive folders list
 yuki archive folders counts --year 2026 --json
 yuki archive folders tabs --folder 3

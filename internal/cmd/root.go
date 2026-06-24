@@ -72,6 +72,7 @@ type Client interface {
 	ChangeDigestTransactionDetail(context.Context, string, string, string) (api.TransactionInfo, error)
 	Projects(context.Context, string, api.ProjectsOptions) ([]api.AccountingProject, error)
 	ProjectsAndID(context.Context, string, api.ProjectsOptions) ([]api.AccountingProject, error)
+	ArchiveProjects(context.Context, string, string) ([]api.AccountingProject, error)
 	UpdateProject(context.Context, string, api.ProjectUpdateOptions) (api.ProjectUpdateResult, error)
 	ProjectBalance(context.Context, string, api.ProjectBalanceOptions) ([]api.ProjectBalance, error)
 	CustomPaymentMethods(context.Context, string, string) ([]api.PaymentMethod, error)

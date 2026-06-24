@@ -2289,6 +2289,8 @@ type cmdFakeClient struct {
 	projects                    []api.AccountingProject
 	projectsOpts                api.ProjectsOptions
 	projectsAndIDOpts           api.ProjectsOptions
+	archiveProjects             []api.AccountingProject
+	archiveProjectsAdminID      string
 	projectUpdateOpts           api.ProjectUpdateOptions
 	projectUpdateResult         api.ProjectUpdateResult
 	projectBalances             []api.ProjectBalance
@@ -2637,6 +2639,11 @@ func (c *cmdFakeClient) Projects(_ context.Context, _ string, opts api.ProjectsO
 func (c *cmdFakeClient) ProjectsAndID(_ context.Context, _ string, opts api.ProjectsOptions) ([]api.AccountingProject, error) {
 	c.projectsAndIDOpts = opts
 	return c.projects, nil
+}
+
+func (c *cmdFakeClient) ArchiveProjects(_ context.Context, _ string, administrationID string) ([]api.AccountingProject, error) {
+	c.archiveProjectsAdminID = administrationID
+	return c.archiveProjects, nil
 }
 
 func (c *cmdFakeClient) UpdateProject(_ context.Context, _ string, opts api.ProjectUpdateOptions) (api.ProjectUpdateResult, error) {
