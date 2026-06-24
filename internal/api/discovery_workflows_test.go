@@ -128,6 +128,26 @@ func TestSearchDocumentsParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentFoldersParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentFolders", documentFoldersResponse, nil)
+
+	folders, err := client.DocumentFolders(context.Background(), "session-1")
+	if err != nil {
+		t.Fatalf("DocumentFolders: %v", err)
+	}
+	if len(folders) != 3 {
+		t.Fatalf("len(folders) = %d, want 3", len(folders))
+	}
+	if folders[0].ID != "7" ||
+		folders[0].Description != "To be handled by Yuki" ||
+		folders[0].Icon != "DocumentFolder_yellow_label.png" ||
+		!folders[0].ProcessedByYuki ||
+		folders[2].ID != "2" ||
+		folders[2].Description != "Sales" {
+		t.Fatalf("folders = %#v", folders)
+	}
+}
+
 func TestPaymentMethodsParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClientForService(t, "Archive", "PaymentMethods", archivePaymentMethodsResponse, nil)
 
@@ -284,5 +304,32 @@ const archivePaymentMethodsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </PaymentMethods>
       </PaymentMethodsResult>
     </PaymentMethodsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentFoldersResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentFoldersResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentFoldersResult>
+        <DocumentFolders xmlns="">
+          <DocumentFolder ID="7">
+            <Description>To be handled by Yuki</Description>
+            <Icon>DocumentFolder_yellow_label.png</Icon>
+            <ProcessedByYuki>True</ProcessedByYuki>
+          </DocumentFolder>
+          <DocumentFolder ID="1">
+            <Description>Purchase</Description>
+            <Icon>DocumentFolder_red_label.png</Icon>
+            <ProcessedByYuki>True</ProcessedByYuki>
+          </DocumentFolder>
+          <DocumentFolder ID="2">
+            <Description>Sales</Description>
+            <Icon>DocumentFolder_red_label.png</Icon>
+            <ProcessedByYuki>True</ProcessedByYuki>
+          </DocumentFolder>
+        </DocumentFolders>
+      </DocumentFoldersResult>
+    </DocumentFoldersResponse>
   </soap:Body>
 </soap:Envelope>`

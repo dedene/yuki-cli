@@ -20,6 +20,18 @@ type SearchDocumentsOptions struct {
 	StartRecord     int
 }
 
+func (c *Client) DocumentFolders(ctx context.Context, sessionID string) ([]DocumentFolder, error) {
+	data, err := c.call(ctx, "Archive", "DocumentFolders", sessionParams(sessionID))
+	if err != nil {
+		return nil, err
+	}
+	var env documentFoldersEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse DocumentFolders response: %w", err)
+	}
+	return env.Body.Response.Result.DocumentFolders.Folders, nil
+}
+
 func (c *Client) SearchDocuments(ctx context.Context, sessionID string, opts SearchDocumentsOptions) ([]Document, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -93,6 +105,18 @@ func (c *Client) PaymentMethods(ctx context.Context, sessionID string) ([]Paymen
 		methods = append(methods, PaymentMethod(method))
 	}
 	return methods, nil
+}
+
+type documentFoldersEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				DocumentFolders struct {
+					Folders []DocumentFolder `xml:"DocumentFolder"`
+				} `xml:"DocumentFolders"`
+			} `xml:"DocumentFoldersResult"`
+		} `xml:"DocumentFoldersResponse"`
+	} `xml:"Body"`
 }
 
 type searchDocumentsEnvelope struct {

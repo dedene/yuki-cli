@@ -196,6 +196,13 @@ type DocumentFile struct {
 	FileData string `json:"file_data" xml:"FileData"`
 }
 
+type DocumentFolder struct {
+	ID              string `json:"id" xml:"ID,attr"`
+	Description     string `json:"description" xml:"Description"`
+	Icon            string `json:"icon,omitempty" xml:"Icon"`
+	ProcessedByYuki bool   `json:"processed_by_yuki" xml:"ProcessedByYuki"`
+}
+
 type PaymentMethod struct {
 	ID          string `json:"id" xml:"ID"`
 	Description string `json:"description" xml:"Description"`

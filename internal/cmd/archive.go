@@ -9,7 +9,39 @@ import (
 
 type ArchiveCmd struct {
 	Documents      ArchiveDocumentsCmd      `cmd:"" help:"Inspect and download archive documents."`
+	Folders        ArchiveFoldersCmd        `cmd:"" help:"Inspect archive folders."`
 	PaymentMethods ArchivePaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect archive payment methods."`
+}
+
+type ArchiveFoldersCmd struct {
+	List ArchiveFoldersListCmd `cmd:"" help:"List archive document folders."`
+}
+
+type ArchiveFoldersListCmd struct{}
+
+func (c *ArchiveFoldersListCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	folders, err := client.DocumentFolders(rt.Context, sessionID)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, folders)
+	}
+
+	rows := make([][]string, 0, len(folders))
+	for _, folder := range folders {
+		rows = append(rows, []string{
+			folder.ID,
+			folder.Description,
+			output.Bool(folder.ProcessedByYuki),
+			folder.Icon,
+		})
+	}
+	return output.Table(rt.Out, []string{"ID", "DESCRIPTION", "PROCESSED", "ICON"}, rows)
 }
 
 type ArchiveDocumentsCmd struct {
