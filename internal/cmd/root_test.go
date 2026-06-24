@@ -2085,6 +2085,11 @@ type cmdFakeClient struct {
 	fiscalTableYear             int
 	backofficeWorkflow          []api.BackofficeWorkflowDocument
 	backofficeQuestions         []api.BackofficeQuestion
+	salesInvoiceSchemaPath      string
+	salesItems                  []api.SalesItem
+	salesInvoiceImportOpts      api.SalesInvoiceImportOptions
+	salesInvoiceImportResult    api.SalesInvoiceImportResponse
+	salesInvoiceImportOperation string
 	maxWidth                    int
 	maxHeight                   int
 }
@@ -2483,4 +2488,25 @@ func (c *cmdFakeClient) BackofficeWorkflow(_ context.Context, _ string, administ
 func (c *cmdFakeClient) BackofficeOutstandingQuestions(_ context.Context, _ string, administrationID string) ([]api.BackofficeQuestion, error) {
 	c.administrationID = administrationID
 	return c.backofficeQuestions, nil
+}
+
+func (c *cmdFakeClient) SalesInvoiceSchemaPath(context.Context) (string, error) {
+	return c.salesInvoiceSchemaPath, nil
+}
+
+func (c *cmdFakeClient) SalesItems(_ context.Context, _ string, administrationID string) ([]api.SalesItem, error) {
+	c.administrationID = administrationID
+	return c.salesItems, nil
+}
+
+func (c *cmdFakeClient) ProcessSalesInvoices(_ context.Context, _ string, opts api.SalesInvoiceImportOptions) (api.SalesInvoiceImportResponse, error) {
+	c.salesInvoiceImportOperation = "ProcessSalesInvoices"
+	c.salesInvoiceImportOpts = opts
+	return c.salesInvoiceImportResult, nil
+}
+
+func (c *cmdFakeClient) ProcessRecognizedSalesInvoices(_ context.Context, _ string, opts api.SalesInvoiceImportOptions) (api.SalesInvoiceImportResponse, error) {
+	c.salesInvoiceImportOperation = "ProcessRecognizedSalesInvoices"
+	c.salesInvoiceImportOpts = opts
+	return c.salesInvoiceImportResult, nil
 }

@@ -20,7 +20,11 @@ func Envelope(operation string, params []Param) string {
 		b.WriteString(`<they:`)
 		b.WriteString(param.Name)
 		b.WriteString(`>`)
-		b.WriteString(html.EscapeString(param.Value))
+		if param.Raw {
+			b.WriteString(param.Value)
+		} else {
+			b.WriteString(html.EscapeString(param.Value))
+		}
 		b.WriteString(`</they:`)
 		b.WriteString(param.Name)
 		b.WriteString(`>`)

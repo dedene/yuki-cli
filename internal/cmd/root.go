@@ -92,6 +92,10 @@ type Client interface {
 	FiscalTable(context.Context, string, string, int) (api.FiscalTableTotals, error)
 	BackofficeWorkflow(context.Context, string, string) ([]api.BackofficeWorkflowDocument, error)
 	BackofficeOutstandingQuestions(context.Context, string, string) ([]api.BackofficeQuestion, error)
+	SalesInvoiceSchemaPath(context.Context) (string, error)
+	SalesItems(context.Context, string, string) ([]api.SalesItem, error)
+	ProcessSalesInvoices(context.Context, string, api.SalesInvoiceImportOptions) (api.SalesInvoiceImportResponse, error)
+	ProcessRecognizedSalesInvoices(context.Context, string, api.SalesInvoiceImportOptions) (api.SalesInvoiceImportResponse, error)
 }
 
 type Runtime struct {
@@ -127,6 +131,7 @@ type CLI struct {
 	Integration     IntegrationCmd     `cmd:"" help:"Read integration information."`
 	FiscalTable     FiscalTableCmd     `cmd:"" name:"fiscal-table" help:"Read fiscal table information."`
 	Backoffice      BackofficeCmd      `cmd:"" help:"Read backoffice information."`
+	Sales           SalesCmd           `cmd:"" help:"Manage sales invoices and sales items."`
 }
 
 func Execute(ctx context.Context, args []string, rt Runtime) (err error) {

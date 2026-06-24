@@ -23,6 +23,26 @@ func TestEnvelopeEscapesParametersAndUsesYukiNamespace(t *testing.T) {
 	}
 }
 
+func TestEnvelopeAllowsRawXMLParameters(t *testing.T) {
+	got := Envelope("ProcessSalesInvoices", []Param{
+		{Name: "sessionId", Value: "session-1"},
+		{Name: "xmlDoc", Value: `<SalesInvoices><SalesInvoice><Reference>VF-0001</Reference></SalesInvoice></SalesInvoices>`, Raw: true},
+	})
+
+	wantParts := []string{
+		`<they:sessionId>session-1</they:sessionId>`,
+		`<they:xmlDoc><SalesInvoices><SalesInvoice><Reference>VF-0001</Reference></SalesInvoice></SalesInvoices></they:xmlDoc>`,
+	}
+	for _, part := range wantParts {
+		if !strings.Contains(got, part) {
+			t.Fatalf("Envelope() missing %q in:\n%s", part, got)
+		}
+	}
+	if strings.Contains(got, "&lt;SalesInvoices&gt;") {
+		t.Fatalf("Envelope() escaped raw XML:\n%s", got)
+	}
+}
+
 func TestSOAPActionUsesYukiNamespace(t *testing.T) {
 	got := SOAPAction("Domains")
 	want := "http://www.theyukicompany.com/Domains"

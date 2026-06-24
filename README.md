@@ -40,6 +40,10 @@ yuki contacts suppliers-customers --domain <domain-id> --contact-type Supplier -
 yuki companies list --json
 yuki language current --json
 yuki language supported --json
+yuki sales invoices schema-path
+yuki sales items list --administration <administration-id> --json
+yuki sales invoices create --administration <administration-id> --file sales-invoices.xml --dry-run --json
+yuki sales recognized-invoices create --administration <administration-id> --file sales-invoices.xml --dry-run --json
 yuki accounting gl-accounts list --administration <administration-id>
 yuki accounting gl-accounts balance --administration <administration-id> --date 2026-12-31 --json
 yuki accounting gl-accounts balance-fiscal --administration <administration-id> --date 2026-12-31 --json
@@ -108,4 +112,4 @@ yuki --base-url https://api.yukiworks.nl/ws domains list
 yuki --profile zenjoy auth status
 ```
 
-The implemented CLI surface is intentionally read-only against Yuki. Mutating workflows such as sales invoice creation, document upload, journals, contact updates, and project updates are deferred until their command contracts and docs-parity rows are settled.
+Mutating commands support `--dry-run` when they can validate locally and honor global `--readonly` before authentication or network calls.

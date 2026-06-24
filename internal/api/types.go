@@ -19,6 +19,7 @@ type Config struct {
 type Param struct {
 	Name  string
 	Value string
+	Raw   bool
 }
 
 type Domain struct {
