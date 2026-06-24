@@ -476,6 +476,45 @@ func TestRevenueNetFiscalJSONUsesDateRange(t *testing.T) {
 	}
 }
 
+func TestPeriodsTableJSONUsesAdministrationAndYear(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		period: api.AdministrationPeriod{
+			AdministrationID: "admin-1",
+			YearID:           2020,
+			Name:             "Highpro NV",
+			Period:           "2021-01-02T00:00:00",
+			WholePeriod:      "2021-01-02T00:00:00 2022-01-01T00:00:00",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "periods", "table",
+		"--administration", "admin-1",
+		"--year", "2020",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.periodOpts.AdministrationID != "admin-1" ||
+		client.periodOpts.YearID != 2020 {
+		t.Fatalf("periodOpts = %#v", client.periodOpts)
+	}
+	var period api.AdministrationPeriod
+	if err := json.Unmarshal(out.Bytes(), &period); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if period.Name != "Highpro NV" || period.WholePeriod != "2021-01-02T00:00:00 2022-01-01T00:00:00" {
+		t.Fatalf("period = %#v", period)
+	}
+}
+
 func TestCreditorItemsListFiltersPaymentMethod(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1105,6 +1144,8 @@ type cmdFakeClient struct {
 	glTransactionOpts           api.GLAccountTransactionsOptions
 	revenueReport               api.RevenueReport
 	revenueOpts                 api.RevenueOptions
+	period                      api.AdministrationPeriod
+	periodOpts                  api.PeriodDateTableOptions
 	creditorItems               []api.CreditorItem
 	creditorOpts                api.CreditorItemsOptions
 	debtorItems                 []api.DebtorItem
@@ -1237,6 +1278,17 @@ func (c *cmdFakeClient) revenueReportWithDefaults(opts api.RevenueOptions) api.R
 		c.revenueReport.EndDate = opts.EndDate
 	}
 	return c.revenueReport
+}
+
+func (c *cmdFakeClient) PeriodDateTable(_ context.Context, _ string, opts api.PeriodDateTableOptions) (api.AdministrationPeriod, error) {
+	c.periodOpts = opts
+	if c.period.AdministrationID == "" {
+		c.period.AdministrationID = opts.AdministrationID
+	}
+	if c.period.YearID == 0 {
+		c.period.YearID = opts.YearID
+	}
+	return c.period, nil
 }
 
 func (c *cmdFakeClient) OutstandingCreditorItems(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {

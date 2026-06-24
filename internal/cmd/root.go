@@ -37,6 +37,7 @@ type Client interface {
 	CheckOutstandingItemAdmin(context.Context, string, string, string) ([]api.OutstandingItem, error)
 	NetRevenue(context.Context, string, api.RevenueOptions) (api.RevenueReport, error)
 	NetRevenueFiscal(context.Context, string, api.RevenueOptions) (api.RevenueReport, error)
+	PeriodDateTable(context.Context, string, api.PeriodDateTableOptions) (api.AdministrationPeriod, error)
 	OutstandingCreditorItems(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
 	OutstandingCreditorItemsByDate(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
 	OutstandingCreditorWithPaymentReference(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)

@@ -87,6 +87,15 @@ type RevenueReport struct {
 	Amount           string `json:"amount"`
 }
 
+type AdministrationPeriod struct {
+	AdministrationID string `json:"administration_id,omitempty"`
+	YearID           int    `json:"year_id,omitempty"`
+	Name             string `json:"name" xml:"name"`
+	Period           string `json:"period" xml:"period"`
+	WholePeriod      string `json:"whole_period,omitempty" xml:"wholePeriod"`
+	ISO8601Period    bool   `json:"iso8601_period" xml:"ISO8601Period"`
+}
+
 type OutstandingItem struct {
 	ID               string  `json:"id" xml:"ID,attr"`
 	Date             string  `json:"date" xml:"Date"`

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/dedene/yuki-cli/internal/api"
 	"github.com/dedene/yuki-cli/internal/output"
@@ -15,6 +16,7 @@ type AccountingCmd struct {
 	Outstanding    OutstandingCmd              `cmd:"" help:"Inspect outstanding items."`
 	Transactions   TransactionsCmd             `cmd:"" help:"Inspect accounting transactions."`
 	PaymentMethods AccountingPaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect accounting payment methods."`
+	Periods        PeriodsCmd                  `cmd:"" help:"Inspect administration periods."`
 }
 
 type GLAccountsCmd struct {
@@ -265,6 +267,45 @@ func renderGLAccountTransactionsWithFile(rt *Runtime, transactions []api.GLAccou
 		rows = append(rows, []string{tx.Date, tx.GLAccountCode, tx.Amount, tx.Contact, project, tx.FileName, tx.Description})
 	}
 	return output.Table(rt.Out, []string{"DATE", "GL", "AMOUNT", "CONTACT", "PROJECT", "FILE", "DESCRIPTION"}, rows)
+}
+
+type PeriodsCmd struct {
+	Table PeriodsTableCmd `cmd:"" help:"Get the start date table for a financial year."`
+}
+
+type PeriodsTableCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	Year           int    `name:"year" required:"" help:"Financial year ID."`
+}
+
+func (c *PeriodsTableCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	period, err := client.PeriodDateTable(rt.Context, sessionID, api.PeriodDateTableOptions{
+		AdministrationID: administrationID,
+		YearID:           c.Year,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, period)
+	}
+	return output.Table(rt.Out, []string{"ADMINISTRATION", "YEAR", "NAME", "PERIOD", "WHOLE PERIOD", "ISO8601"}, [][]string{{
+		period.AdministrationID,
+		strconv.Itoa(period.YearID),
+		period.Name,
+		period.Period,
+		period.WholePeriod,
+		output.Bool(period.ISO8601Period),
+	}})
 }
 
 type RevenueCmd struct {

@@ -41,6 +41,7 @@ yuki accounting gl-accounts transactions-with-contact --administration <administ
 yuki accounting revenue net --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --json
 yuki accounting revenue net-fiscal --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --json
 yuki accounting payment-methods list --administration <administration-id>
+yuki accounting periods table --administration <administration-id> --year 2026 --json
 yuki accounting creditor-items all --administration <administration-id> --payment-method Creditcard
 yuki accounting creditor-items list --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --payment-method Creditcard
 yuki accounting creditor-items with-payment-reference --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --payment-method Creditcard --json
