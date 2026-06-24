@@ -26,6 +26,29 @@ func (c *Client) DomainFunctions(ctx context.Context, sessionID, domainID string
 	return assignments, nil
 }
 
+func (c *Client) UpdateDomainFunction(ctx context.Context, sessionID string, opts UpdateDomainFunctionOptions) (DomainFunctionUpdateResult, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "domain", Value: opts.DomainID},
+		{Name: "domainFunction", Value: opts.Function},
+		{Name: "login", Value: opts.Login},
+	}
+	data, err := c.call(ctx, "Domains", "UpdateDomainFunctions", params)
+	if err != nil {
+		return DomainFunctionUpdateResult{}, err
+	}
+	message, err := textAt(data, []string{"Envelope", "Body", "UpdateDomainFunctionsResponse", "UpdateDomainFunctionsResult"})
+	if err != nil {
+		return DomainFunctionUpdateResult{}, fmt.Errorf("parse UpdateDomainFunctions response: %w", err)
+	}
+	return DomainFunctionUpdateResult{
+		DomainID: opts.DomainID,
+		Function: opts.Function,
+		Login:    opts.Login,
+		Message:  message,
+	}, nil
+}
+
 type domainFunctionsEnvelope struct {
 	Body struct {
 		Response struct {

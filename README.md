@@ -31,6 +31,7 @@ YUKI_ACCESS_KEY=<key> yuki auth status --json
 yuki domains list
 yuki domains current
 yuki domains functions --domain <domain-id> --json
+yuki domains update-function --domain <domain-id> --function BOAccountManager --login test@test.be --dry-run --json
 yuki administrations list
 yuki accounting gl-accounts list --administration <administration-id>
 yuki accounting gl-accounts balance --administration <administration-id> --date 2026-12-31 --json

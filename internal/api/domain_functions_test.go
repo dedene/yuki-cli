@@ -37,6 +37,36 @@ func TestDomainFunctionsParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestUpdateDomainFunctionParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Domains", "UpdateDomainFunctions", updateDomainFunctionsResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:domain>domain-1</they:domain>",
+			"<they:domainFunction>BOAccountManager</they:domainFunction>",
+			"<they:login>test@test.be</they:login>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	result, err := client.UpdateDomainFunction(context.Background(), "session-1", UpdateDomainFunctionOptions{
+		DomainID: "domain-1",
+		Function: "BOAccountManager",
+		Login:    "test@test.be",
+	})
+	if err != nil {
+		t.Fatalf("UpdateDomainFunction: %v", err)
+	}
+	if result.DomainID != "domain-1" ||
+		result.Function != "BOAccountManager" ||
+		result.Login != "test@test.be" ||
+		result.Message != "Domain function successfully updated" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
 const domainFunctionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <soap:Body>
@@ -62,5 +92,14 @@ const domainFunctionsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </DomainFunctions>
       </GetDomainFunctionsResult>
     </GetDomainFunctionsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const updateDomainFunctionsResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <UpdateDomainFunctionsResponse xmlns="http://www.theyukicompany.com/">
+      <UpdateDomainFunctionsResult>Domain function successfully updated</UpdateDomainFunctionsResult>
+    </UpdateDomainFunctionsResponse>
   </soap:Body>
 </soap:Envelope>`

@@ -34,6 +34,20 @@ type DomainFunctionAssignment struct {
 	Login    string `json:"login,omitempty"`
 }
 
+type UpdateDomainFunctionOptions struct {
+	DomainID string
+	Function string
+	Login    string
+}
+
+type DomainFunctionUpdateResult struct {
+	DomainID string `json:"domain_id"`
+	Function string `json:"function"`
+	Login    string `json:"login"`
+	Message  string `json:"message"`
+	DryRun   bool   `json:"dry_run,omitempty"`
+}
+
 type Company struct {
 	ID     string `json:"id" xml:"ID,attr"`
 	Name   string `json:"name" xml:"Name"`

@@ -143,6 +143,106 @@ func TestDomainsFunctionsJSONUsesDomainFlag(t *testing.T) {
 	}
 }
 
+func TestDomainsUpdateFunctionJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		domainFunctionUpdateResult: api.DomainFunctionUpdateResult{
+			DomainID: "domain-1",
+			Function: "BOAccountManager",
+			Login:    "test@test.be",
+			Message:  "Domain function successfully updated",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json", "domains", "update-function",
+		"--domain", "domain-1",
+		"--function", "BOAccountManager",
+		"--login", "test@test.be",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.domainFunctionUpdateOpts.DomainID != "domain-1" ||
+		client.domainFunctionUpdateOpts.Function != "BOAccountManager" ||
+		client.domainFunctionUpdateOpts.Login != "test@test.be" {
+		t.Fatalf("opts = %#v", client.domainFunctionUpdateOpts)
+	}
+	var result api.DomainFunctionUpdateResult
+	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if result.Message != "Domain function successfully updated" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestDomainsUpdateFunctionDryRunSkipsAuth(t *testing.T) {
+	var out bytes.Buffer
+
+	err := Execute(context.Background(), []string{
+		"--json", "domains", "update-function",
+		"--domain", "domain-1",
+		"--function", "BOBackup",
+		"--login", "backup@test.be",
+		"--dry-run",
+	}, Runtime{Out: &out})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	var result api.DomainFunctionUpdateResult
+	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if !result.DryRun ||
+		result.DomainID != "domain-1" ||
+		result.Function != "BOBackup" ||
+		result.Login != "backup@test.be" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestDomainsUpdateFunctionReadonlyBlocksBeforeAuth(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{sessionID: "session-1"}
+
+	err := Execute(context.Background(), []string{
+		"--readonly", "domains", "update-function",
+		"--domain", "domain-1",
+		"--function", "BOController",
+		"--login", "controller@test.be",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err == nil || !strings.Contains(err.Error(), "--readonly blocks mutating command") {
+		t.Fatalf("err = %v", err)
+	}
+	if client.accessKey != "" {
+		t.Fatalf("accessKey = %q, want no authentication", client.accessKey)
+	}
+}
+
+func TestDomainsUpdateFunctionRejectsUnknownFunction(t *testing.T) {
+	var out bytes.Buffer
+
+	err := Execute(context.Background(), []string{
+		"domains", "update-function",
+		"--domain", "domain-1",
+		"--function", "BackOffice",
+		"--login", "user@test.be",
+	}, Runtime{Out: &out})
+	if err == nil || !strings.Contains(err.Error(), "invalid --function") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestGLAccountsListJSONUsesAdministrationFlag(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1682,6 +1782,8 @@ type cmdFakeClient struct {
 	domainID                    string
 	domains                     []api.Domain
 	domainFunctions             []api.DomainFunctionAssignment
+	domainFunctionUpdateOpts    api.UpdateDomainFunctionOptions
+	domainFunctionUpdateResult  api.DomainFunctionUpdateResult
 	accounts                    []api.GLAccount
 	rgsEntries                  []api.RGSEntry
 	rgsOpts                     api.RGSSchemeOptions
@@ -1771,6 +1873,19 @@ func (c *cmdFakeClient) CurrentDomain(context.Context, string) (api.Domain, erro
 func (c *cmdFakeClient) DomainFunctions(_ context.Context, _ string, domainID string) ([]api.DomainFunctionAssignment, error) {
 	c.domainID = domainID
 	return c.domainFunctions, nil
+}
+
+func (c *cmdFakeClient) UpdateDomainFunction(_ context.Context, _ string, opts api.UpdateDomainFunctionOptions) (api.DomainFunctionUpdateResult, error) {
+	c.domainFunctionUpdateOpts = opts
+	if c.domainFunctionUpdateResult.Message == "" {
+		c.domainFunctionUpdateResult = api.DomainFunctionUpdateResult{
+			DomainID: opts.DomainID,
+			Function: opts.Function,
+			Login:    opts.Login,
+			Message:  "Domain function successfully updated",
+		}
+	}
+	return c.domainFunctionUpdateResult, nil
 }
 
 func (c *cmdFakeClient) Administrations(context.Context, string) ([]api.Administration, error) {
