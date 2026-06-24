@@ -268,6 +268,16 @@ type TransactionVAT struct {
 	CodePercentage  string `json:"code_percentage,omitempty" xml:"codePercentage"`
 }
 
+type VATCode struct {
+	Description     string `json:"description,omitempty" xml:"description"`
+	Type            string `json:"type" xml:"type"`
+	TypeDescription string `json:"type_description,omitempty" xml:"typeDescription"`
+	Percentage      string `json:"percentage" xml:"percentage"`
+	Country         string `json:"country,omitempty" xml:"country"`
+	StartDate       string `json:"start_date,omitempty" xml:"startDate"`
+	EndDate         string `json:"end_date,omitempty" xml:"endDate"`
+}
+
 type ProjectInfo struct {
 	Code        string `json:"code,omitempty" xml:"code"`
 	Description string `json:"description,omitempty" xml:"description"`

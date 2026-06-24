@@ -78,6 +78,7 @@ type Client interface {
 	Currencies(context.Context, string) ([]api.Currency, error)
 	CostCategories(context.Context, string) ([]api.CostCategory, error)
 	Menu(context.Context, string) ([]api.MenuEntry, error)
+	ActiveVATCodes(context.Context, string, string) ([]api.VATCode, error)
 }
 
 type Runtime struct {
@@ -106,6 +107,7 @@ type CLI struct {
 	Administrations AdministrationsCmd `cmd:"" help:"Inspect accessible administrations."`
 	Accounting      AccountingCmd      `cmd:"" help:"Read accounting information."`
 	Archive         ArchiveCmd         `cmd:"" help:"Read archive document information."`
+	VAT             VATCmd             `cmd:"" name:"vat" help:"Read VAT information."`
 }
 
 func Execute(ctx context.Context, args []string, rt Runtime) (err error) {

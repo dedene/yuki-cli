@@ -1224,6 +1224,42 @@ func TestProjectsBalanceJSONUsesScopeAndDateRange(t *testing.T) {
 	}
 }
 
+func TestVATCodesActiveJSONUsesAdministration(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		vatCodes: []api.VATCode{{
+			Description:     "VAT 21%",
+			Type:            "1",
+			TypeDescription: "VAT high",
+			Percentage:      "21.00",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"vat", "codes", "active",
+		"--administration", "admin-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.administrationID != "admin-1" {
+		t.Fatalf("administrationID = %q", client.administrationID)
+	}
+	var codes []api.VATCode
+	if err := json.Unmarshal(out.Bytes(), &codes); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(codes) != 1 || codes[0].Percentage != "21.00" {
+		t.Fatalf("codes = %#v", codes)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1488,6 +1524,7 @@ type cmdFakeClient struct {
 	documentXMLData             api.DocumentXMLData
 	documentXMLDataOperation    string
 	transactionDocument         api.TransactionDocument
+	vatCodes                    []api.VATCode
 	maxWidth                    int
 	maxHeight                   int
 }
@@ -1810,4 +1847,9 @@ func (c *cmdFakeClient) CostCategories(context.Context, string) ([]api.CostCateg
 
 func (c *cmdFakeClient) Menu(context.Context, string) ([]api.MenuEntry, error) {
 	return c.menuEntries, nil
+}
+
+func (c *cmdFakeClient) ActiveVATCodes(_ context.Context, _ string, administrationID string) ([]api.VATCode, error) {
+	c.administrationID = administrationID
+	return c.vatCodes, nil
 }
