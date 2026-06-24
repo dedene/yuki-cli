@@ -114,6 +114,7 @@ type CLI struct {
 	Auth            AuthCmd            `cmd:"" help:"Manage authentication."`
 	Domains         DomainsCmd         `cmd:"" help:"Inspect accessible domains."`
 	Administrations AdministrationsCmd `cmd:"" help:"Inspect accessible administrations."`
+	Companies       CompaniesCmd       `cmd:"" help:"Inspect accessible companies."`
 	Accounting      AccountingCmd      `cmd:"" help:"Read accounting information."`
 	Archive         ArchiveCmd         `cmd:"" help:"Read archive document information."`
 	Contacts        ContactsCmd        `cmd:"" help:"Read contact information."`

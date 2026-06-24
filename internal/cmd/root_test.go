@@ -331,6 +331,34 @@ func TestContactsSuppliersCustomersJSONUsesFlags(t *testing.T) {
 	}
 }
 
+func TestCompaniesListJSONPrintsCompanies(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		companies: []api.Company{{
+			ID:     "company-1",
+			Name:   "Highpro BV",
+			Active: true,
+		}},
+	}
+
+	err := Execute(context.Background(), []string{"--json", "companies", "list"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	var companies []api.Company
+	if err := json.Unmarshal(out.Bytes(), &companies); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(companies) != 1 || companies[0].ID != "company-1" || !companies[0].Active {
+		t.Fatalf("companies = %#v", companies)
+	}
+}
+
 func TestGLAccountsListJSONUsesAdministrationFlag(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1874,6 +1902,7 @@ type cmdFakeClient struct {
 	domainFunctionUpdateResult  api.DomainFunctionUpdateResult
 	contacts                    []api.Contact
 	contactSearchOpts           api.ContactSearchOptions
+	companies                   []api.Company
 	accounts                    []api.GLAccount
 	rgsEntries                  []api.RGSEntry
 	rgsOpts                     api.RGSSchemeOptions
@@ -1993,7 +2022,7 @@ func (c *cmdFakeClient) Administrations(context.Context, string) ([]api.Administ
 }
 
 func (c *cmdFakeClient) Companies(context.Context, string) ([]api.Company, error) {
-	return nil, nil
+	return c.companies, nil
 }
 
 func (c *cmdFakeClient) GLAccounts(_ context.Context, _ string, administrationID string) ([]api.GLAccount, error) {
