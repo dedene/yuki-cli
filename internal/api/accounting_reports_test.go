@@ -67,6 +67,36 @@ func TestGLAccountBalanceFiscalParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestGLAccountBalanceYearEndParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Accounting", "GLAccountBalanceYearEnd", glAccountBalanceYearEndResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:transactionDate>2020-12-31</they:transactionDate>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	balances, err := client.GLAccountBalanceYearEnd(context.Background(), "session-1", GLAccountBalanceOptions{
+		AdministrationID: "admin-1",
+		TransactionDate:  "2020-12-31",
+	})
+	if err != nil {
+		t.Fatalf("GLAccountBalanceYearEnd: %v", err)
+	}
+	if len(balances) != 1 {
+		t.Fatalf("len(balances) = %d, want 1", len(balances))
+	}
+	if balances[0].Code != "140000" ||
+		balances[0].Description != "Overgedragen winst" ||
+		balances[0].Amount != "-1454.14" {
+		t.Fatalf("balance = %#v", balances[0])
+	}
+}
+
 const glAccountBalanceResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -100,5 +130,21 @@ const glAccountBalanceFiscalResponse = `<?xml version="1.0" encoding="utf-8"?>
         </GLAccountBalance>
       </GLAccountBalanceFiscalResult>
     </GLAccountBalanceFiscalResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const glAccountBalanceYearEndResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GLAccountBalanceYearEndResponse xmlns="http://www.theyukicompany.com/">
+      <GLAccountBalanceYearEndResult>
+        <GLAccountBalance xmlns="">
+          <GLAccount Code="140000" BalanceType="B">
+            <Description>Overgedragen winst</Description>
+            <Amount>-1454.14</Amount>
+          </GLAccount>
+        </GLAccountBalance>
+      </GLAccountBalanceYearEndResult>
+    </GLAccountBalanceYearEndResponse>
   </soap:Body>
 </soap:Envelope>`

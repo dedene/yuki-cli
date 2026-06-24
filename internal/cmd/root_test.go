@@ -220,6 +220,44 @@ func TestGLAccountsBalanceFiscalJSONUsesDate(t *testing.T) {
 	}
 }
 
+func TestGLAccountsBalanceYearEndJSONUsesDate(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		balances: []api.GLAccountBalanceItem{{
+			Code:        "140000",
+			BalanceType: "B",
+			Amount:      "-1454.14",
+			Description: "Overgedragen winst",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "gl-accounts", "balance-year-end",
+		"--administration", "admin-1",
+		"--date", "2020-12-31",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.balanceOpts.AdministrationID != "admin-1" ||
+		client.balanceOpts.TransactionDate != "2020-12-31" {
+		t.Fatalf("balanceOpts = %#v", client.balanceOpts)
+	}
+	var balances []api.GLAccountBalanceItem
+	if err := json.Unmarshal(out.Bytes(), &balances); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(balances) != 1 || balances[0].Code != "140000" {
+		t.Fatalf("balances = %#v", balances)
+	}
+}
+
 func TestCreditorItemsListFiltersPaymentMethod(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -604,6 +642,11 @@ func (c *cmdFakeClient) GLAccountBalance(_ context.Context, _ string, opts api.G
 }
 
 func (c *cmdFakeClient) GLAccountBalanceFiscal(_ context.Context, _ string, opts api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error) {
+	c.balanceOpts = opts
+	return c.balances, nil
+}
+
+func (c *cmdFakeClient) GLAccountBalanceYearEnd(_ context.Context, _ string, opts api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error) {
 	c.balanceOpts = opts
 	return c.balances, nil
 }

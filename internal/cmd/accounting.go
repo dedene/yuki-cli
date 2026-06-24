@@ -15,9 +15,10 @@ type AccountingCmd struct {
 }
 
 type GLAccountsCmd struct {
-	List          GLAccountsListCmd          `cmd:"" help:"List GL accounts for an administration."`
-	Balance       GLAccountsBalanceCmd       `cmd:"" help:"List GL account balances at a transaction date."`
-	BalanceFiscal GLAccountsBalanceFiscalCmd `cmd:"" name:"balance-fiscal" help:"List fiscal GL account balances at a transaction date."`
+	List           GLAccountsListCmd           `cmd:"" help:"List GL accounts for an administration."`
+	Balance        GLAccountsBalanceCmd        `cmd:"" help:"List GL account balances at a transaction date."`
+	BalanceFiscal  GLAccountsBalanceFiscalCmd  `cmd:"" name:"balance-fiscal" help:"List fiscal GL account balances at a transaction date."`
+	BalanceYearEnd GLAccountsBalanceYearEndCmd `cmd:"" name:"balance-year-end" help:"List year-end GL account balances at a transaction date."`
 }
 
 type GLAccountsListCmd struct {
@@ -92,6 +93,34 @@ func (c *GLAccountsBalanceFiscalCmd) Run(rt *Runtime, globals *Globals) error {
 		return err
 	}
 	balances, err := client.GLAccountBalanceFiscal(rt.Context, sessionID, api.GLAccountBalanceOptions{
+		AdministrationID: administrationID,
+		TransactionDate:  c.Date,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, balances)
+	}
+	return renderGLAccountBalances(rt, balances)
+}
+
+type GLAccountsBalanceYearEndCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	Date           string `name:"date" required:"" help:"Transaction date, YYYY-MM-DD."`
+}
+
+func (c *GLAccountsBalanceYearEndCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	balances, err := client.GLAccountBalanceYearEnd(rt.Context, sessionID, api.GLAccountBalanceOptions{
 		AdministrationID: administrationID,
 		TransactionDate:  c.Date,
 	})
