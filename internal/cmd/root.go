@@ -99,6 +99,9 @@ type Client interface {
 	FiscalTable(context.Context, string, string, int) (api.FiscalTableTotals, error)
 	BackofficeWorkflow(context.Context, string, string) ([]api.BackofficeWorkflowDocument, error)
 	BackofficeOutstandingQuestions(context.Context, string, string) ([]api.BackofficeQuestion, error)
+	ImportPettyCashStatement(context.Context, string, api.PettyCashStatementImportOptions) (api.PettyCashImportResult, error)
+	ImportPettyCashLine(context.Context, string, api.PettyCashLineImportOptions) (api.PettyCashImportResult, error)
+	ImportPettyCashProjectLine(context.Context, string, api.PettyCashLineImportOptions) (api.PettyCashImportResult, error)
 	SalesInvoiceSchemaPath(context.Context) (string, error)
 	SalesItems(context.Context, string, string) ([]api.SalesItem, error)
 	ProcessSalesInvoices(context.Context, string, api.SalesInvoiceImportOptions) (api.SalesInvoiceImportResponse, error)
@@ -138,6 +141,7 @@ type CLI struct {
 	Integration     IntegrationCmd     `cmd:"" help:"Read integration information."`
 	FiscalTable     FiscalTableCmd     `cmd:"" name:"fiscal-table" help:"Read fiscal table information."`
 	Backoffice      BackofficeCmd      `cmd:"" help:"Read backoffice information."`
+	PettyCash       PettyCashCmd       `cmd:"" name:"petty-cash" help:"Import petty cash statements."`
 	Sales           SalesCmd           `cmd:"" help:"Manage sales invoices and sales items."`
 }
 

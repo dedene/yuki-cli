@@ -86,6 +86,9 @@ yuki integration administration-data --administration <administration-id> --json
 yuki fiscal-table totals --company <company-id> --year 2023 --json
 yuki backoffice workflow --administration <administration-id> --json
 yuki backoffice outstanding-questions --administration <administration-id> --json
+yuki petty-cash statement import --administration <administration-id> --file pettycash.csv --dry-run --json
+yuki petty-cash line import --account-gl-code 570000 --transaction-date 2026-01-15 --amount -42.50 --description "office supplies" --dry-run --json
+yuki petty-cash project-line import --account-gl-code 570000 --transaction-date 2026-01-15 --amount 100 --project-code PROJECTNEW --project-name "New Project" --dry-run --json
 yuki archive payment-methods list
 yuki archive currencies list
 yuki archive cost-categories list

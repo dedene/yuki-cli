@@ -2322,6 +2322,10 @@ type cmdFakeClient struct {
 	fiscalTableYear             int
 	backofficeWorkflow          []api.BackofficeWorkflowDocument
 	backofficeQuestions         []api.BackofficeQuestion
+	pettyCashStatementOpts      api.PettyCashStatementImportOptions
+	pettyCashLineOpts           api.PettyCashLineImportOptions
+	pettyCashImportOperation    string
+	pettyCashImportResult       api.PettyCashImportResult
 	salesInvoiceSchemaPath      string
 	salesItems                  []api.SalesItem
 	salesInvoiceImportOpts      api.SalesInvoiceImportOptions
@@ -2776,6 +2780,36 @@ func (c *cmdFakeClient) BackofficeWorkflow(_ context.Context, _ string, administ
 func (c *cmdFakeClient) BackofficeOutstandingQuestions(_ context.Context, _ string, administrationID string) ([]api.BackofficeQuestion, error) {
 	c.administrationID = administrationID
 	return c.backofficeQuestions, nil
+}
+
+func (c *cmdFakeClient) ImportPettyCashStatement(_ context.Context, _ string, opts api.PettyCashStatementImportOptions) (api.PettyCashImportResult, error) {
+	c.pettyCashImportOperation = "ImportStatement"
+	c.pettyCashStatementOpts = opts
+	if c.pettyCashImportResult.Operation == "" {
+		c.pettyCashImportResult.Operation = "ImportStatement"
+	}
+	if c.pettyCashImportResult.AdministrationID == "" {
+		c.pettyCashImportResult.AdministrationID = opts.AdministrationID
+	}
+	return c.pettyCashImportResult, nil
+}
+
+func (c *cmdFakeClient) ImportPettyCashLine(_ context.Context, _ string, opts api.PettyCashLineImportOptions) (api.PettyCashImportResult, error) {
+	c.pettyCashImportOperation = "ImportSingleStatementLine"
+	c.pettyCashLineOpts = opts
+	if c.pettyCashImportResult.Operation == "" {
+		c.pettyCashImportResult.Operation = "ImportSingleStatementLine"
+	}
+	return c.pettyCashImportResult, nil
+}
+
+func (c *cmdFakeClient) ImportPettyCashProjectLine(_ context.Context, _ string, opts api.PettyCashLineImportOptions) (api.PettyCashImportResult, error) {
+	c.pettyCashImportOperation = "ImportSingleStatementProjectLine"
+	c.pettyCashLineOpts = opts
+	if c.pettyCashImportResult.Operation == "" {
+		c.pettyCashImportResult.Operation = "ImportSingleStatementProjectLine"
+	}
+	return c.pettyCashImportResult, nil
 }
 
 func (c *cmdFakeClient) SalesInvoiceSchemaPath(context.Context) (string, error) {
