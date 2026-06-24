@@ -159,13 +159,14 @@ func (c *ArchiveFoldersTabsCmd) Run(rt *Runtime, globals *Globals) error {
 }
 
 type ArchiveDocumentsCmd struct {
-	List     ArchiveDocumentsListCmd     `cmd:"" help:"List archive documents by document date range."`
-	InFolder ArchiveDocumentsInFolderCmd `cmd:"" name:"in-folder" help:"List archive documents in a folder."`
-	InTab    ArchiveDocumentsInTabCmd    `cmd:"" name:"in-tab" help:"List archive documents in a tab."`
-	ByType   ArchiveDocumentsByTypeCmd   `cmd:"" name:"by-type" help:"List archive documents by document type."`
-	Search   ArchiveDocumentsSearchCmd   `cmd:"" help:"Search archive documents."`
-	Find     ArchiveDocumentsFindCmd     `cmd:"" help:"Find document metadata by document ID."`
-	Download ArchiveDocumentsDownloadCmd `cmd:"" help:"Download a document file by document ID."`
+	List             ArchiveDocumentsListCmd             `cmd:"" help:"List archive documents by document date range."`
+	InFolder         ArchiveDocumentsInFolderCmd         `cmd:"" name:"in-folder" help:"List archive documents in a folder."`
+	InTab            ArchiveDocumentsInTabCmd            `cmd:"" name:"in-tab" help:"List archive documents in a tab."`
+	ByType           ArchiveDocumentsByTypeCmd           `cmd:"" name:"by-type" help:"List archive documents by document type."`
+	ModifiedInFolder ArchiveDocumentsModifiedInFolderCmd `cmd:"" name:"modified-in-folder" help:"List archive documents modified since a date in a folder."`
+	Search           ArchiveDocumentsSearchCmd           `cmd:"" help:"Search archive documents."`
+	Find             ArchiveDocumentsFindCmd             `cmd:"" help:"Find document metadata by document ID."`
+	Download         ArchiveDocumentsDownloadCmd         `cmd:"" help:"Download a document file by document ID."`
 }
 
 type ArchiveDocumentsListCmd struct {
@@ -269,6 +270,32 @@ func (c *ArchiveDocumentsByTypeCmd) Run(rt *Runtime, globals *Globals) error {
 		SortOrder:       c.SortOrder,
 		StartDate:       c.From,
 		EndDate:         c.To,
+		NumberOfRecords: c.Limit,
+		StartRecord:     c.StartRecord,
+	})
+	if err != nil {
+		return err
+	}
+	return renderDocuments(rt, globals, documents)
+}
+
+type ArchiveDocumentsModifiedInFolderCmd struct {
+	FolderID      int    `name:"folder" required:"" help:"Folder ID."`
+	SortOrder     string `name:"sort-order" default:"CreatedAsc" help:"Yuki document sort order."`
+	ModifiedSince string `name:"modified-since" required:"" help:"Return documents modified since this date, YYYY-MM-DD."`
+	Limit         int    `name:"limit" default:"100" help:"Number of records to request."`
+	StartRecord   int    `name:"start-record" default:"1" help:"Start record to request."`
+}
+
+func (c *ArchiveDocumentsModifiedInFolderCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	documents, err := client.ModifiedDocumentsInFolder(rt.Context, sessionID, api.ModifiedDocumentsInFolderOptions{
+		FolderID:        c.FolderID,
+		SortOrder:       c.SortOrder,
+		ModifiedSince:   c.ModifiedSince,
 		NumberOfRecords: c.Limit,
 		StartRecord:     c.StartRecord,
 	})

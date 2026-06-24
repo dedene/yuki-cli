@@ -278,6 +278,42 @@ func TestDocumentsByTypeParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestModifiedDocumentsInFolderParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "ModifiedDocumentsInFolder", modifiedDocumentsInFolderResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:folderID>2</they:folderID>",
+			"<they:sortOrder>CreatedAsc</they:sortOrder>",
+			"<they:modifiedSince>2020-08-01</they:modifiedSince>",
+			"<they:numberOfRecords>100</they:numberOfRecords>",
+			"<they:startRecord>1</they:startRecord>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	documents, err := client.ModifiedDocumentsInFolder(context.Background(), "session-1", ModifiedDocumentsInFolderOptions{
+		FolderID:        2,
+		SortOrder:       "CreatedAsc",
+		ModifiedSince:   "2020-08-01",
+		NumberOfRecords: 100,
+		StartRecord:     1,
+	})
+	if err != nil {
+		t.Fatalf("ModifiedDocumentsInFolder: %v", err)
+	}
+	if len(documents) != 2 {
+		t.Fatalf("len(documents) = %d, want 2", len(documents))
+	}
+	if documents[0].ID != "9a52c873-cf70-4807-9e74-b9820b0144ed" ||
+		documents[0].Modified != "2021-08-23T17:20:18" ||
+		documents[1].ContactName != "Apple Sales International" {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
 const transactionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -550,6 +586,44 @@ const documentsByTypeResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Documents>
       </DocumentsByTypeResult>
     </DocumentsByTypeResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const modifiedDocumentsInFolderResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <ModifiedDocumentsInFolderResponse xmlns="http://www.theyukicompany.com/">
+      <ModifiedDocumentsInFolderResult>
+        <Documents xmlns="">
+          <Document ID="9a52c873-cf70-4807-9e74-b9820b0144ed">
+            <Subject>Testfactuur - 1</Subject>
+            <DocumentDate>2021-07-05</DocumentDate>
+            <Amount>111.79</Amount>
+            <Type>6</Type>
+            <TypeDescription>Verkoopfactuur</TypeDescription>
+            <FileName>Invoice B1240.pdf</FileName>
+            <ContentType>application/pdf</ContentType>
+            <FileSize>95360</FileSize>
+            <ContactName>ES klant</ContactName>
+            <Created>2021-07-05T10:15:33</Created>
+            <Creator>yuki</Creator>
+            <Modified>2021-08-23T17:20:18</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+          <Document ID="5517bedb-57c6-499f-b87a-c2f3a151fe59">
+            <Subject>Testfactuur - 1</Subject>
+            <Amount>29.76</Amount>
+            <Type>6</Type>
+            <TypeDescription>Verkoopfactuur</TypeDescription>
+            <ContactName>Apple Sales International</ContactName>
+            <Created>2021-08-01T04:10:22</Created>
+            <Creator>yuki</Creator>
+            <Modified>2021-08-01T04:10:23</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+        </Documents>
+      </ModifiedDocumentsInFolderResult>
+    </ModifiedDocumentsInFolderResponse>
   </soap:Body>
 </soap:Envelope>`
 

@@ -55,6 +55,14 @@ type DocumentsByTypeOptions struct {
 	StartRecord     int
 }
 
+type ModifiedDocumentsInFolderOptions struct {
+	FolderID        int
+	SortOrder       string
+	ModifiedSince   string
+	NumberOfRecords int
+	StartRecord     int
+}
+
 func (c *Client) DocumentFolders(ctx context.Context, sessionID string) ([]DocumentFolder, error) {
 	data, err := c.call(ctx, "Archive", "DocumentFolders", sessionParams(sessionID))
 	if err != nil {
@@ -162,6 +170,26 @@ func (c *Client) DocumentsByType(ctx context.Context, sessionID string, opts Doc
 	var env documentsByTypeEnvelope
 	if err := xml.Unmarshal(data, &env); err != nil {
 		return nil, fmt.Errorf("parse DocumentsByType response: %w", err)
+	}
+	return env.Body.Response.Result.Documents.Documents, nil
+}
+
+func (c *Client) ModifiedDocumentsInFolder(ctx context.Context, sessionID string, opts ModifiedDocumentsInFolderOptions) ([]Document, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "folderID", Value: strconv.Itoa(opts.FolderID)},
+		{Name: "sortOrder", Value: opts.SortOrder},
+		{Name: "modifiedSince", Value: opts.ModifiedSince},
+		{Name: "numberOfRecords", Value: strconv.Itoa(opts.NumberOfRecords)},
+		{Name: "startRecord", Value: strconv.Itoa(opts.StartRecord)},
+	}
+	data, err := c.call(ctx, "Archive", "ModifiedDocumentsInFolder", params)
+	if err != nil {
+		return nil, err
+	}
+	var env modifiedDocumentsInFolderEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse ModifiedDocumentsInFolder response: %w", err)
 	}
 	return env.Body.Response.Result.Documents.Documents, nil
 }
@@ -382,6 +410,18 @@ type documentsByTypeEnvelope struct {
 				} `xml:"Documents"`
 			} `xml:"DocumentsByTypeResult"`
 		} `xml:"DocumentsByTypeResponse"`
+	} `xml:"Body"`
+}
+
+type modifiedDocumentsInFolderEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Documents struct {
+					Documents []Document `xml:"Document"`
+				} `xml:"Documents"`
+			} `xml:"ModifiedDocumentsInFolderResult"`
+		} `xml:"ModifiedDocumentsInFolderResponse"`
 	} `xml:"Body"`
 }
 
