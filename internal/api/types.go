@@ -85,21 +85,22 @@ type RevenueReport struct {
 }
 
 type CreditorItem struct {
-	ID             string  `json:"id" xml:"ID,attr"`
-	Date           string  `json:"date" xml:"Date"`
-	Description    string  `json:"description" xml:"Description"`
-	Contact        string  `json:"contact" xml:"Contact"`
-	ContactID      string  `json:"contact_id,omitempty" xml:"ContactID"`
-	OpenAmount     string  `json:"open_amount" xml:"OpenAmount"`
-	OriginalAmount string  `json:"original_amount" xml:"OriginalAmount"`
-	Type           XMLText `json:"type" xml:"Type"`
-	Reference      string  `json:"reference,omitempty" xml:"Reference"`
-	DueDate        string  `json:"due_date,omitempty" xml:"DueDate"`
-	DocumentID     string  `json:"document_id,omitempty" xml:"DocumentID"`
-	PaymentMethod  string  `json:"payment_method,omitempty" xml:"PaymentMethod"`
-	ContactCode    string  `json:"contact_code,omitempty" xml:"ContactCode"`
-	VATNumber      string  `json:"vat_number,omitempty" xml:"VATNumber"`
-	Country        string  `json:"country,omitempty" xml:"Country"`
+	ID               string  `json:"id" xml:"ID,attr"`
+	Date             string  `json:"date" xml:"Date"`
+	Description      string  `json:"description" xml:"Description"`
+	Contact          string  `json:"contact" xml:"Contact"`
+	ContactID        string  `json:"contact_id,omitempty" xml:"ContactID"`
+	OpenAmount       string  `json:"open_amount" xml:"OpenAmount"`
+	OriginalAmount   string  `json:"original_amount" xml:"OriginalAmount"`
+	Type             XMLText `json:"type" xml:"Type"`
+	Reference        string  `json:"reference,omitempty" xml:"Reference"`
+	PaymentReference string  `json:"payment_reference,omitempty" xml:"PaymentReference"`
+	DueDate          string  `json:"due_date,omitempty" xml:"DueDate"`
+	DocumentID       string  `json:"document_id,omitempty" xml:"DocumentID"`
+	PaymentMethod    string  `json:"payment_method,omitempty" xml:"PaymentMethod"`
+	ContactCode      string  `json:"contact_code,omitempty" xml:"ContactCode"`
+	VATNumber        string  `json:"vat_number,omitempty" xml:"VATNumber"`
+	Country          string  `json:"country,omitempty" xml:"Country"`
 }
 
 type TransactionInfo struct {

@@ -9,8 +9,9 @@ import (
 )
 
 type CreditorItemsCmd struct {
-	All  CreditorItemsAllCmd  `cmd:"" help:"List all outstanding creditor purchase invoice items."`
-	List CreditorItemsListCmd `cmd:"" help:"List outstanding creditor purchase invoice items."`
+	All                  CreditorItemsAllCmd                  `cmd:"" help:"List all outstanding creditor purchase invoice items."`
+	List                 CreditorItemsListCmd                 `cmd:"" help:"List outstanding creditor purchase invoice items."`
+	WithPaymentReference CreditorItemsWithPaymentReferenceCmd `cmd:"" name:"with-payment-reference" help:"List outstanding creditor items with payment references."`
 }
 
 type CreditorItemsAllCmd struct {
@@ -82,6 +83,41 @@ func (c *CreditorItemsListCmd) Run(rt *Runtime, globals *Globals) error {
 	return renderCreditorItems(rt, globals, items)
 }
 
+type CreditorItemsWithPaymentReferenceCmd struct {
+	Administration          string `help:"Administration ID. Defaults to profile/global administration."`
+	From                    string `name:"from" required:"" help:"Start date, YYYY-MM-DD."`
+	To                      string `name:"to" required:"" help:"End date, YYYY-MM-DD."`
+	IncludeBankTransactions bool   `name:"include-bank-transactions" help:"Include outstanding bank transactions."`
+	SortOrder               string `name:"sort-order" default:"DateDesc" help:"Yuki sort order, e.g. DateAsc or DateDesc."`
+	PaymentMethod           string `name:"payment-method" help:"Filter results by payment method, e.g. Creditcard."`
+}
+
+func (c *CreditorItemsWithPaymentReferenceCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	items, err := client.OutstandingCreditorWithPaymentReference(rt.Context, sessionID, api.CreditorItemsOptions{
+		AdministrationID:        administrationID,
+		StartDate:               c.From,
+		EndDate:                 c.To,
+		IncludeBankTransactions: c.IncludeBankTransactions,
+		SortOrder:               c.SortOrder,
+	})
+	if err != nil {
+		return err
+	}
+	if c.PaymentMethod != "" {
+		items = filterCreditorItemsByPaymentMethod(items, c.PaymentMethod)
+	}
+	return renderCreditorItemsWithPaymentReference(rt, globals, items)
+}
+
 func renderCreditorItems(rt *Runtime, globals *Globals, items []api.CreditorItem) error {
 	if globals.JSON {
 		return output.JSON(rt.Out, items)
@@ -101,6 +137,28 @@ func renderCreditorItems(rt *Runtime, globals *Globals, items []api.CreditorItem
 		})
 	}
 	return output.Table(rt.Out, []string{"DATE", "CONTACT", "ORIGINAL", "OPEN", "PAYMENT", "REFERENCE", "DOCUMENT", "DESCRIPTION"}, rows)
+}
+
+func renderCreditorItemsWithPaymentReference(rt *Runtime, globals *Globals, items []api.CreditorItem) error {
+	if globals.JSON {
+		return output.JSON(rt.Out, items)
+	}
+
+	rows := make([][]string, 0, len(items))
+	for _, item := range items {
+		rows = append(rows, []string{
+			item.Date,
+			item.Contact,
+			item.OriginalAmount,
+			item.OpenAmount,
+			item.PaymentMethod,
+			item.Reference,
+			item.PaymentReference,
+			item.DocumentID,
+			item.Description,
+		})
+	}
+	return output.Table(rt.Out, []string{"DATE", "CONTACT", "ORIGINAL", "OPEN", "PAYMENT", "REFERENCE", "PAYMENT REF", "DOCUMENT", "DESCRIPTION"}, rows)
 }
 
 func filterCreditorItemsByPaymentMethod(items []api.CreditorItem, paymentMethod string) []api.CreditorItem {
