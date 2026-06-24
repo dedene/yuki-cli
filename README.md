@@ -46,6 +46,7 @@ yuki archive folders tabs --folder 3
 yuki archive documents list --from 2026-01-01 --to 2026-01-31 --limit 25 --json
 yuki archive documents in-folder --folder 1 --from 2026-01-01 --to 2026-01-31 --json
 yuki archive documents in-tab --tab 101 --from 2026-01-01 --to 2026-01-31 --json
+yuki archive documents by-type --type 2 --from 2026-01-01 --to 2026-01-31 --json
 yuki archive documents search --search-text apple --limit 25 --json
 yuki archive documents find --document <document-id>
 yuki archive documents download --document <document-id> --output invoice.pdf

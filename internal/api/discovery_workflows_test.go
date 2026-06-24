@@ -240,6 +240,44 @@ func TestDocumentsInTabParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentsByTypeParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentsByType", documentsByTypeResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:documentType>2</they:documentType>",
+			"<they:sortOrder>DocumentDateAsc</they:sortOrder>",
+			"<they:startDate>2020-01-01</they:startDate>",
+			"<they:endDate>2020-01-31</they:endDate>",
+			"<they:numberOfRecords>100</they:numberOfRecords>",
+			"<they:startRecord>0</they:startRecord>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	documents, err := client.DocumentsByType(context.Background(), "session-1", DocumentsByTypeOptions{
+		DocumentType:    2,
+		SortOrder:       "DocumentDateAsc",
+		StartDate:       "2020-01-01",
+		EndDate:         "2020-01-31",
+		NumberOfRecords: 100,
+		StartRecord:     0,
+	})
+	if err != nil {
+		t.Fatalf("DocumentsByType: %v", err)
+	}
+	if len(documents) != 2 {
+		t.Fatalf("len(documents) = %d, want 2", len(documents))
+	}
+	if documents[0].ID != "2e22b66c-0608-4bce-8f66-0e64ed024c3e" ||
+		documents[0].TypeDescription != "Purchase invoice" ||
+		documents[1].Amount != "242.00" {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
 const transactionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -466,6 +504,52 @@ const documentsInTabResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Documents>
       </DocumentsInTabResult>
     </DocumentsInTabResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentsByTypeResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentsByTypeResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentsByTypeResult>
+        <Documents xmlns="">
+          <Document ID="2e22b66c-0608-4bce-8f66-0e64ed024c3e">
+            <Subject>Factuur van AD Delhaize, Gebouwen, Rekening onbekend</Subject>
+            <DocumentDate>2020-01-03</DocumentDate>
+            <Amount>354520.32</Amount>
+            <Folder ID="1">Purchase</Folder>
+            <Tab ID="101">Invoices</Tab>
+            <Type>2</Type>
+            <TypeDescription>Purchase invoice</TypeDescription>
+            <FileName>document.htm</FileName>
+            <ContentType>text/html</ContentType>
+            <FileSize>0</FileSize>
+            <ContactName>AD Delhaize</ContactName>
+            <Created>2020-01-03T15:56:52</Created>
+            <Creator>yuki</Creator>
+            <Modified>2020-01-03T16:04:56</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+          <Document ID="4439aea3-9705-4119-acc0-3ed65342ee21">
+            <Subject>Factuur van AD Delhaize, Gebouwen</Subject>
+            <DocumentDate>2020-01-03</DocumentDate>
+            <Amount>242.00</Amount>
+            <Folder ID="1">Purchase</Folder>
+            <Tab ID="101">Invoices</Tab>
+            <Type>2</Type>
+            <TypeDescription>Purchase invoice</TypeDescription>
+            <FileName>document.htm</FileName>
+            <ContentType>text/html</ContentType>
+            <FileSize>0</FileSize>
+            <ContactName>AD Delhaize</ContactName>
+            <Created>2020-01-03T15:40:00</Created>
+            <Creator>yuki</Creator>
+            <Modified>2020-01-03T15:40:41</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+        </Documents>
+      </DocumentsByTypeResult>
+    </DocumentsByTypeResponse>
   </soap:Body>
 </soap:Envelope>`
 

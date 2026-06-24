@@ -37,6 +37,7 @@ type Client interface {
 	Documents(context.Context, string, api.DocumentsOptions) ([]api.Document, error)
 	DocumentsInFolder(context.Context, string, api.DocumentsInFolderOptions) ([]api.Document, error)
 	DocumentsInTab(context.Context, string, api.DocumentsInTabOptions) ([]api.Document, error)
+	DocumentsByType(context.Context, string, api.DocumentsByTypeOptions) ([]api.Document, error)
 	SearchDocuments(context.Context, string, api.SearchDocumentsOptions) ([]api.Document, error)
 	FindDocument(context.Context, string, string) (api.Document, error)
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)

@@ -328,6 +328,7 @@ type cmdFakeClient struct {
 	documentsOpts         api.DocumentsOptions
 	documentsInFolderOpts api.DocumentsInFolderOptions
 	documentsInTabOpts    api.DocumentsInTabOptions
+	documentsByTypeOpts   api.DocumentsByTypeOptions
 	searchDocuments       []api.Document
 	searchDocumentsOpts   api.SearchDocumentsOptions
 	document              api.Document
@@ -408,6 +409,11 @@ func (c *cmdFakeClient) DocumentsInFolder(_ context.Context, _ string, opts api.
 
 func (c *cmdFakeClient) DocumentsInTab(_ context.Context, _ string, opts api.DocumentsInTabOptions) ([]api.Document, error) {
 	c.documentsInTabOpts = opts
+	return c.documents, nil
+}
+
+func (c *cmdFakeClient) DocumentsByType(_ context.Context, _ string, opts api.DocumentsByTypeOptions) ([]api.Document, error) {
+	c.documentsByTypeOpts = opts
 	return c.documents, nil
 }
 

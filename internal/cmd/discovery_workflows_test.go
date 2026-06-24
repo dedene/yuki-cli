@@ -248,6 +248,55 @@ func TestArchiveDocumentsInTabJSONUsesPagingFlags(t *testing.T) {
 	}
 }
 
+func TestArchiveDocumentsByTypeJSONUsesPagingFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		documents: []api.Document{{
+			ID:              "doc-1",
+			Subject:         "Purchase invoice",
+			DocumentDate:    "2020-01-03",
+			Amount:          "242.00",
+			Type:            "2",
+			TypeDescription: "Purchase invoice",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"archive", "documents", "by-type",
+		"--type", "2",
+		"--from", "2020-01-01",
+		"--to", "2020-01-31",
+		"--sort-order", "DocumentDateAsc",
+		"--limit", "100",
+		"--start-record", "0",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	opts := client.documentsByTypeOpts
+	if opts.DocumentType != 2 ||
+		opts.SortOrder != "DocumentDateAsc" ||
+		opts.StartDate != "2020-01-01" ||
+		opts.EndDate != "2020-01-31" ||
+		opts.NumberOfRecords != 100 ||
+		opts.StartRecord != 0 {
+		t.Fatalf("documentsByTypeOpts = %#v", opts)
+	}
+	var documents []api.Document
+	if err := json.Unmarshal(out.Bytes(), &documents); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(documents) != 1 || documents[0].TypeDescription != "Purchase invoice" {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
 func TestArchiveFoldersListPrintsRows(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{

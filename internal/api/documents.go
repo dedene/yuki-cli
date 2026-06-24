@@ -46,6 +46,15 @@ type DocumentsInTabOptions struct {
 	StartRecord     int
 }
 
+type DocumentsByTypeOptions struct {
+	DocumentType    int
+	SortOrder       string
+	StartDate       string
+	EndDate         string
+	NumberOfRecords int
+	StartRecord     int
+}
+
 func (c *Client) DocumentFolders(ctx context.Context, sessionID string) ([]DocumentFolder, error) {
 	data, err := c.call(ctx, "Archive", "DocumentFolders", sessionParams(sessionID))
 	if err != nil {
@@ -132,6 +141,27 @@ func (c *Client) DocumentsInTab(ctx context.Context, sessionID string, opts Docu
 	var env documentsInTabEnvelope
 	if err := xml.Unmarshal(data, &env); err != nil {
 		return nil, fmt.Errorf("parse DocumentsInTab response: %w", err)
+	}
+	return env.Body.Response.Result.Documents.Documents, nil
+}
+
+func (c *Client) DocumentsByType(ctx context.Context, sessionID string, opts DocumentsByTypeOptions) ([]Document, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "documentType", Value: strconv.Itoa(opts.DocumentType)},
+		{Name: "sortOrder", Value: opts.SortOrder},
+		{Name: "startDate", Value: opts.StartDate},
+		{Name: "endDate", Value: opts.EndDate},
+		{Name: "numberOfRecords", Value: strconv.Itoa(opts.NumberOfRecords)},
+		{Name: "startRecord", Value: strconv.Itoa(opts.StartRecord)},
+	}
+	data, err := c.call(ctx, "Archive", "DocumentsByType", params)
+	if err != nil {
+		return nil, err
+	}
+	var env documentsByTypeEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse DocumentsByType response: %w", err)
 	}
 	return env.Body.Response.Result.Documents.Documents, nil
 }
@@ -340,6 +370,18 @@ type documentsInTabEnvelope struct {
 				} `xml:"Documents"`
 			} `xml:"DocumentsInTabResult"`
 		} `xml:"DocumentsInTabResponse"`
+	} `xml:"Body"`
+}
+
+type documentsByTypeEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Documents struct {
+					Documents []Document `xml:"Document"`
+				} `xml:"Documents"`
+			} `xml:"DocumentsByTypeResult"`
+		} `xml:"DocumentsByTypeResponse"`
 	} `xml:"Body"`
 }
 
