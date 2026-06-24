@@ -35,6 +35,7 @@ yuki accounting gl-accounts list --administration <administration-id>
 yuki accounting gl-accounts balance --administration <administration-id> --date 2026-12-31 --json
 yuki accounting gl-accounts balance-fiscal --administration <administration-id> --date 2026-12-31 --json
 yuki accounting gl-accounts balance-year-end --administration <administration-id> --date 2026-12-31 --json
+yuki accounting gl-accounts rgs-scheme --administration <administration-id> --rgs-version 2.0 --json
 yuki accounting gl-accounts transactions --administration <administration-id> --gl-account 700000 --from 2026-01-01 --to 2026-01-31 --json
 yuki accounting gl-accounts transactions-fiscal --administration <administration-id> --gl-account 700000 --from 2026-01-01 --to 2026-01-31 --json
 yuki accounting gl-accounts transactions-with-contact --administration <administration-id> --gl-account 700000 --from 2026-01-01 --to 2026-01-31 --json

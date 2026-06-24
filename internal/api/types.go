@@ -55,6 +55,17 @@ type GLAccount struct {
 	Description string `json:"description" xml:"descripton"`
 }
 
+type RGSEntry struct {
+	YukiCode         string `json:"yuki_code" xml:"YukiCode"`
+	YukiIsEnabled    string `json:"yuki_is_enabled" xml:"YukiIsEnabled"`
+	YukiDescription  string `json:"yuki_description" xml:"YukiDescription"`
+	RGSReferenceCode string `json:"rgs_reference_code,omitempty" xml:"RgsReferenceCode"`
+	RGSDescription   string `json:"rgs_description,omitempty" xml:"RgsDescription"`
+	RGSFlipCode      string `json:"rgs_flip_code,omitempty" xml:"RgsFlipCode"`
+	AdministrationID string `json:"administration_id,omitempty"`
+	RGSVersion       string `json:"rgs_version,omitempty"`
+}
+
 type GLAccountBalanceItem struct {
 	Code        string `json:"code" xml:"Code,attr"`
 	BalanceType string `json:"balance_type" xml:"BalanceType,attr"`

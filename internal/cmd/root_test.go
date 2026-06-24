@@ -144,6 +144,45 @@ func TestGLAccountsListJSONUsesAdministrationFlag(t *testing.T) {
 	}
 }
 
+func TestGLAccountsRGSSchemeJSONUsesAdministrationAndVersion(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		rgsEntries: []api.RGSEntry{{
+			YukiCode:         "100000",
+			YukiIsEnabled:    "True",
+			YukiDescription:  "Geplaatst kapitaal",
+			RGSReferenceCode: "BEivGokGea",
+			RGSDescription:   "Normale aandelen aandelenkapitaal",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "gl-accounts", "rgs-scheme",
+		"--administration", "admin-1",
+		"--rgs-version", "2.0",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.rgsOpts.AdministrationID != "admin-1" ||
+		client.rgsOpts.RGSVersion != "2.0" {
+		t.Fatalf("rgsOpts = %#v", client.rgsOpts)
+	}
+	var entries []api.RGSEntry
+	if err := json.Unmarshal(out.Bytes(), &entries); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(entries) != 1 || entries[0].RGSReferenceCode != "BEivGokGea" {
+		t.Fatalf("entries = %#v", entries)
+	}
+}
+
 func TestGLAccountsBalanceJSONUsesDate(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1138,6 +1177,8 @@ type cmdFakeClient struct {
 	transactionID               string
 	domains                     []api.Domain
 	accounts                    []api.GLAccount
+	rgsEntries                  []api.RGSEntry
+	rgsOpts                     api.RGSSchemeOptions
 	balances                    []api.GLAccountBalanceItem
 	balanceOpts                 api.GLAccountBalanceOptions
 	glTransactions              []api.GLAccountTransaction
@@ -1214,6 +1255,11 @@ func (c *cmdFakeClient) Companies(context.Context, string) ([]api.Company, error
 func (c *cmdFakeClient) GLAccounts(_ context.Context, _ string, administrationID string) ([]api.GLAccount, error) {
 	c.administrationID = administrationID
 	return c.accounts, nil
+}
+
+func (c *cmdFakeClient) RGSScheme(_ context.Context, _ string, opts api.RGSSchemeOptions) ([]api.RGSEntry, error) {
+	c.rgsOpts = opts
+	return c.rgsEntries, nil
 }
 
 func (c *cmdFakeClient) GLAccountBalance(_ context.Context, _ string, opts api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error) {

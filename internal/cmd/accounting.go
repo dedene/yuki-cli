@@ -21,6 +21,7 @@ type AccountingCmd struct {
 
 type GLAccountsCmd struct {
 	List                    GLAccountsListCmd                    `cmd:"" help:"List GL accounts for an administration."`
+	RGSScheme               GLAccountsRGSSchemeCmd               `cmd:"" name:"rgs-scheme" help:"List GL accounts with RGS codes."`
 	Balance                 GLAccountsBalanceCmd                 `cmd:"" help:"List GL account balances at a transaction date."`
 	BalanceFiscal           GLAccountsBalanceFiscalCmd           `cmd:"" name:"balance-fiscal" help:"List fiscal GL account balances at a transaction date."`
 	BalanceYearEnd          GLAccountsBalanceYearEndCmd          `cmd:"" name:"balance-year-end" help:"List year-end GL account balances at a transaction date."`
@@ -55,6 +56,45 @@ func (c *GLAccountsListCmd) Run(rt *Runtime, globals *Globals) error {
 		rows = append(rows, []string{account.Code, account.Type, account.Subtype, output.Bool(account.Enabled), account.Description})
 	}
 	return output.Table(rt.Out, []string{"CODE", "TYPE", "SUBTYPE", "ENABLED", "DESCRIPTION"}, rows)
+}
+
+type GLAccountsRGSSchemeCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	RGSVersion     string `name:"rgs-version" default:"2.0" help:"RGS version to request."`
+}
+
+func (c *GLAccountsRGSSchemeCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	entries, err := client.RGSScheme(rt.Context, sessionID, api.RGSSchemeOptions{
+		AdministrationID: administrationID,
+		RGSVersion:       c.RGSVersion,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, entries)
+	}
+	rows := make([][]string, 0, len(entries))
+	for _, entry := range entries {
+		rows = append(rows, []string{
+			entry.YukiCode,
+			entry.YukiIsEnabled,
+			entry.YukiDescription,
+			entry.RGSReferenceCode,
+			entry.RGSDescription,
+			entry.RGSFlipCode,
+		})
+	}
+	return output.Table(rt.Out, []string{"YUKI CODE", "ENABLED", "YUKI DESCRIPTION", "RGS CODE", "RGS DESCRIPTION", "RGS FLIP"}, rows)
 }
 
 type GLAccountsBalanceCmd struct {
