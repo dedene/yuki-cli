@@ -55,6 +55,7 @@ yuki accounting outstanding check-admin --administration <administration-id> --r
 yuki accounting transactions list --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --gl-account 550002 --limit 100 --json
 yuki accounting transactions details --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --gl-account 400000 --json
 yuki accounting transactions document --administration <administration-id> --transaction <transaction-id> --output invoice.pdf
+yuki accounting change-digest transactions --administration <administration-id> --from 2025-07-23T00:00:00.00Z --to 2025-08-23T13:00:00.00Z --limit 100 --start-record 0 --json
 yuki archive payment-methods list
 yuki archive currencies list
 yuki archive cost-categories list

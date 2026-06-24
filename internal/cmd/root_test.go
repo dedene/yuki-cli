@@ -1012,6 +1012,54 @@ func TestTransactionDetailsJSONUsesFlags(t *testing.T) {
 	}
 }
 
+func TestChangeDigestTransactionsJSONUsesDateRangeAndPaging(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		updatedTransactions: []api.UpdatedTransaction{{
+			ID:                "tx-1",
+			TransactionDate:   "2023-02-06T00:00:00",
+			TransactionAmount: "-63.00",
+			Currency:          "EUR",
+			GLAccountCode:     "494100",
+			FullName:          "Biovita Bvba",
+			Updated:           "2023-07-25T13:37:58.3",
+			Deleted:           "true",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "change-digest", "transactions",
+		"--administration", "admin-1",
+		"--from", "2025-07-23T00:00:00.00Z",
+		"--to", "2025-08-23T13:00:00.00Z",
+		"--limit", "100",
+		"--start-record", "0",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.updatedTransactionsOpts.AdministrationID != "admin-1" ||
+		client.updatedTransactionsOpts.StartDate != "2025-07-23T00:00:00.00Z" ||
+		client.updatedTransactionsOpts.EndDate != "2025-08-23T13:00:00.00Z" ||
+		client.updatedTransactionsOpts.NumberOfRecords != 100 ||
+		client.updatedTransactionsOpts.StartRecord != 0 {
+		t.Fatalf("updatedTransactionsOpts = %#v", client.updatedTransactionsOpts)
+	}
+	var transactions []api.UpdatedTransaction
+	if err := json.Unmarshal(out.Bytes(), &transactions); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(transactions) != 1 || transactions[0].Deleted != "true" {
+		t.Fatalf("transactions = %#v", transactions)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1239,6 +1287,8 @@ type cmdFakeClient struct {
 	transactionsOpts            api.TransactionsOptions
 	transactions                []api.TransactionInfo
 	transactionOpts             api.TransactionDetailsOptions
+	updatedTransactions         []api.UpdatedTransaction
+	updatedTransactionsOpts     api.UpdatedAndDeletedTransactionsOptions
 	customMethods               []api.PaymentMethod
 	archiveMethods              []api.PaymentMethod
 	folders                     []api.DocumentFolder
@@ -1427,6 +1477,11 @@ func (c *cmdFakeClient) TransactionDocument(_ context.Context, _ string, adminis
 	c.administrationID = administrationID
 	c.transactionID = transactionID
 	return c.transactionDocument, nil
+}
+
+func (c *cmdFakeClient) UpdatedAndDeletedTransactions(_ context.Context, _ string, opts api.UpdatedAndDeletedTransactionsOptions) ([]api.UpdatedTransaction, error) {
+	c.updatedTransactionsOpts = opts
+	return c.updatedTransactions, nil
 }
 
 func (c *cmdFakeClient) CustomPaymentMethods(_ context.Context, _ string, administrationID string) ([]api.PaymentMethod, error) {

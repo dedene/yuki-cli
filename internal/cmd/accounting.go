@@ -15,6 +15,7 @@ type AccountingCmd struct {
 	DebtorItems    DebtorItemsCmd              `cmd:"" name:"debtor-items" help:"Inspect outstanding debtor sales invoices."`
 	Outstanding    OutstandingCmd              `cmd:"" help:"Inspect outstanding items."`
 	Transactions   TransactionsCmd             `cmd:"" help:"Inspect accounting transactions."`
+	ChangeDigest   ChangeDigestCmd             `cmd:"" name:"change-digest" help:"Inspect change digest feeds."`
 	PaymentMethods AccountingPaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect accounting payment methods."`
 	Periods        PeriodsCmd                  `cmd:"" help:"Inspect administration periods."`
 }

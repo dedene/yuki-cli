@@ -180,6 +180,25 @@ type TransactionInfo struct {
 	MutationUser                     string `json:"mutation_user,omitempty" xml:"mutationUser"`
 }
 
+type UpdatedTransaction struct {
+	ID                               string `json:"id" xml:"id"`
+	TransactionDate                  string `json:"transaction_date" xml:"transactionDate"`
+	Description                      string `json:"description,omitempty" xml:"description"`
+	TransactionAmount                string `json:"transaction_amount" xml:"transactionAmount"`
+	TransactionAmountForeignCurrency string `json:"transaction_amount_foreign_currency,omitempty" xml:"transactionAmountForeignCurrency"`
+	CurrencyRate                     string `json:"currency_rate,omitempty" xml:"currencyRate"`
+	Currency                         string `json:"currency,omitempty" xml:"currency"`
+	ContactID                        string `json:"contact_id,omitempty" xml:"contactID"`
+	FullName                         string `json:"full_name,omitempty" xml:"fullName"`
+	GLAccountCode                    string `json:"gl_account_code,omitempty" xml:"glAccountCode"`
+	DocumentID                       string `json:"document_id,omitempty" xml:"documentID"`
+	Project                          string `json:"project,omitempty" xml:"project"`
+	ProjectCode                      string `json:"project_code,omitempty" xml:"projectCode"`
+	Created                          string `json:"created" xml:"created"`
+	Updated                          string `json:"updated" xml:"updated"`
+	Deleted                          string `json:"deleted,omitempty" xml:"deleted"`
+}
+
 type Transaction struct {
 	ID                string                        `json:"id" xml:"id"`
 	HID               string                        `json:"hid,omitempty" xml:"hID"`
