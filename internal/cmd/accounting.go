@@ -9,16 +9,17 @@ import (
 )
 
 type AccountingCmd struct {
-	GLAccounts     GLAccountsCmd               `cmd:"" name:"gl-accounts" help:"Inspect GL accounts."`
-	Revenue        RevenueCmd                  `cmd:"" help:"Inspect revenue reports."`
-	CreditorItems  CreditorItemsCmd            `cmd:"" name:"creditor-items" help:"Inspect outstanding creditor purchase invoices."`
-	DebtorItems    DebtorItemsCmd              `cmd:"" name:"debtor-items" help:"Inspect outstanding debtor sales invoices."`
-	Outstanding    OutstandingCmd              `cmd:"" help:"Inspect outstanding items."`
-	Transactions   TransactionsCmd             `cmd:"" help:"Inspect accounting transactions."`
-	ChangeDigest   ChangeDigestCmd             `cmd:"" name:"change-digest" help:"Inspect change digest feeds."`
-	Projects       ProjectsCmd                 `cmd:"" help:"Inspect accounting projects."`
-	PaymentMethods AccountingPaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect accounting payment methods."`
-	Periods        PeriodsCmd                  `cmd:"" help:"Inspect administration periods."`
+	GLAccounts      GLAccountsCmd               `cmd:"" name:"gl-accounts" help:"Inspect GL accounts."`
+	Revenue         RevenueCmd                  `cmd:"" help:"Inspect revenue reports."`
+	CreditorItems   CreditorItemsCmd            `cmd:"" name:"creditor-items" help:"Inspect outstanding creditor purchase invoices."`
+	DebtorItems     DebtorItemsCmd              `cmd:"" name:"debtor-items" help:"Inspect outstanding debtor sales invoices."`
+	Outstanding     OutstandingCmd              `cmd:"" help:"Inspect outstanding items."`
+	Transactions    TransactionsCmd             `cmd:"" help:"Inspect accounting transactions."`
+	ChangeDigest    ChangeDigestCmd             `cmd:"" name:"change-digest" help:"Inspect change digest feeds."`
+	Projects        ProjectsCmd                 `cmd:"" help:"Inspect accounting projects."`
+	PaymentMethods  AccountingPaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect accounting payment methods."`
+	Periods         PeriodsCmd                  `cmd:"" help:"Inspect administration periods."`
+	ContactDefaults ContactDefaultsCmd          `cmd:"" name:"contact-defaults" help:"Inspect contact accounting defaults."`
 }
 
 type GLAccountsCmd struct {
@@ -347,7 +348,8 @@ func renderGLAccountTransactionsWithFile(rt *Runtime, transactions []api.GLAccou
 }
 
 type PeriodsCmd struct {
-	Table PeriodsTableCmd `cmd:"" help:"Get the start date table for a financial year."`
+	Table        PeriodsTableCmd        `cmd:"" help:"Get the start date table for a financial year."`
+	ModifiedDate PeriodsModifiedDateCmd `cmd:"" name:"modified-date" help:"Show when a financial year was last modified."`
 }
 
 type PeriodsTableCmd struct {
@@ -382,6 +384,38 @@ func (c *PeriodsTableCmd) Run(rt *Runtime, globals *Globals) error {
 		period.Period,
 		period.WholePeriod,
 		output.Bool(period.ISO8601Period),
+	}})
+}
+
+type PeriodsModifiedDateCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	Year           int    `name:"year" required:"" help:"Financial year ID."`
+}
+
+func (c *PeriodsModifiedDateCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	result, err := client.FinancialYearModifiedDate(rt.Context, sessionID, api.PeriodDateTableOptions{
+		AdministrationID: administrationID,
+		YearID:           c.Year,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, result)
+	}
+	return output.Table(rt.Out, []string{"ADMINISTRATION", "YEAR", "MODIFIED"}, [][]string{{
+		result.AdministrationID,
+		strconv.Itoa(result.YearID),
+		result.ModifiedDate,
 	}})
 }
 
@@ -452,6 +486,72 @@ func (c *RevenueNetFiscalCmd) Run(rt *Runtime, globals *Globals) error {
 
 func renderRevenueReport(rt *Runtime, report api.RevenueReport) error {
 	return output.Table(rt.Out, []string{"FROM", "TO", "AMOUNT"}, [][]string{{report.StartDate, report.EndDate, report.Amount}})
+}
+
+type ContactDefaultsCmd struct {
+	List ContactDefaultsListCmd `cmd:"" help:"List default accounting values for a contact."`
+}
+
+type ContactDefaultsListCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	Contact        string `name:"contact" required:"" help:"Contact ID."`
+}
+
+func (c *ContactDefaultsListCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	defaults, err := client.ContactDefaultValues(rt.Context, sessionID, administrationID, c.Contact)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, defaults)
+	}
+	return renderContactDefaults(rt, defaults)
+}
+
+func renderContactDefaults(rt *Runtime, defaults []api.ContactDefaultValues) error {
+	rows := [][]string{}
+	for _, contactDefaults := range defaults {
+		for _, defaultValue := range contactDefaults.DefaultValues {
+			rows = append(rows, []string{
+				contactDefaults.ContactName,
+				contactDefaults.DefaultBankAccount,
+				defaultValue.InputFields.DocumentType,
+				strconv.Itoa(defaultValue.InputFields.Priority),
+				defaultValue.InputFields.Amount,
+				defaultValue.InputFields.Currency,
+				defaultValue.OutputFields.GLAccount,
+				defaultValue.OutputFields.VATCode,
+				defaultValue.OutputFields.PaymentMethod,
+				defaultValue.OutputFields.PaymentTerm,
+				defaultValue.Created,
+			})
+		}
+		if len(contactDefaults.DefaultValues) == 0 {
+			rows = append(rows, []string{
+				contactDefaults.ContactName,
+				contactDefaults.DefaultBankAccount,
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+			})
+		}
+	}
+	return output.Table(rt.Out, []string{"CONTACT", "BANK", "DOCUMENT", "PRIORITY", "AMOUNT", "CURRENCY", "GL", "VAT", "PAYMENT", "TERM", "CREATED"}, rows)
 }
 
 func resolveAdministrationID(globals *Globals, explicit string) (string, error) {

@@ -89,11 +89,59 @@ func (c *Client) PeriodDateTable(ctx context.Context, sessionID string, opts Per
 	return period, nil
 }
 
+func (c *Client) FinancialYearModifiedDate(ctx context.Context, sessionID string, opts PeriodDateTableOptions) (FinancialYearModifiedDate, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "yearID", Value: strconv.Itoa(opts.YearID)},
+	}
+	data, err := c.call(ctx, "AccountingInfo", "GetFinancialYearModifiedDate", params)
+	if err != nil {
+		return FinancialYearModifiedDate{}, err
+	}
+	modifiedDate, err := textAt(data, []string{"Envelope", "Body", "GetFinancialYearModifiedDateResponse", "GetFinancialYearModifiedDateResult"})
+	if err != nil {
+		return FinancialYearModifiedDate{}, err
+	}
+	return FinancialYearModifiedDate{
+		AdministrationID: opts.AdministrationID,
+		YearID:           opts.YearID,
+		ModifiedDate:     modifiedDate,
+	}, nil
+}
+
+func (c *Client) ContactDefaultValues(ctx context.Context, sessionID, administrationID, contactID string) ([]ContactDefaultValues, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: administrationID},
+		{Name: "contactID", Value: contactID},
+	}
+	data, err := c.call(ctx, "AccountingInfo", "GetContactDefaultValues", params)
+	if err != nil {
+		return nil, err
+	}
+	var env contactDefaultValuesEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse GetContactDefaultValues response: %w", err)
+	}
+	return env.Body.Response.Result.Values, nil
+}
+
 type periodDateTableEnvelope struct {
 	Body struct {
 		Response struct {
 			Result AdministrationPeriod `xml:"GetPeriodDateTableResult"`
 		} `xml:"GetPeriodDateTableResponse"`
+	} `xml:"Body"`
+}
+
+type contactDefaultValuesEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Values []ContactDefaultValues `xml:"ContactDefaultValues"`
+			} `xml:"GetContactDefaultValuesResult"`
+		} `xml:"GetContactDefaultValuesResponse"`
 	} `xml:"Body"`
 }
 

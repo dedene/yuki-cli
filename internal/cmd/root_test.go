@@ -949,6 +949,96 @@ func TestPeriodsTableJSONUsesAdministrationAndYear(t *testing.T) {
 	}
 }
 
+func TestPeriodsModifiedDateJSONUsesAdministrationAndYear(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		financialYearModifiedDate: api.FinancialYearModifiedDate{
+			AdministrationID: "admin-1",
+			YearID:           2026,
+			ModifiedDate:     "2026-02-05T11:12:13",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "periods", "modified-date",
+		"--administration", "admin-1",
+		"--year", "2026",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.periodOpts.AdministrationID != "admin-1" ||
+		client.periodOpts.YearID != 2026 {
+		t.Fatalf("periodOpts = %#v", client.periodOpts)
+	}
+	var result api.FinancialYearModifiedDate
+	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if result.ModifiedDate != "2026-02-05T11:12:13" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestContactDefaultsListJSONUsesContact(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		contactDefaults: []api.ContactDefaultValues{{
+			ContactID:          "contact-1",
+			ContactName:        "ACME BV",
+			DefaultBankAccount: "BE68539007547034",
+			DefaultValues: []api.DefaultValue{{
+				InputFields: api.DefaultInputFields{
+					DocumentType: "PurchaseInvoice",
+					Priority:     1,
+					Amount:       "125.00",
+					Currency:     "EUR",
+				},
+				OutputFields: api.DefaultOutputFields{
+					GLAccount:     "604000",
+					VATCode:       "21",
+					PaymentMethod: "Creditcard",
+					PaymentTerm:   "30",
+				},
+				Created: "2026-01-02T03:04:05",
+			}},
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "contact-defaults", "list",
+		"--administration", "admin-1",
+		"--contact", "contact-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.administrationID != "admin-1" || client.contactID != "contact-1" {
+		t.Fatalf("administration/contact = %q/%q", client.administrationID, client.contactID)
+	}
+	var defaults []api.ContactDefaultValues
+	if err := json.Unmarshal(out.Bytes(), &defaults); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(defaults) != 1 ||
+		defaults[0].ContactName != "ACME BV" ||
+		defaults[0].DefaultValues[0].OutputFields.PaymentMethod != "Creditcard" {
+		t.Fatalf("defaults = %#v", defaults)
+	}
+}
+
 func TestCreditorItemsListFiltersPaymentMethod(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -2169,6 +2259,9 @@ type cmdFakeClient struct {
 	revenueOpts                 api.RevenueOptions
 	period                      api.AdministrationPeriod
 	periodOpts                  api.PeriodDateTableOptions
+	financialYearModifiedDate   api.FinancialYearModifiedDate
+	contactID                   string
+	contactDefaults             []api.ContactDefaultValues
 	creditorItems               []api.CreditorItem
 	creditorOpts                api.CreditorItemsOptions
 	debtorItems                 []api.DebtorItem
@@ -2388,6 +2481,23 @@ func (c *cmdFakeClient) PeriodDateTable(_ context.Context, _ string, opts api.Pe
 		c.period.YearID = opts.YearID
 	}
 	return c.period, nil
+}
+
+func (c *cmdFakeClient) FinancialYearModifiedDate(_ context.Context, _ string, opts api.PeriodDateTableOptions) (api.FinancialYearModifiedDate, error) {
+	c.periodOpts = opts
+	if c.financialYearModifiedDate.AdministrationID == "" {
+		c.financialYearModifiedDate.AdministrationID = opts.AdministrationID
+	}
+	if c.financialYearModifiedDate.YearID == 0 {
+		c.financialYearModifiedDate.YearID = opts.YearID
+	}
+	return c.financialYearModifiedDate, nil
+}
+
+func (c *cmdFakeClient) ContactDefaultValues(_ context.Context, _ string, administrationID string, contactID string) ([]api.ContactDefaultValues, error) {
+	c.administrationID = administrationID
+	c.contactID = contactID
+	return c.contactDefaults, nil
 }
 
 func (c *cmdFakeClient) OutstandingCreditorItems(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {

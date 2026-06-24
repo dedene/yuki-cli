@@ -48,6 +48,8 @@ type Client interface {
 	NetRevenue(context.Context, string, api.RevenueOptions) (api.RevenueReport, error)
 	NetRevenueFiscal(context.Context, string, api.RevenueOptions) (api.RevenueReport, error)
 	PeriodDateTable(context.Context, string, api.PeriodDateTableOptions) (api.AdministrationPeriod, error)
+	FinancialYearModifiedDate(context.Context, string, api.PeriodDateTableOptions) (api.FinancialYearModifiedDate, error)
+	ContactDefaultValues(context.Context, string, string, string) ([]api.ContactDefaultValues, error)
 	OutstandingCreditorItems(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
 	OutstandingCreditorItemsByDate(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
 	OutstandingCreditorItemsByDateOutstanding(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)

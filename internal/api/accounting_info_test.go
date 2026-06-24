@@ -105,6 +105,66 @@ func TestStartBalanceByGLAccountParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestFinancialYearModifiedDateParsesWSDLResponse(t *testing.T) {
+	client := fixtureClientForService(t, "AccountingInfo", "GetFinancialYearModifiedDate", financialYearModifiedDateResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:yearID>2026</they:yearID>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	result, err := client.FinancialYearModifiedDate(context.Background(), "session-1", PeriodDateTableOptions{
+		AdministrationID: "admin-1",
+		YearID:           2026,
+	})
+	if err != nil {
+		t.Fatalf("FinancialYearModifiedDate: %v", err)
+	}
+	if result.AdministrationID != "admin-1" ||
+		result.YearID != 2026 ||
+		result.ModifiedDate != "2026-02-05T11:12:13" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestContactDefaultValuesParsesWSDLResponse(t *testing.T) {
+	client := fixtureClientForService(t, "AccountingInfo", "GetContactDefaultValues", contactDefaultValuesResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:contactID>contact-1</they:contactID>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	values, err := client.ContactDefaultValues(context.Background(), "session-1", "admin-1", "contact-1")
+	if err != nil {
+		t.Fatalf("ContactDefaultValues: %v", err)
+	}
+	if len(values) != 1 {
+		t.Fatalf("len(values) = %d, want 1", len(values))
+	}
+	defaults := values[0]
+	if defaults.ContactID != "contact-1" ||
+		defaults.ContactName != "ACME BV" ||
+		defaults.DefaultBankAccount != "BE68539007547034" ||
+		len(defaults.DefaultValues) != 1 ||
+		defaults.DefaultValues[0].InputFields.DocumentType != "PurchaseInvoice" ||
+		defaults.DefaultValues[0].InputFields.Priority != 1 ||
+		defaults.DefaultValues[0].OutputFields.GLAccount != "604000" ||
+		defaults.DefaultValues[0].OutputFields.PaymentTerm != "30" {
+		t.Fatalf("defaults = %#v", defaults)
+	}
+}
+
 const periodDateTableResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -116,6 +176,51 @@ const periodDateTableResponse = `<?xml version="1.0" encoding="utf-8"?>
         <ISO8601Period>false</ISO8601Period>
       </GetPeriodDateTableResult>
     </GetPeriodDateTableResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const financialYearModifiedDateResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetFinancialYearModifiedDateResponse xmlns="http://www.theyukicompany.com/">
+      <GetFinancialYearModifiedDateResult>2026-02-05T11:12:13</GetFinancialYearModifiedDateResult>
+    </GetFinancialYearModifiedDateResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const contactDefaultValuesResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetContactDefaultValuesResponse xmlns="http://www.theyukicompany.com/">
+      <GetContactDefaultValuesResult>
+        <ContactDefaultValues>
+          <ContactId>contact-1</ContactId>
+          <ContactName>ACME BV</ContactName>
+          <DefaultBankAccount>BE68539007547034</DefaultBankAccount>
+          <DefaultValues>
+            <DefaultValue>
+              <InputFields>
+                <DocumentType>PurchaseInvoice</DocumentType>
+                <ContactName>ACME BV</ContactName>
+                <Priority>1</Priority>
+                <Amount>125.00</Amount>
+                <Currency>EUR</Currency>
+                <StartDate>2026-01-01</StartDate>
+                <EndDate>2026-12-31</EndDate>
+                <Text>hosting</Text>
+              </InputFields>
+              <OutputFields>
+                <GLAccount>604000</GLAccount>
+                <VATCode>21</VATCode>
+                <PaymentMethod>Creditcard</PaymentMethod>
+                <PaymentTerm>30</PaymentTerm>
+              </OutputFields>
+              <Created>2026-01-02T03:04:05</Created>
+            </DefaultValue>
+          </DefaultValues>
+        </ContactDefaultValues>
+      </GetContactDefaultValuesResult>
+    </GetContactDefaultValuesResponse>
   </soap:Body>
 </soap:Envelope>`
 

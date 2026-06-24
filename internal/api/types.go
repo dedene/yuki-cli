@@ -190,6 +190,43 @@ type AdministrationPeriod struct {
 	ISO8601Period    bool   `json:"iso8601_period" xml:"ISO8601Period"`
 }
 
+type FinancialYearModifiedDate struct {
+	AdministrationID string `json:"administration_id,omitempty"`
+	YearID           int    `json:"year_id,omitempty"`
+	ModifiedDate     string `json:"modified_date"`
+}
+
+type ContactDefaultValues struct {
+	ContactID          string         `json:"contact_id,omitempty" xml:"ContactId"`
+	ContactName        string         `json:"contact_name,omitempty" xml:"ContactName"`
+	DefaultBankAccount string         `json:"default_bank_account,omitempty" xml:"DefaultBankAccount"`
+	DefaultValues      []DefaultValue `json:"default_values,omitempty" xml:"DefaultValues>DefaultValue"`
+}
+
+type DefaultValue struct {
+	InputFields  DefaultInputFields  `json:"input_fields" xml:"InputFields"`
+	OutputFields DefaultOutputFields `json:"output_fields" xml:"OutputFields"`
+	Created      string              `json:"created,omitempty" xml:"Created"`
+}
+
+type DefaultInputFields struct {
+	DocumentType string `json:"document_type,omitempty" xml:"DocumentType"`
+	ContactName  string `json:"contact_name,omitempty" xml:"ContactName"`
+	Priority     int    `json:"priority,omitempty" xml:"Priority"`
+	Amount       string `json:"amount,omitempty" xml:"Amount"`
+	Currency     string `json:"currency,omitempty" xml:"Currency"`
+	StartDate    string `json:"start_date,omitempty" xml:"StartDate"`
+	EndDate      string `json:"end_date,omitempty" xml:"EndDate"`
+	Text         string `json:"text,omitempty" xml:"Text"`
+}
+
+type DefaultOutputFields struct {
+	GLAccount     string `json:"gl_account,omitempty" xml:"GLAccount"`
+	VATCode       string `json:"vat_code,omitempty" xml:"VATCode"`
+	PaymentMethod string `json:"payment_method,omitempty" xml:"PaymentMethod"`
+	PaymentTerm   string `json:"payment_term,omitempty" xml:"PaymentTerm"`
+}
+
 type OutstandingItem struct {
 	ID               string  `json:"id" xml:"ID,attr"`
 	Date             string  `json:"date" xml:"Date"`
