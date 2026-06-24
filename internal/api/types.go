@@ -59,6 +59,24 @@ type GLAccountBalanceItem struct {
 	Amount      string `json:"amount" xml:"Amount"`
 }
 
+type GLAccountTransaction struct {
+	ID            string               `json:"id" xml:"ID,attr"`
+	Date          string               `json:"date" xml:"Date"`
+	Description   string               `json:"description" xml:"Description"`
+	Amount        string               `json:"amount" xml:"Amount"`
+	SalesItem     string               `json:"sales_item,omitempty" xml:"SalesItem"`
+	Contact       string               `json:"contact,omitempty" xml:"Contact"`
+	ContactID     string               `json:"contact_id,omitempty" xml:"ContactID"`
+	Project       GLTransactionProject `json:"project" xml:"Project"`
+	GLAccountCode string               `json:"gl_account_code" xml:"GLAccountCode"`
+	FileName      string               `json:"file_name,omitempty" xml:"FileName"`
+}
+
+type GLTransactionProject struct {
+	Code string `json:"code,omitempty" xml:"Code,attr"`
+	Text string `json:"text,omitempty" xml:",chardata"`
+}
+
 type RevenueReport struct {
 	AdministrationID string `json:"administration_id,omitempty"`
 	StartDate        string `json:"start_date"`

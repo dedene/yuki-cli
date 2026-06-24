@@ -20,6 +20,7 @@ type GLAccountsCmd struct {
 	Balance        GLAccountsBalanceCmd        `cmd:"" help:"List GL account balances at a transaction date."`
 	BalanceFiscal  GLAccountsBalanceFiscalCmd  `cmd:"" name:"balance-fiscal" help:"List fiscal GL account balances at a transaction date."`
 	BalanceYearEnd GLAccountsBalanceYearEndCmd `cmd:"" name:"balance-year-end" help:"List year-end GL account balances at a transaction date."`
+	Transactions   GLAccountsTransactionsCmd   `cmd:"" help:"List transactions for a GL account."`
 }
 
 type GLAccountsListCmd struct {
@@ -140,6 +141,46 @@ func renderGLAccountBalances(rt *Runtime, balances []api.GLAccountBalanceItem) e
 		rows = append(rows, []string{balance.Code, balance.BalanceType, balance.Amount, balance.Description})
 	}
 	return output.Table(rt.Out, []string{"CODE", "TYPE", "AMOUNT", "DESCRIPTION"}, rows)
+}
+
+type GLAccountsTransactionsCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	GLAccount      string `name:"gl-account" help:"GL account code. Pass an empty value to include all accounts."`
+	From           string `name:"from" required:"" help:"Start date, YYYY-MM-DD."`
+	To             string `name:"to" required:"" help:"End date, YYYY-MM-DD."`
+}
+
+func (c *GLAccountsTransactionsCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	transactions, err := client.GLAccountTransactions(rt.Context, sessionID, api.GLAccountTransactionsOptions{
+		AdministrationID: administrationID,
+		GLAccountCode:    c.GLAccount,
+		StartDate:        c.From,
+		EndDate:          c.To,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, transactions)
+	}
+	rows := make([][]string, 0, len(transactions))
+	for _, tx := range transactions {
+		project := tx.Project.Text
+		if project == "" {
+			project = tx.Project.Code
+		}
+		rows = append(rows, []string{tx.Date, tx.GLAccountCode, tx.Amount, tx.Contact, project, tx.Description})
+	}
+	return output.Table(rt.Out, []string{"DATE", "GL", "AMOUNT", "CONTACT", "PROJECT", "DESCRIPTION"}, rows)
 }
 
 type RevenueCmd struct {

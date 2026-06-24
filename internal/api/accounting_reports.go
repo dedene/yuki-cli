@@ -11,6 +11,13 @@ type GLAccountBalanceOptions struct {
 	TransactionDate  string
 }
 
+type GLAccountTransactionsOptions struct {
+	AdministrationID string
+	GLAccountCode    string
+	StartDate        string
+	EndDate          string
+}
+
 type RevenueOptions struct {
 	AdministrationID string
 	StartDate        string
@@ -68,6 +75,25 @@ func (c *Client) GLAccountBalanceYearEnd(ctx context.Context, sessionID string, 
 	return env.Body.Response.Result.Balance.Items, nil
 }
 
+func (c *Client) GLAccountTransactions(ctx context.Context, sessionID string, opts GLAccountTransactionsOptions) ([]GLAccountTransaction, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "GLAccountCode", Value: opts.GLAccountCode},
+		{Name: "StartDate", Value: opts.StartDate},
+		{Name: "EndDate", Value: opts.EndDate},
+	}
+	data, err := c.call(ctx, "Accounting", "GLAccountTransactions", params)
+	if err != nil {
+		return nil, err
+	}
+	var env glAccountTransactionsEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse GLAccountTransactions response: %w", err)
+	}
+	return env.Body.Response.Result.Transactions.Items, nil
+}
+
 func (c *Client) NetRevenue(ctx context.Context, sessionID string, opts RevenueOptions) (RevenueReport, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -123,6 +149,18 @@ type glAccountBalanceEnvelope struct {
 				} `xml:"GLAccountBalance"`
 			} `xml:"GLAccountBalanceResult"`
 		} `xml:"GLAccountBalanceResponse"`
+	} `xml:"Body"`
+}
+
+type glAccountTransactionsEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Transactions struct {
+					Items []GLAccountTransaction `xml:"GLAccountTransaction"`
+				} `xml:"GLAccountTransactions"`
+			} `xml:"GLAccountTransactionsResult"`
+		} `xml:"GLAccountTransactionsResponse"`
 	} `xml:"Body"`
 }
 
