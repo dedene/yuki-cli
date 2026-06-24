@@ -9,7 +9,39 @@ import (
 )
 
 type CreditorItemsCmd struct {
+	All  CreditorItemsAllCmd  `cmd:"" help:"List all outstanding creditor purchase invoice items."`
 	List CreditorItemsListCmd `cmd:"" help:"List outstanding creditor purchase invoice items."`
+}
+
+type CreditorItemsAllCmd struct {
+	Administration          string `help:"Administration ID. Defaults to profile/global administration."`
+	IncludeBankTransactions bool   `name:"include-bank-transactions" help:"Include outstanding bank transactions."`
+	SortOrder               string `name:"sort-order" default:"DateAsc" help:"Yuki sort order, e.g. DateAsc or DateDesc."`
+	PaymentMethod           string `name:"payment-method" help:"Filter results by payment method, e.g. Creditcard."`
+}
+
+func (c *CreditorItemsAllCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	items, err := client.OutstandingCreditorItems(rt.Context, sessionID, api.CreditorItemsOptions{
+		AdministrationID:        administrationID,
+		IncludeBankTransactions: c.IncludeBankTransactions,
+		SortOrder:               c.SortOrder,
+	})
+	if err != nil {
+		return err
+	}
+	if c.PaymentMethod != "" {
+		items = filterCreditorItemsByPaymentMethod(items, c.PaymentMethod)
+	}
+	return renderCreditorItems(rt, globals, items)
 }
 
 type CreditorItemsListCmd struct {
@@ -47,6 +79,10 @@ func (c *CreditorItemsListCmd) Run(rt *Runtime, globals *Globals) error {
 	if c.PaymentMethod != "" {
 		items = filterCreditorItemsByPaymentMethod(items, c.PaymentMethod)
 	}
+	return renderCreditorItems(rt, globals, items)
+}
+
+func renderCreditorItems(rt *Runtime, globals *Globals, items []api.CreditorItem) error {
 	if globals.JSON {
 		return output.JSON(rt.Out, items)
 	}

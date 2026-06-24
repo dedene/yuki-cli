@@ -43,6 +43,43 @@ func TestOutstandingCreditorItemsByDateParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestOutstandingCreditorItemsParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Accounting", "OutstandingCreditorItems", outstandingCreditorItemsResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:includeBankTransactions>true</they:includeBankTransactions>",
+			"<they:sortOrder>DateAsc</they:sortOrder>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+		for _, notWant := range []string{"<they:startDate>", "<they:endDate>"} {
+			if strings.Contains(body, notWant) {
+				t.Fatalf("request body unexpectedly contains %q:\n%s", notWant, body)
+			}
+		}
+	})
+
+	items, err := client.OutstandingCreditorItems(context.Background(), "session-1", CreditorItemsOptions{
+		AdministrationID:        "admin-1",
+		IncludeBankTransactions: true,
+		SortOrder:               "DateAsc",
+	})
+	if err != nil {
+		t.Fatalf("OutstandingCreditorItems: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("len(items) = %d, want 1", len(items))
+	}
+	if items[0].DocumentID != "a76c5a71-818e-4d94-b28c-1adc71acd285" ||
+		items[0].Reference != "S05233212" ||
+		items[0].PaymentMethod != "Overschrijving" {
+		t.Fatalf("item = %#v", items[0])
+	}
+}
+
 func TestTransactionDetailsParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClientForService(t, "AccountingInfo", "GetTransactionDetails", transactionDetailsResponse, func(t *testing.T, body string) {
 		t.Helper()
@@ -212,6 +249,35 @@ const creditorItemsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </OutstandingCreditorItems>
       </OutstandingCreditorItemsByDateResult>
     </OutstandingCreditorItemsByDateResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const outstandingCreditorItemsResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <OutstandingCreditorItemsResponse xmlns="http://www.theyukicompany.com/">
+      <OutstandingCreditorItemsResult>
+        <OutstandingCreditorItems xmlns="">
+          <Item ID="eaa937e9-951a-46f1-82e4-fc4e7ad9f07f">
+            <Date>2015-03-09</Date>
+            <Description>Factuur van Belgian Shell S.A., Brandstoffen bedrijfswagens</Description>
+            <Contact>Belgian Shell S.A.</Contact>
+            <ContactID>a9fbcd16-32f2-4372-adf4-f186eb515c60</ContactID>
+            <OpenAmount>75.86</OpenAmount>
+            <OriginalAmount>75.86</OriginalAmount>
+            <Type ID="2">Aankoopfactuur</Type>
+            <Reference>S05233212</Reference>
+            <DueDate>2015-03-09</DueDate>
+            <PaymentMethod>Overschrijving</PaymentMethod>
+            <DocumentID>a76c5a71-818e-4d94-b28c-1adc71acd285</DocumentID>
+            <ContactCode />
+            <CoCNumber>0403048262</CoCNumber>
+            <VATNumber>BE0403.048.262</VATNumber>
+            <Country>BE</Country>
+          </Item>
+        </OutstandingCreditorItems>
+      </OutstandingCreditorItemsResult>
+    </OutstandingCreditorItemsResponse>
   </soap:Body>
 </soap:Envelope>`
 

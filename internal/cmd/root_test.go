@@ -198,6 +198,52 @@ func TestCreditorItemsListFiltersPaymentMethod(t *testing.T) {
 	}
 }
 
+func TestCreditorItemsAllJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		creditorItems: []api.CreditorItem{{
+			Date:           "2026-01-03",
+			Contact:        "Belgian Shell S.A.",
+			OriginalAmount: "75.86",
+			OpenAmount:     "75.86",
+			PaymentMethod:  "Overschrijving",
+			Reference:      "S05233212",
+			DocumentID:     "doc-1",
+			Description:    "Factuur van Belgian Shell S.A.",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "creditor-items", "all",
+		"--administration", "admin-1",
+		"--include-bank-transactions",
+		"--sort-order", "DateDesc",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.creditorOpts.AdministrationID != "admin-1" ||
+		!client.creditorOpts.IncludeBankTransactions ||
+		client.creditorOpts.SortOrder != "DateDesc" ||
+		client.creditorOpts.StartDate != "" ||
+		client.creditorOpts.EndDate != "" {
+		t.Fatalf("creditorOpts = %#v", client.creditorOpts)
+	}
+	var items []api.CreditorItem
+	if err := json.Unmarshal(out.Bytes(), &items); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(items) != 1 || items[0].Reference != "S05233212" {
+		t.Fatalf("items = %#v", items)
+	}
+}
+
 func TestTransactionDetailsJSONUsesFlags(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -472,6 +518,11 @@ func (c *cmdFakeClient) Companies(context.Context, string) ([]api.Company, error
 func (c *cmdFakeClient) GLAccounts(_ context.Context, _ string, administrationID string) ([]api.GLAccount, error) {
 	c.administrationID = administrationID
 	return c.accounts, nil
+}
+
+func (c *cmdFakeClient) OutstandingCreditorItems(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {
+	c.creditorOpts = opts
+	return c.creditorItems, nil
 }
 
 func (c *cmdFakeClient) OutstandingCreditorItemsByDate(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {
