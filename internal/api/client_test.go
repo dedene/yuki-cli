@@ -80,6 +80,40 @@ func TestListAdministrationsParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestAdministrationIDPostsNameAndParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "AccountingInfo", "AdministrationID", administrationIDResponse, func(t *testing.T, body string) {
+		t.Helper()
+		if !strings.Contains(body, "<they:administrationName>Highpro NV</they:administrationName>") {
+			t.Fatalf("request body missing administration name:\n%s", body)
+		}
+	})
+
+	id, err := client.AdministrationID(context.Background(), "session-1", "Highpro NV")
+	if err != nil {
+		t.Fatalf("AdministrationID: %v", err)
+	}
+	if id != "38axxxxx-xxxx-xxxx-xxxx-xxxxxxxx23ee" {
+		t.Fatalf("id = %q", id)
+	}
+}
+
+func TestAdministrationsWithInternalCustomerCodeParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClient(t, "AdministrationsWithInternalCustomerCode", administrationsWithInternalCustomerCodeResponse)
+
+	admins, err := client.AdministrationsWithInternalCustomerCode(context.Background(), "session-1")
+	if err != nil {
+		t.Fatalf("AdministrationsWithInternalCustomerCode: %v", err)
+	}
+	if len(admins) != 1 {
+		t.Fatalf("len(admins) = %d, want 1", len(admins))
+	}
+	if admins[0].ID != "a484xxxxxxxxxxxxxxxxxd239ed" ||
+		admins[0].Name != "Yuki test account" ||
+		admins[0].InternalCustomerCode != "MI6-005" {
+		t.Fatalf("administration = %#v", admins[0])
+	}
+}
+
 func TestListCompaniesParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClient(t, "Companies", companiesResponse)
 
@@ -94,6 +128,38 @@ func TestListCompaniesParsesDocumentedResponse(t *testing.T) {
 		companies[0].Name != "Highpro BV" ||
 		!companies[0].Active {
 		t.Fatalf("company = %#v", companies[0])
+	}
+}
+
+func TestLanguageParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClient(t, "Language", languageResponse)
+
+	language, err := client.Language(context.Background(), "session-1")
+	if err != nil {
+		t.Fatalf("Language: %v", err)
+	}
+	if language != "nl-be" {
+		t.Fatalf("language = %q", language)
+	}
+}
+
+func TestSupportedLanguagesParsesWSDLAnyResponse(t *testing.T) {
+	client := fixtureClient(t, "SupportedLanguages", supportedLanguagesResponse)
+
+	languages, err := client.SupportedLanguages(context.Background(), "session-1")
+	if err != nil {
+		t.Fatalf("SupportedLanguages: %v", err)
+	}
+	if len(languages) != 2 {
+		t.Fatalf("len(languages) = %d, want 2", len(languages))
+	}
+	if languages[0].Code != "nl-be" ||
+		languages[0].Description != "Néerlandais" ||
+		languages[0].NativeDescription != "Nederlands" ||
+		languages[1].Code != "en" ||
+		languages[1].Description != "Anglais" ||
+		languages[1].NativeDescription != "English" {
+		t.Fatalf("languages = %#v", languages)
 	}
 }
 
@@ -256,6 +322,40 @@ const administrationsResponse = `<?xml version="1.0" encoding="utf-8"?>
   </soap:Body>
 </soap:Envelope>`
 
+const administrationIDResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <AdministrationIDResponse xmlns="http://www.theyukicompany.com/">
+      <AdministrationIDResult>38axxxxx-xxxx-xxxx-xxxx-xxxxxxxx23ee</AdministrationIDResult>
+    </AdministrationIDResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const administrationsWithInternalCustomerCodeResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <AdministrationsWithInternalCustomerCodeResponse xmlns="http://www.theyukicompany.com/">
+      <AdministrationsWithInternalCustomerCodeResult>
+        <Administrations xmlns="">
+          <Administration ID="a484xxxxxxxxxxxxxxxxxd239ed">
+            <Name>Yuki test account</Name>
+            <AddressLine>Orteliuskaai 4</AddressLine>
+            <Postcode>2000</Postcode>
+            <City>Antwerpen</City>
+            <Country>BE</Country>
+            <CoCNumber>0831.xxx.xxx</CoCNumber>
+            <VATNumber>BE0831.xxx.xxx</VATNumber>
+            <StartDate>2018-01-01</StartDate>
+            <DomainID>ff992xxxxxxxxxxxxxxx864858</DomainID>
+            <Active>true</Active>
+            <InternalCustomerCode>MI6-005</InternalCustomerCode>
+          </Administration>
+        </Administrations>
+      </AdministrationsWithInternalCustomerCodeResult>
+    </AdministrationsWithInternalCustomerCodeResponse>
+  </soap:Body>
+</soap:Envelope>`
+
 const companiesResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -269,6 +369,35 @@ const companiesResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Companies>
       </CompaniesResult>
     </CompaniesResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const languageResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <LanguageResponse xmlns="http://www.theyukicompany.com/">
+      <LanguageResult>nl-be</LanguageResult>
+    </LanguageResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const supportedLanguagesResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <SupportedLanguagesResponse xmlns="http://www.theyukicompany.com/">
+      <SupportedLanguagesResult>
+        <Languages xmlns="">
+          <Language Code="nl-be">
+            <Description>Néerlandais</Description>
+            <NativeDescription>Nederlands</NativeDescription>
+          </Language>
+          <Language Code="en">
+            <Description>Anglais</Description>
+            <NativeDescription>English</NativeDescription>
+          </Language>
+        </Languages>
+      </SupportedLanguagesResult>
+    </SupportedLanguagesResponse>
   </soap:Body>
 </soap:Envelope>`
 

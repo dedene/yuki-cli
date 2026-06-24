@@ -29,7 +29,11 @@ type Client interface {
 	SearchContacts(context.Context, string, api.ContactSearchOptions) ([]api.Contact, error)
 	SuppliersAndCustomers(context.Context, string, api.ContactSearchOptions) ([]api.Contact, error)
 	Administrations(context.Context, string) ([]api.Administration, error)
+	AdministrationID(context.Context, string, string) (string, error)
+	AdministrationsWithInternalCustomerCode(context.Context, string) ([]api.Administration, error)
 	Companies(context.Context, string) ([]api.Company, error)
+	Language(context.Context, string) (string, error)
+	SupportedLanguages(context.Context, string) ([]api.SupportedLanguage, error)
 	GLAccounts(context.Context, string, string) ([]api.GLAccount, error)
 	RGSScheme(context.Context, string, api.RGSSchemeOptions) ([]api.RGSEntry, error)
 	StartBalanceByGLAccount(context.Context, string, api.StartBalanceByGLAccountOptions) ([]api.GLAccountStartBalance, error)
@@ -115,6 +119,7 @@ type CLI struct {
 	Domains         DomainsCmd         `cmd:"" help:"Inspect accessible domains."`
 	Administrations AdministrationsCmd `cmd:"" help:"Inspect accessible administrations."`
 	Companies       CompaniesCmd       `cmd:"" help:"Inspect accessible companies."`
+	Language        LanguageCmd        `cmd:"" help:"Inspect session language."`
 	Accounting      AccountingCmd      `cmd:"" help:"Read accounting information."`
 	Archive         ArchiveCmd         `cmd:"" help:"Read archive document information."`
 	Contacts        ContactsCmd        `cmd:"" help:"Read contact information."`

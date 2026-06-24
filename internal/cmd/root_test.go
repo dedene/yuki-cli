@@ -359,6 +359,114 @@ func TestCompaniesListJSONPrintsCompanies(t *testing.T) {
 	}
 }
 
+func TestAdministrationsIDJSONUsesName(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID:                "session-1",
+		administrationResolvedID: "admin-1",
+	}
+
+	err := Execute(context.Background(), []string{"--json", "administrations", "id", "--name", "Highpro NV"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.administrationName != "Highpro NV" {
+		t.Fatalf("administrationName = %q", client.administrationName)
+	}
+	var payload map[string]string
+	if err := json.Unmarshal(out.Bytes(), &payload); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if payload["name"] != "Highpro NV" || payload["id"] != "admin-1" {
+		t.Fatalf("payload = %#v", payload)
+	}
+}
+
+func TestAdministrationsWithCustomerCodeJSONPrintsInternalCode(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		admins: []api.Administration{{
+			ID:                   "admin-1",
+			Name:                 "Highpro BV",
+			InternalCustomerCode: "MI6-005",
+			Active:               true,
+		}},
+	}
+
+	err := Execute(context.Background(), []string{"--json", "administrations", "with-customer-code"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	var admins []api.Administration
+	if err := json.Unmarshal(out.Bytes(), &admins); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(admins) != 1 || admins[0].InternalCustomerCode != "MI6-005" {
+		t.Fatalf("admins = %#v", admins)
+	}
+}
+
+func TestLanguageCurrentJSONPrintsLanguage(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		language:  "nl-be",
+	}
+
+	err := Execute(context.Background(), []string{"--json", "language", "current"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	var payload map[string]string
+	if err := json.Unmarshal(out.Bytes(), &payload); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if payload["language"] != "nl-be" {
+		t.Fatalf("payload = %#v", payload)
+	}
+}
+
+func TestLanguageSupportedJSONPrintsLanguages(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		supportedLanguages: []api.SupportedLanguage{{
+			Code:              "nl-be",
+			Description:       "Dutch",
+			NativeDescription: "Nederlands",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{"--json", "language", "supported"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	var languages []api.SupportedLanguage
+	if err := json.Unmarshal(out.Bytes(), &languages); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(languages) != 1 || languages[0].Code != "nl-be" || languages[0].NativeDescription != "Nederlands" {
+		t.Fatalf("languages = %#v", languages)
+	}
+}
+
 func TestGLAccountsListJSONUsesAdministrationFlag(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1902,7 +2010,12 @@ type cmdFakeClient struct {
 	domainFunctionUpdateResult  api.DomainFunctionUpdateResult
 	contacts                    []api.Contact
 	contactSearchOpts           api.ContactSearchOptions
+	admins                      []api.Administration
+	administrationName          string
+	administrationResolvedID    string
 	companies                   []api.Company
+	language                    string
+	supportedLanguages          []api.SupportedLanguage
 	accounts                    []api.GLAccount
 	rgsEntries                  []api.RGSEntry
 	rgsOpts                     api.RGSSchemeOptions
@@ -2018,11 +2131,28 @@ func (c *cmdFakeClient) SuppliersAndCustomers(_ context.Context, _ string, opts 
 }
 
 func (c *cmdFakeClient) Administrations(context.Context, string) ([]api.Administration, error) {
-	return nil, nil
+	return c.admins, nil
+}
+
+func (c *cmdFakeClient) AdministrationID(_ context.Context, _ string, administrationName string) (string, error) {
+	c.administrationName = administrationName
+	return c.administrationResolvedID, nil
+}
+
+func (c *cmdFakeClient) AdministrationsWithInternalCustomerCode(context.Context, string) ([]api.Administration, error) {
+	return c.admins, nil
 }
 
 func (c *cmdFakeClient) Companies(context.Context, string) ([]api.Company, error) {
 	return c.companies, nil
+}
+
+func (c *cmdFakeClient) Language(context.Context, string) (string, error) {
+	return c.language, nil
+}
+
+func (c *cmdFakeClient) SupportedLanguages(context.Context, string) ([]api.SupportedLanguage, error) {
+	return c.supportedLanguages, nil
 }
 
 func (c *cmdFakeClient) GLAccounts(_ context.Context, _ string, administrationID string) ([]api.GLAccount, error) {

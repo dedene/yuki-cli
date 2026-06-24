@@ -100,17 +100,24 @@ type Company struct {
 }
 
 type Administration struct {
-	ID          string `json:"id" xml:"ID,attr"`
-	Name        string `json:"name" xml:"Name"`
-	AddressLine string `json:"address_line,omitempty" xml:"AddressLine"`
-	Postcode    string `json:"postcode,omitempty" xml:"Postcode"`
-	City        string `json:"city,omitempty" xml:"City"`
-	Country     string `json:"country,omitempty" xml:"Country"`
-	CoCNumber   string `json:"coc_number,omitempty" xml:"CoCNumber"`
-	VATNumber   string `json:"vat_number,omitempty" xml:"VATNumber"`
-	StartDate   string `json:"start_date,omitempty" xml:"StartDate"`
-	DomainID    string `json:"domain_id,omitempty" xml:"DomainID"`
-	Active      bool   `json:"active" xml:"Active"`
+	ID                   string `json:"id" xml:"ID,attr"`
+	Name                 string `json:"name" xml:"Name"`
+	AddressLine          string `json:"address_line,omitempty" xml:"AddressLine"`
+	Postcode             string `json:"postcode,omitempty" xml:"Postcode"`
+	City                 string `json:"city,omitempty" xml:"City"`
+	Country              string `json:"country,omitempty" xml:"Country"`
+	CoCNumber            string `json:"coc_number,omitempty" xml:"CoCNumber"`
+	VATNumber            string `json:"vat_number,omitempty" xml:"VATNumber"`
+	StartDate            string `json:"start_date,omitempty" xml:"StartDate"`
+	DomainID             string `json:"domain_id,omitempty" xml:"DomainID"`
+	Active               bool   `json:"active" xml:"Active"`
+	InternalCustomerCode string `json:"internal_customer_code,omitempty" xml:"InternalCustomerCode"`
+}
+
+type SupportedLanguage struct {
+	Code              string `json:"code"`
+	Description       string `json:"description,omitempty"`
+	NativeDescription string `json:"native_description,omitempty"`
 }
 
 type GLAccount struct {

@@ -33,9 +33,13 @@ yuki domains current
 yuki domains functions --domain <domain-id> --json
 yuki domains update-function --domain <domain-id> --function BOAccountManager --login test@test.be --dry-run --json
 yuki administrations list
+yuki administrations id --name "Highpro NV" --json
+yuki administrations with-customer-code --json
 yuki contacts search --domain <domain-id> --search-option Email --search-value billing@example.com --json
 yuki contacts suppliers-customers --domain <domain-id> --contact-type Supplier --search-option ContactType --search-value Supplier --json
 yuki companies list --json
+yuki language current --json
+yuki language supported --json
 yuki accounting gl-accounts list --administration <administration-id>
 yuki accounting gl-accounts balance --administration <administration-id> --date 2026-12-31 --json
 yuki accounting gl-accounts balance-fiscal --administration <administration-id> --date 2026-12-31 --json

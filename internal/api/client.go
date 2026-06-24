@@ -87,6 +87,30 @@ func (c *Client) Administrations(ctx context.Context, sessionID string) ([]Admin
 	return env.Body.Response.Result.Administrations.Administrations, nil
 }
 
+func (c *Client) AdministrationID(ctx context.Context, sessionID, administrationName string) (string, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationName", Value: administrationName},
+	}
+	data, err := c.call(ctx, generalService, "AdministrationID", params)
+	if err != nil {
+		return "", err
+	}
+	return textAt(data, []string{"Envelope", "Body", "AdministrationIDResponse", "AdministrationIDResult"})
+}
+
+func (c *Client) AdministrationsWithInternalCustomerCode(ctx context.Context, sessionID string) ([]Administration, error) {
+	data, err := c.call(ctx, generalService, "AdministrationsWithInternalCustomerCode", sessionParams(sessionID))
+	if err != nil {
+		return nil, err
+	}
+	var env administrationsWithInternalCustomerCodeEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse AdministrationsWithInternalCustomerCode response: %w", err)
+	}
+	return env.Body.Response.Result.Administrations.Administrations, nil
+}
+
 func (c *Client) CurrentDomain(ctx context.Context, sessionID string) (Domain, error) {
 	data, err := c.call(ctx, generalService, "GetCurrentDomain", sessionParams(sessionID))
 	if err != nil {
@@ -100,6 +124,30 @@ func (c *Client) CurrentDomain(ctx context.Context, sessionID string) (Domain, e
 		return Domain{}, errors.New("current domain response did not contain a domain")
 	}
 	return env.Body.Response.Result.Domains.Domains[0], nil
+}
+
+func (c *Client) Language(ctx context.Context, sessionID string) (string, error) {
+	data, err := c.call(ctx, generalService, "Language", sessionParams(sessionID))
+	if err != nil {
+		return "", err
+	}
+	return textAt(data, []string{"Envelope", "Body", "LanguageResponse", "LanguageResult"})
+}
+
+func (c *Client) SupportedLanguages(ctx context.Context, sessionID string) ([]SupportedLanguage, error) {
+	data, err := c.call(ctx, generalService, "SupportedLanguages", sessionParams(sessionID))
+	if err != nil {
+		return nil, err
+	}
+	var env supportedLanguagesEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse SupportedLanguages response: %w", err)
+	}
+	languages, err := env.Body.Response.Result.languages()
+	if err != nil {
+		return nil, fmt.Errorf("parse SupportedLanguages result: %w", err)
+	}
+	return languages, nil
 }
 
 func (c *Client) GLAccounts(ctx context.Context, sessionID, administrationID string) ([]GLAccount, error) {
@@ -260,6 +308,18 @@ type administrationsEnvelope struct {
 	} `xml:"Body"`
 }
 
+type administrationsWithInternalCustomerCodeEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Administrations struct {
+					Administrations []Administration `xml:"Administration"`
+				} `xml:"Administrations"`
+			} `xml:"AdministrationsWithInternalCustomerCodeResult"`
+		} `xml:"AdministrationsWithInternalCustomerCodeResponse"`
+	} `xml:"Body"`
+}
+
 type currentDomainEnvelope struct {
 	Body struct {
 		Response struct {
@@ -270,6 +330,74 @@ type currentDomainEnvelope struct {
 			} `xml:"GetCurrentDomainResult"`
 		} `xml:"GetCurrentDomainResponse"`
 	} `xml:"Body"`
+}
+
+type supportedLanguagesEnvelope struct {
+	Body struct {
+		Response struct {
+			Result supportedLanguagesResult `xml:"SupportedLanguagesResult"`
+		} `xml:"SupportedLanguagesResponse"`
+	} `xml:"Body"`
+}
+
+type supportedLanguagesResult struct {
+	InnerXML string `xml:",innerxml"`
+}
+
+func (r supportedLanguagesResult) languages() ([]SupportedLanguage, error) {
+	decoder := xml.NewDecoder(strings.NewReader("<root>" + r.InnerXML + "</root>"))
+	languages := []SupportedLanguage{}
+	for {
+		token, err := decoder.Token()
+		if errors.Is(err, io.EOF) {
+			return languages, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		start, ok := token.(xml.StartElement)
+		if !ok || (start.Name.Local != "Language" && start.Name.Local != "SupportedLanguage") {
+			continue
+		}
+		var item supportedLanguageXML
+		if err := decoder.DecodeElement(&item, &start); err != nil {
+			return nil, err
+		}
+		language := item.language()
+		if language.Code != "" || language.Description != "" || language.NativeDescription != "" {
+			languages = append(languages, language)
+		}
+	}
+}
+
+type supportedLanguageXML struct {
+	ID                    string `xml:"ID,attr"`
+	CodeAttr              string `xml:"Code,attr"`
+	ValueAttr             string `xml:"Value,attr"`
+	DescriptionAttr       string `xml:"Description,attr"`
+	NativeDescriptionAttr string `xml:"NativeDescription,attr"`
+	Code                  string `xml:"Code"`
+	Value                 string `xml:"Value"`
+	Description           string `xml:"Description"`
+	NativeDescription     string `xml:"NativeDescription"`
+	Text                  string `xml:",chardata"`
+}
+
+func (l supportedLanguageXML) language() SupportedLanguage {
+	text := strings.TrimSpace(l.Text)
+	code := firstNonEmpty(l.ID, l.CodeAttr, l.Code, l.ValueAttr, l.Value)
+	description := firstNonEmpty(l.DescriptionAttr, l.Description)
+	nativeDescription := firstNonEmpty(l.NativeDescriptionAttr, l.NativeDescription)
+	if code == "" {
+		code = text
+	} else if description == "" {
+		description = text
+	}
+	return SupportedLanguage{
+		Code:              code,
+		Description:       description,
+		NativeDescription: nativeDescription,
+	}
 }
 
 type glAccountsEnvelope struct {
