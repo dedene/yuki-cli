@@ -144,6 +144,44 @@ func TestGLAccountsListJSONUsesAdministrationFlag(t *testing.T) {
 	}
 }
 
+func TestGLAccountsBalanceJSONUsesDate(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		balances: []api.GLAccountBalanceItem{{
+			Code:        "100000",
+			BalanceType: "B",
+			Amount:      "-1222.22",
+			Description: "Share capital",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "gl-accounts", "balance",
+		"--administration", "admin-1",
+		"--date", "2020-12-31",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.balanceOpts.AdministrationID != "admin-1" ||
+		client.balanceOpts.TransactionDate != "2020-12-31" {
+		t.Fatalf("balanceOpts = %#v", client.balanceOpts)
+	}
+	var balances []api.GLAccountBalanceItem
+	if err := json.Unmarshal(out.Bytes(), &balances); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(balances) != 1 || balances[0].Code != "100000" {
+		t.Fatalf("balances = %#v", balances)
+	}
+}
+
 func TestCreditorItemsListFiltersPaymentMethod(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -458,6 +496,8 @@ type cmdFakeClient struct {
 	transactionID         string
 	domains               []api.Domain
 	accounts              []api.GLAccount
+	balances              []api.GLAccountBalanceItem
+	balanceOpts           api.GLAccountBalanceOptions
 	creditorItems         []api.CreditorItem
 	creditorOpts          api.CreditorItemsOptions
 	richTransactions      []api.Transaction
@@ -518,6 +558,11 @@ func (c *cmdFakeClient) Companies(context.Context, string) ([]api.Company, error
 func (c *cmdFakeClient) GLAccounts(_ context.Context, _ string, administrationID string) ([]api.GLAccount, error) {
 	c.administrationID = administrationID
 	return c.accounts, nil
+}
+
+func (c *cmdFakeClient) GLAccountBalance(_ context.Context, _ string, opts api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error) {
+	c.balanceOpts = opts
+	return c.balances, nil
 }
 
 func (c *cmdFakeClient) OutstandingCreditorItems(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {

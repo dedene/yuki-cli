@@ -52,6 +52,13 @@ type GLAccount struct {
 	Description string `json:"description" xml:"descripton"`
 }
 
+type GLAccountBalanceItem struct {
+	Code        string `json:"code" xml:"Code,attr"`
+	BalanceType string `json:"balance_type" xml:"BalanceType,attr"`
+	Description string `json:"description" xml:"Description"`
+	Amount      string `json:"amount" xml:"Amount"`
+}
+
 type CreditorItem struct {
 	ID             string  `json:"id" xml:"ID,attr"`
 	Date           string  `json:"date" xml:"Date"`

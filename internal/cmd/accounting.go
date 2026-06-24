@@ -15,7 +15,8 @@ type AccountingCmd struct {
 }
 
 type GLAccountsCmd struct {
-	List GLAccountsListCmd `cmd:"" help:"List GL accounts for an administration."`
+	List    GLAccountsListCmd    `cmd:"" help:"List GL accounts for an administration."`
+	Balance GLAccountsBalanceCmd `cmd:"" help:"List GL account balances at a transaction date."`
 }
 
 type GLAccountsListCmd struct {
@@ -44,6 +45,38 @@ func (c *GLAccountsListCmd) Run(rt *Runtime, globals *Globals) error {
 		rows = append(rows, []string{account.Code, account.Type, account.Subtype, output.Bool(account.Enabled), account.Description})
 	}
 	return output.Table(rt.Out, []string{"CODE", "TYPE", "SUBTYPE", "ENABLED", "DESCRIPTION"}, rows)
+}
+
+type GLAccountsBalanceCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	Date           string `name:"date" required:"" help:"Transaction date, YYYY-MM-DD."`
+}
+
+func (c *GLAccountsBalanceCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	balances, err := client.GLAccountBalance(rt.Context, sessionID, api.GLAccountBalanceOptions{
+		AdministrationID: administrationID,
+		TransactionDate:  c.Date,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, balances)
+	}
+	rows := make([][]string, 0, len(balances))
+	for _, balance := range balances {
+		rows = append(rows, []string{balance.Code, balance.BalanceType, balance.Amount, balance.Description})
+	}
+	return output.Table(rt.Out, []string{"CODE", "TYPE", "AMOUNT", "DESCRIPTION"}, rows)
 }
 
 func resolveAdministrationID(globals *Globals, explicit string) (string, error) {
