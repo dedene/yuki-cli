@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/dedene/yuki-cli/internal/api"
@@ -170,6 +171,7 @@ type ArchiveDocumentsCmd struct {
 	Find             ArchiveDocumentsFindCmd             `cmd:"" help:"Find document metadata by document ID."`
 	Download         ArchiveDocumentsDownloadCmd         `cmd:"" help:"Download a document file by document ID."`
 	ImageCount       ArchiveDocumentsImageCountCmd       `cmd:"" name:"image-count" help:"Count rendered images for a document."`
+	XML              ArchiveDocumentsXMLCmd              `cmd:"" name:"xml" help:"Fetch XML data for a document."`
 }
 
 type ArchiveDocumentsListCmd struct {
@@ -427,6 +429,30 @@ func (c *ArchiveDocumentsImageCountCmd) Run(rt *Runtime, globals *Globals) error
 		return output.JSON(rt.Out, count)
 	}
 	return output.Table(rt.Out, []string{"DOCUMENT", "IMAGES"}, [][]string{{count.DocumentID, strconv.Itoa(count.ImageCount)}})
+}
+
+type ArchiveDocumentsXMLCmd struct {
+	Document string `name:"document" required:"" help:"Document ID."`
+	Output   string `name:"output" short:"o" help:"Write XML to this path instead of stdout."`
+}
+
+func (c *ArchiveDocumentsXMLCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	data, err := client.DocumentXMLDataAsString(rt.Context, sessionID, c.Document)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, data)
+	}
+	if c.Output != "" {
+		return writeTextFile(rt.Out, c.Output, data.XML)
+	}
+	_, err = fmt.Fprintln(rt.Out, data.XML)
+	return err
 }
 
 type ArchivePaymentMethodsCmd struct {

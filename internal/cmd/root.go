@@ -44,6 +44,7 @@ type Client interface {
 	FindDocument(context.Context, string, string) (api.Document, error)
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)
 	DocumentImageCount(context.Context, string, string) (api.DocumentImageCount, error)
+	DocumentXMLDataAsString(context.Context, string, string) (api.DocumentXMLData, error)
 	PaymentMethods(context.Context, string) ([]api.PaymentMethod, error)
 	Currencies(context.Context, string) ([]api.Currency, error)
 	CostCategories(context.Context, string) ([]api.CostCategory, error)

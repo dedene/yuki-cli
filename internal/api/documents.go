@@ -300,6 +300,25 @@ func (c *Client) DocumentImageCount(ctx context.Context, sessionID, documentID s
 	}, nil
 }
 
+func (c *Client) DocumentXMLDataAsString(ctx context.Context, sessionID, documentID string) (DocumentXMLData, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "documentID", Value: documentID},
+	}
+	data, err := c.call(ctx, "Archive", "DocumentXMLDataAsString", params)
+	if err != nil {
+		return DocumentXMLData{}, err
+	}
+	var env documentXMLDataAsStringEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return DocumentXMLData{}, fmt.Errorf("parse DocumentXMLDataAsString response: %w", err)
+	}
+	return DocumentXMLData{
+		DocumentID: documentID,
+		XML:        env.Body.Response.Result,
+	}, nil
+}
+
 func (c *Client) PaymentMethods(ctx context.Context, sessionID string) ([]PaymentMethod, error) {
 	data, err := c.call(ctx, "Archive", "PaymentMethods", sessionParams(sessionID))
 	if err != nil {
@@ -540,5 +559,13 @@ type documentImageCountEnvelope struct {
 		Response struct {
 			Result int `xml:"DocumentImageCountResult"`
 		} `xml:"DocumentImageCountResponse"`
+	} `xml:"Body"`
+}
+
+type documentXMLDataAsStringEnvelope struct {
+	Body struct {
+		Response struct {
+			Result string `xml:"DocumentXMLDataAsStringResult"`
+		} `xml:"DocumentXMLDataAsStringResponse"`
 	} `xml:"Body"`
 }

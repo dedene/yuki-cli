@@ -152,6 +152,24 @@ func TestDocumentImageCountParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentXMLDataAsStringParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentXMLDataAsString", documentXMLDataAsStringResponse, func(t *testing.T, body string) {
+		t.Helper()
+		if !strings.Contains(body, "<they:documentID>doc-1</they:documentID>") {
+			t.Fatalf("request body missing document ID:\n%s", body)
+		}
+	})
+
+	data, err := client.DocumentXMLDataAsString(context.Background(), "session-1", "doc-1")
+	if err != nil {
+		t.Fatalf("DocumentXMLDataAsString: %v", err)
+	}
+	want := "<SalesInvoice><Reference>A1040</Reference><Subject>Testfactuur - 1</Subject></SalesInvoice>"
+	if data.DocumentID != "doc-1" || data.XML != want {
+		t.Fatalf("data = %#v", data)
+	}
+}
+
 const creditorItemsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -274,5 +292,14 @@ const documentImageCountResponse = `<?xml version="1.0" encoding="utf-8"?>
     <DocumentImageCountResponse xmlns="http://www.theyukicompany.com/">
       <DocumentImageCountResult>0</DocumentImageCountResult>
     </DocumentImageCountResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentXMLDataAsStringResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentXMLDataAsStringResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentXMLDataAsStringResult>&lt;SalesInvoice&gt;&lt;Reference&gt;A1040&lt;/Reference&gt;&lt;Subject&gt;Testfactuur - 1&lt;/Subject&gt;&lt;/SalesInvoice&gt;</DocumentXMLDataAsStringResult>
+    </DocumentXMLDataAsStringResponse>
   </soap:Body>
 </soap:Envelope>`

@@ -310,6 +310,40 @@ func TestArchiveDocumentsImageCountJSONPrintsCount(t *testing.T) {
 	}
 }
 
+func TestArchiveDocumentsXMLJSONPrintsXMLData(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		documentXMLData: api.DocumentXMLData{
+			DocumentID: "doc-1",
+			XML:        "<SalesInvoice><Reference>A1040</Reference></SalesInvoice>",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"archive", "documents", "xml",
+		"--document", "doc-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.documentID != "doc-1" {
+		t.Fatalf("documentID = %q", client.documentID)
+	}
+	var data api.DocumentXMLData
+	if err := json.Unmarshal(out.Bytes(), &data); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if data.DocumentID != "doc-1" || data.XML != "<SalesInvoice><Reference>A1040</Reference></SalesInvoice>" {
+		t.Fatalf("data = %#v", data)
+	}
+}
+
 type cmdFakeStore struct {
 	key string
 	err error
@@ -370,6 +404,7 @@ type cmdFakeClient struct {
 	document              api.Document
 	documentFile          api.DocumentFile
 	documentImageCount    api.DocumentImageCount
+	documentXMLData       api.DocumentXMLData
 	transactionDocument   api.TransactionDocument
 }
 
@@ -485,6 +520,14 @@ func (c *cmdFakeClient) DocumentImageCount(_ context.Context, _ string, document
 		c.documentImageCount.DocumentID = documentID
 	}
 	return c.documentImageCount, nil
+}
+
+func (c *cmdFakeClient) DocumentXMLDataAsString(_ context.Context, _ string, documentID string) (api.DocumentXMLData, error) {
+	c.documentID = documentID
+	if c.documentXMLData.DocumentID == "" {
+		c.documentXMLData.DocumentID = documentID
+	}
+	return c.documentXMLData, nil
 }
 
 func (c *cmdFakeClient) PaymentMethods(context.Context, string) ([]api.PaymentMethod, error) {
