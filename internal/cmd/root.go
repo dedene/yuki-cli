@@ -82,6 +82,8 @@ type Client interface {
 	VATReturns(context.Context, string, api.VATReturnListOptions) ([]api.VATReturnInfo, error)
 	AdministrationData(context.Context, string, string) (api.AdministrationIntegrationData, error)
 	FiscalTable(context.Context, string, string, int) (api.FiscalTableTotals, error)
+	BackofficeWorkflow(context.Context, string, string) ([]api.BackofficeWorkflowDocument, error)
+	BackofficeOutstandingQuestions(context.Context, string, string) ([]api.BackofficeQuestion, error)
 }
 
 type Runtime struct {
@@ -113,6 +115,7 @@ type CLI struct {
 	VAT             VATCmd             `cmd:"" name:"vat" help:"Read VAT information."`
 	Integration     IntegrationCmd     `cmd:"" help:"Read integration information."`
 	FiscalTable     FiscalTableCmd     `cmd:"" name:"fiscal-table" help:"Read fiscal table information."`
+	Backoffice      BackofficeCmd      `cmd:"" help:"Read backoffice information."`
 }
 
 func Execute(ctx context.Context, args []string, rt Runtime) (err error) {

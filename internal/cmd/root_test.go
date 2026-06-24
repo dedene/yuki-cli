@@ -1373,6 +1373,77 @@ func TestFiscalTableTotalsJSONUsesCompanyAndYear(t *testing.T) {
 	}
 }
 
+func TestBackofficeWorkflowJSONUsesAdministration(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		backofficeWorkflow: []api.BackofficeWorkflowDocument{{
+			SubmitDate:   "2020-08-26T14:10:05",
+			DocumentType: api.XMLText{ID: "2", Text: "Purchase invoice"},
+			FileName:     "ININV-00004.pdf",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"backoffice", "workflow",
+		"--administration", "admin-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.administrationID != "admin-1" {
+		t.Fatalf("administrationID = %q", client.administrationID)
+	}
+	var documents []api.BackofficeWorkflowDocument
+	if err := json.Unmarshal(out.Bytes(), &documents); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(documents) != 1 || documents[0].FileName != "ININV-00004.pdf" {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
+func TestBackofficeOutstandingQuestionsJSONUsesAdministration(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		backofficeQuestions: []api.BackofficeQuestion{{
+			Date:        "2022-03-09T16:57:47",
+			Type:        api.XMLText{ID: "29", Text: "Question"},
+			Description: "vraag",
+			From:        "Katrien",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"backoffice", "outstanding-questions",
+		"--administration", "admin-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.administrationID != "admin-1" {
+		t.Fatalf("administrationID = %q", client.administrationID)
+	}
+	var questions []api.BackofficeQuestion
+	if err := json.Unmarshal(out.Bytes(), &questions); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(questions) != 1 || questions[0].From != "Katrien" {
+		t.Fatalf("questions = %#v", questions)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1644,6 +1715,8 @@ type cmdFakeClient struct {
 	administrationData          api.AdministrationIntegrationData
 	fiscalTableTotals           api.FiscalTableTotals
 	fiscalTableYear             int
+	backofficeWorkflow          []api.BackofficeWorkflowDocument
+	backofficeQuestions         []api.BackofficeQuestion
 	maxWidth                    int
 	maxHeight                   int
 }
@@ -1987,4 +2060,14 @@ func (c *cmdFakeClient) FiscalTable(_ context.Context, _ string, companyID strin
 	c.companyID = companyID
 	c.fiscalTableYear = year
 	return c.fiscalTableTotals, nil
+}
+
+func (c *cmdFakeClient) BackofficeWorkflow(_ context.Context, _ string, administrationID string) ([]api.BackofficeWorkflowDocument, error) {
+	c.administrationID = administrationID
+	return c.backofficeWorkflow, nil
+}
+
+func (c *cmdFakeClient) BackofficeOutstandingQuestions(_ context.Context, _ string, administrationID string) ([]api.BackofficeQuestion, error) {
+	c.administrationID = administrationID
+	return c.backofficeQuestions, nil
 }

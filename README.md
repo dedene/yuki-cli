@@ -64,6 +64,8 @@ yuki vat codes active --administration <administration-id> --json
 yuki vat returns list --administration <administration-id> --year 2023 --modified-after 2021-01-01 --json
 yuki integration administration-data --administration <administration-id> --json
 yuki fiscal-table totals --company <company-id> --year 2023 --json
+yuki backoffice workflow --administration <administration-id> --json
+yuki backoffice outstanding-questions --administration <administration-id> --json
 yuki archive payment-methods list
 yuki archive currencies list
 yuki archive cost-categories list

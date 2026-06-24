@@ -319,6 +319,19 @@ type FiscalTableTotals struct {
 	SocialContributionsTotal string `json:"social_contributions_total,omitempty" xml:"SocialContributionsTotal"`
 }
 
+type BackofficeWorkflowDocument struct {
+	SubmitDate   string  `json:"submit_date,omitempty" xml:"SubmitDate"`
+	DocumentType XMLText `json:"document_type" xml:"DocumentType"`
+	FileName     string  `json:"file_name,omitempty" xml:"Filename"`
+}
+
+type BackofficeQuestion struct {
+	Date        string  `json:"date,omitempty" xml:"Date"`
+	Type        XMLText `json:"type" xml:"Type"`
+	Description string  `json:"description,omitempty" xml:"Description"`
+	From        string  `json:"from,omitempty" xml:"From"`
+}
+
 type ProjectInfo struct {
 	Code        string `json:"code,omitempty" xml:"code"`
 	Description string `json:"description,omitempty" xml:"description"`
