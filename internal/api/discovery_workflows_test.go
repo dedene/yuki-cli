@@ -148,6 +148,30 @@ func TestDocumentFoldersParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentFolderTabsParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentFolderTabs", documentFolderTabsResponse, func(t *testing.T, body string) {
+		t.Helper()
+		if !strings.Contains(body, "<they:folderID>3</they:folderID>") {
+			t.Fatalf("request body missing folder ID:\n%s", body)
+		}
+	})
+
+	tabs, err := client.DocumentFolderTabs(context.Background(), "session-1", "3")
+	if err != nil {
+		t.Fatalf("DocumentFolderTabs: %v", err)
+	}
+	if len(tabs) != 5 {
+		t.Fatalf("len(tabs) = %d, want 5", len(tabs))
+	}
+	if tabs[0].ID != "301" ||
+		tabs[0].Description != "Files" ||
+		!tabs[0].ProcessedByYuki ||
+		tabs[2].ID != "303" ||
+		tabs[2].Description != "Credit cards" {
+		t.Fatalf("tabs = %#v", tabs)
+	}
+}
+
 func TestPaymentMethodsParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClientForService(t, "Archive", "PaymentMethods", archivePaymentMethodsResponse, nil)
 
@@ -331,5 +355,37 @@ const documentFoldersResponse = `<?xml version="1.0" encoding="utf-8"?>
         </DocumentFolders>
       </DocumentFoldersResult>
     </DocumentFoldersResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentFolderTabsResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentFolderTabsResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentFolderTabsResult>
+        <DocumentFolderTabs xmlns="">
+          <DocumentFolderTab ID="301">
+            <Description>Files</Description>
+            <ProcessedByYuki>True</ProcessedByYuki>
+          </DocumentFolderTab>
+          <DocumentFolderTab ID="302">
+            <Description>Statement view</Description>
+            <ProcessedByYuki>True</ProcessedByYuki>
+          </DocumentFolderTab>
+          <DocumentFolderTab ID="303">
+            <Description>Credit cards</Description>
+            <ProcessedByYuki>True</ProcessedByYuki>
+          </DocumentFolderTab>
+          <DocumentFolderTab ID="304">
+            <Description>Petty cash</Description>
+            <ProcessedByYuki>True</ProcessedByYuki>
+          </DocumentFolderTab>
+          <DocumentFolderTab ID="305">
+            <Description>Other</Description>
+            <ProcessedByYuki>True</ProcessedByYuki>
+          </DocumentFolderTab>
+        </DocumentFolderTabs>
+      </DocumentFolderTabsResult>
+    </DocumentFolderTabsResponse>
   </soap:Body>
 </soap:Envelope>`

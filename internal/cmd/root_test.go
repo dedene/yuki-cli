@@ -319,6 +319,8 @@ type cmdFakeClient struct {
 	customMethods       []api.PaymentMethod
 	archiveMethods      []api.PaymentMethod
 	folders             []api.DocumentFolder
+	tabs                []api.DocumentFolderTab
+	folderID            string
 	searchDocuments     []api.Document
 	searchDocumentsOpts api.SearchDocumentsOptions
 	document            api.Document
@@ -380,6 +382,11 @@ func (c *cmdFakeClient) CustomPaymentMethods(_ context.Context, _ string, admini
 
 func (c *cmdFakeClient) DocumentFolders(context.Context, string) ([]api.DocumentFolder, error) {
 	return c.folders, nil
+}
+
+func (c *cmdFakeClient) DocumentFolderTabs(_ context.Context, _ string, folderID string) ([]api.DocumentFolderTab, error) {
+	c.folderID = folderID
+	return c.tabs, nil
 }
 
 func (c *cmdFakeClient) SearchDocuments(_ context.Context, _ string, opts api.SearchDocumentsOptions) ([]api.Document, error) {

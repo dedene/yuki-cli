@@ -15,6 +15,7 @@ type ArchiveCmd struct {
 
 type ArchiveFoldersCmd struct {
 	List ArchiveFoldersListCmd `cmd:"" help:"List archive document folders."`
+	Tabs ArchiveFoldersTabsCmd `cmd:"" help:"List tabs for an archive document folder."`
 }
 
 type ArchiveFoldersListCmd struct{}
@@ -42,6 +43,34 @@ func (c *ArchiveFoldersListCmd) Run(rt *Runtime, globals *Globals) error {
 		})
 	}
 	return output.Table(rt.Out, []string{"ID", "DESCRIPTION", "PROCESSED", "ICON"}, rows)
+}
+
+type ArchiveFoldersTabsCmd struct {
+	Folder string `name:"folder" required:"" help:"Folder ID."`
+}
+
+func (c *ArchiveFoldersTabsCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	tabs, err := client.DocumentFolderTabs(rt.Context, sessionID, c.Folder)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, tabs)
+	}
+
+	rows := make([][]string, 0, len(tabs))
+	for _, tab := range tabs {
+		rows = append(rows, []string{
+			tab.ID,
+			tab.Description,
+			output.Bool(tab.ProcessedByYuki),
+		})
+	}
+	return output.Table(rt.Out, []string{"ID", "DESCRIPTION", "PROCESSED"}, rows)
 }
 
 type ArchiveDocumentsCmd struct {

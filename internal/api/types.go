@@ -203,6 +203,12 @@ type DocumentFolder struct {
 	ProcessedByYuki bool   `json:"processed_by_yuki" xml:"ProcessedByYuki"`
 }
 
+type DocumentFolderTab struct {
+	ID              string `json:"id" xml:"ID,attr"`
+	Description     string `json:"description" xml:"Description"`
+	ProcessedByYuki bool   `json:"processed_by_yuki" xml:"ProcessedByYuki"`
+}
+
 type PaymentMethod struct {
 	ID          string `json:"id" xml:"ID"`
 	Description string `json:"description" xml:"Description"`

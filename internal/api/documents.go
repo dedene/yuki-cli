@@ -32,6 +32,22 @@ func (c *Client) DocumentFolders(ctx context.Context, sessionID string) ([]Docum
 	return env.Body.Response.Result.DocumentFolders.Folders, nil
 }
 
+func (c *Client) DocumentFolderTabs(ctx context.Context, sessionID, folderID string) ([]DocumentFolderTab, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "folderID", Value: folderID},
+	}
+	data, err := c.call(ctx, "Archive", "DocumentFolderTabs", params)
+	if err != nil {
+		return nil, err
+	}
+	var env documentFolderTabsEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse DocumentFolderTabs response: %w", err)
+	}
+	return env.Body.Response.Result.DocumentFolderTabs.Tabs, nil
+}
+
 func (c *Client) SearchDocuments(ctx context.Context, sessionID string, opts SearchDocumentsOptions) ([]Document, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -116,6 +132,18 @@ type documentFoldersEnvelope struct {
 				} `xml:"DocumentFolders"`
 			} `xml:"DocumentFoldersResult"`
 		} `xml:"DocumentFoldersResponse"`
+	} `xml:"Body"`
+}
+
+type documentFolderTabsEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				DocumentFolderTabs struct {
+					Tabs []DocumentFolderTab `xml:"DocumentFolderTab"`
+				} `xml:"DocumentFolderTabs"`
+			} `xml:"DocumentFolderTabsResult"`
+		} `xml:"DocumentFolderTabsResponse"`
 	} `xml:"Body"`
 }
 

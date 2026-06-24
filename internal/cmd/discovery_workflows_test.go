@@ -135,6 +135,36 @@ func TestArchiveFoldersListPrintsRows(t *testing.T) {
 	}
 }
 
+func TestArchiveFoldersTabsPrintsRows(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		tabs: []api.DocumentFolderTab{{
+			ID:              "303",
+			Description:     "Credit cards",
+			ProcessedByYuki: true,
+		}},
+	}
+
+	err := Execute(context.Background(), []string{"archive", "folders", "tabs", "--folder", "3"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.folderID != "3" {
+		t.Fatalf("folderID = %q", client.folderID)
+	}
+	got := out.String()
+	for _, want := range []string{"ID", "DESCRIPTION", "PROCESSED", "303", "Credit cards", "true"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("archive folder tabs output missing %q in:\n%s", want, got)
+		}
+	}
+}
+
 func TestAccountingPaymentMethodsListPrintsRows(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{

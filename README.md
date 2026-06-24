@@ -39,6 +39,7 @@ yuki accounting transactions details --administration <administration-id> --from
 yuki accounting transactions document --administration <administration-id> --transaction <transaction-id> --output invoice.pdf
 yuki archive payment-methods list
 yuki archive folders list
+yuki archive folders tabs --folder 3
 yuki archive documents search --search-text apple --limit 25 --json
 yuki archive documents find --document <document-id>
 yuki archive documents download --document <document-id> --output invoice.pdf
