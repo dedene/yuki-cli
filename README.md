@@ -51,6 +51,7 @@ yuki archive documents modified-in-folder --folder 1 --modified-since 2026-01-01
 yuki archive documents modified-by-type --type 2 --modified-since 2026-01-01 --json
 yuki archive documents search --search-text apple --limit 25 --json
 yuki archive documents find --document <document-id>
+yuki archive documents image-count --document <document-id> --json
 yuki archive documents download --document <document-id> --output invoice.pdf
 ```
 

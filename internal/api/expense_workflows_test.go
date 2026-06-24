@@ -135,6 +135,23 @@ func TestDocumentFileParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentImageCountParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentImageCount", documentImageCountResponse, func(t *testing.T, body string) {
+		t.Helper()
+		if !strings.Contains(body, "<they:documentID>doc-1</they:documentID>") {
+			t.Fatalf("request body missing document ID:\n%s", body)
+		}
+	})
+
+	count, err := client.DocumentImageCount(context.Background(), "session-1", "doc-1")
+	if err != nil {
+		t.Fatalf("DocumentImageCount: %v", err)
+	}
+	if count.DocumentID != "doc-1" || count.ImageCount != 0 {
+		t.Fatalf("count = %#v", count)
+	}
+}
+
 const creditorItemsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -248,5 +265,14 @@ const documentFileResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Document>
       </DocumentFileResult>
     </DocumentFileResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentImageCountResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentImageCountResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentImageCountResult>0</DocumentImageCountResult>
+    </DocumentImageCountResponse>
   </soap:Body>
 </soap:Envelope>`

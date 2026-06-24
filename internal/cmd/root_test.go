@@ -276,6 +276,40 @@ func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	}
 }
 
+func TestArchiveDocumentsImageCountJSONPrintsCount(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		documentImageCount: api.DocumentImageCount{
+			DocumentID: "doc-1",
+			ImageCount: 3,
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"archive", "documents", "image-count",
+		"--document", "doc-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.documentID != "doc-1" {
+		t.Fatalf("documentID = %q", client.documentID)
+	}
+	var count api.DocumentImageCount
+	if err := json.Unmarshal(out.Bytes(), &count); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if count.DocumentID != "doc-1" || count.ImageCount != 3 {
+		t.Fatalf("count = %#v", count)
+	}
+}
+
 type cmdFakeStore struct {
 	key string
 	err error
@@ -335,6 +369,7 @@ type cmdFakeClient struct {
 	searchDocumentsOpts   api.SearchDocumentsOptions
 	document              api.Document
 	documentFile          api.DocumentFile
+	documentImageCount    api.DocumentImageCount
 	transactionDocument   api.TransactionDocument
 }
 
@@ -442,6 +477,14 @@ func (c *cmdFakeClient) FindDocument(_ context.Context, _ string, documentID str
 func (c *cmdFakeClient) DocumentFile(_ context.Context, _ string, documentID string) (api.DocumentFile, error) {
 	c.documentID = documentID
 	return c.documentFile, nil
+}
+
+func (c *cmdFakeClient) DocumentImageCount(_ context.Context, _ string, documentID string) (api.DocumentImageCount, error) {
+	c.documentID = documentID
+	if c.documentImageCount.DocumentID == "" {
+		c.documentImageCount.DocumentID = documentID
+	}
+	return c.documentImageCount, nil
 }
 
 func (c *cmdFakeClient) PaymentMethods(context.Context, string) ([]api.PaymentMethod, error) {

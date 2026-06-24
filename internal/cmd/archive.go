@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/dedene/yuki-cli/internal/api"
 	"github.com/dedene/yuki-cli/internal/output"
@@ -168,6 +169,7 @@ type ArchiveDocumentsCmd struct {
 	Search           ArchiveDocumentsSearchCmd           `cmd:"" help:"Search archive documents."`
 	Find             ArchiveDocumentsFindCmd             `cmd:"" help:"Find document metadata by document ID."`
 	Download         ArchiveDocumentsDownloadCmd         `cmd:"" help:"Download a document file by document ID."`
+	ImageCount       ArchiveDocumentsImageCountCmd       `cmd:"" name:"image-count" help:"Count rendered images for a document."`
 }
 
 type ArchiveDocumentsListCmd struct {
@@ -406,6 +408,25 @@ func (c *ArchiveDocumentsDownloadCmd) Run(rt *Runtime, globals *Globals) error {
 		return errors.New("missing --output; pass --output <path> or use --json to print the base64 payload")
 	}
 	return writeBase64File(rt.Out, c.Output, file.FileName, file.FileData)
+}
+
+type ArchiveDocumentsImageCountCmd struct {
+	Document string `name:"document" required:"" help:"Document ID."`
+}
+
+func (c *ArchiveDocumentsImageCountCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	count, err := client.DocumentImageCount(rt.Context, sessionID, c.Document)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, count)
+	}
+	return output.Table(rt.Out, []string{"DOCUMENT", "IMAGES"}, [][]string{{count.DocumentID, strconv.Itoa(count.ImageCount)}})
 }
 
 type ArchivePaymentMethodsCmd struct {

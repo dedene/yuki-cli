@@ -196,6 +196,11 @@ type DocumentFile struct {
 	FileData string `json:"file_data" xml:"FileData"`
 }
 
+type DocumentImageCount struct {
+	DocumentID string `json:"document_id"`
+	ImageCount int    `json:"image_count"`
+}
+
 type DocumentFolder struct {
 	ID              string `json:"id" xml:"ID,attr"`
 	Description     string `json:"description" xml:"Description"`
