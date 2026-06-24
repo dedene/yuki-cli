@@ -170,6 +170,7 @@ type ArchiveDocumentsCmd struct {
 	Search           ArchiveDocumentsSearchCmd           `cmd:"" help:"Search archive documents."`
 	Find             ArchiveDocumentsFindCmd             `cmd:"" help:"Find document metadata by document ID."`
 	Download         ArchiveDocumentsDownloadCmd         `cmd:"" help:"Download a document file by document ID."`
+	Binary           ArchiveDocumentsBinaryCmd           `cmd:"" help:"Download raw document binary data by document ID."`
 	ImageCount       ArchiveDocumentsImageCountCmd       `cmd:"" name:"image-count" help:"Count rendered images for a document."`
 	XML              ArchiveDocumentsXMLCmd              `cmd:"" name:"xml" help:"Fetch XML data for a document."`
 }
@@ -410,6 +411,29 @@ func (c *ArchiveDocumentsDownloadCmd) Run(rt *Runtime, globals *Globals) error {
 		return errors.New("missing --output; pass --output <path> or use --json to print the base64 payload")
 	}
 	return writeBase64File(rt.Out, c.Output, file.FileName, file.FileData)
+}
+
+type ArchiveDocumentsBinaryCmd struct {
+	Document string `name:"document" required:"" help:"Document ID."`
+	Output   string `name:"output" short:"o" help:"Write decoded file bytes to this path."`
+}
+
+func (c *ArchiveDocumentsBinaryCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	data, err := client.DocumentBinaryData(rt.Context, sessionID, c.Document)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, data)
+	}
+	if c.Output == "" {
+		return errors.New("missing --output; pass --output <path> or use --json to print the base64 payload")
+	}
+	return writeBase64File(rt.Out, c.Output, data.DocumentID, data.FileData)
 }
 
 type ArchiveDocumentsImageCountCmd struct {

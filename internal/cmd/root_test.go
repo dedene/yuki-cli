@@ -310,6 +310,40 @@ func TestArchiveDocumentsImageCountJSONPrintsCount(t *testing.T) {
 	}
 }
 
+func TestArchiveDocumentsBinaryJSONPrintsBase64(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		documentBinaryData: api.DocumentBinaryData{
+			DocumentID: "doc-1",
+			FileData:   "JVBERg==",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"archive", "documents", "binary",
+		"--document", "doc-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.documentID != "doc-1" {
+		t.Fatalf("documentID = %q", client.documentID)
+	}
+	var data api.DocumentBinaryData
+	if err := json.Unmarshal(out.Bytes(), &data); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if data.DocumentID != "doc-1" || data.FileData != "JVBERg==" {
+		t.Fatalf("data = %#v", data)
+	}
+}
+
 func TestArchiveDocumentsXMLJSONPrintsXMLData(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -403,6 +437,7 @@ type cmdFakeClient struct {
 	searchDocumentsOpts   api.SearchDocumentsOptions
 	document              api.Document
 	documentFile          api.DocumentFile
+	documentBinaryData    api.DocumentBinaryData
 	documentImageCount    api.DocumentImageCount
 	documentXMLData       api.DocumentXMLData
 	transactionDocument   api.TransactionDocument
@@ -512,6 +547,14 @@ func (c *cmdFakeClient) FindDocument(_ context.Context, _ string, documentID str
 func (c *cmdFakeClient) DocumentFile(_ context.Context, _ string, documentID string) (api.DocumentFile, error) {
 	c.documentID = documentID
 	return c.documentFile, nil
+}
+
+func (c *cmdFakeClient) DocumentBinaryData(_ context.Context, _ string, documentID string) (api.DocumentBinaryData, error) {
+	c.documentID = documentID
+	if c.documentBinaryData.DocumentID == "" {
+		c.documentBinaryData.DocumentID = documentID
+	}
+	return c.documentBinaryData, nil
 }
 
 func (c *cmdFakeClient) DocumentImageCount(_ context.Context, _ string, documentID string) (api.DocumentImageCount, error) {

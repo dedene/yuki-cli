@@ -135,6 +135,23 @@ func TestDocumentFileParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentBinaryDataParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentBinaryData", documentBinaryDataResponse, func(t *testing.T, body string) {
+		t.Helper()
+		if !strings.Contains(body, "<they:documentID>doc-1</they:documentID>") {
+			t.Fatalf("request body missing document ID:\n%s", body)
+		}
+	})
+
+	data, err := client.DocumentBinaryData(context.Background(), "session-1", "doc-1")
+	if err != nil {
+		t.Fatalf("DocumentBinaryData: %v", err)
+	}
+	if data.DocumentID != "doc-1" || data.FileData != "JVBERg==" {
+		t.Fatalf("data = %#v", data)
+	}
+}
+
 func TestDocumentImageCountParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClientForService(t, "Archive", "DocumentImageCount", documentImageCountResponse, func(t *testing.T, body string) {
 		t.Helper()
@@ -283,6 +300,15 @@ const documentFileResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Document>
       </DocumentFileResult>
     </DocumentFileResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentBinaryDataResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentBinaryDataResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentBinaryDataResult>JVBERg==</DocumentBinaryDataResult>
+    </DocumentBinaryDataResponse>
   </soap:Body>
 </soap:Envelope>`
 

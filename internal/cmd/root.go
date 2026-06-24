@@ -43,6 +43,7 @@ type Client interface {
 	SearchDocuments(context.Context, string, api.SearchDocumentsOptions) ([]api.Document, error)
 	FindDocument(context.Context, string, string) (api.Document, error)
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)
+	DocumentBinaryData(context.Context, string, string) (api.DocumentBinaryData, error)
 	DocumentImageCount(context.Context, string, string) (api.DocumentImageCount, error)
 	DocumentXMLDataAsString(context.Context, string, string) (api.DocumentXMLData, error)
 	PaymentMethods(context.Context, string) ([]api.PaymentMethod, error)

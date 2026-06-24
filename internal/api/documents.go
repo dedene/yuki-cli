@@ -281,6 +281,25 @@ func (c *Client) DocumentFile(ctx context.Context, sessionID, documentID string)
 	return env.Body.Response.Result.File, nil
 }
 
+func (c *Client) DocumentBinaryData(ctx context.Context, sessionID, documentID string) (DocumentBinaryData, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "documentID", Value: documentID},
+	}
+	data, err := c.call(ctx, "Archive", "DocumentBinaryData", params)
+	if err != nil {
+		return DocumentBinaryData{}, err
+	}
+	var env documentBinaryDataEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return DocumentBinaryData{}, fmt.Errorf("parse DocumentBinaryData response: %w", err)
+	}
+	return DocumentBinaryData{
+		DocumentID: documentID,
+		FileData:   env.Body.Response.Result,
+	}, nil
+}
+
 func (c *Client) DocumentImageCount(ctx context.Context, sessionID, documentID string) (DocumentImageCount, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -551,6 +570,14 @@ type documentFileEnvelope struct {
 				File DocumentFile `xml:"Document"`
 			} `xml:"DocumentFileResult"`
 		} `xml:"DocumentFileResponse"`
+	} `xml:"Body"`
+}
+
+type documentBinaryDataEnvelope struct {
+	Body struct {
+		Response struct {
+			Result string `xml:"DocumentBinaryDataResult"`
+		} `xml:"DocumentBinaryDataResponse"`
 	} `xml:"Body"`
 }
 
