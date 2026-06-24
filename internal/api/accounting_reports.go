@@ -91,6 +91,29 @@ func (c *Client) NetRevenue(ctx context.Context, sessionID string, opts RevenueO
 	}, nil
 }
 
+func (c *Client) NetRevenueFiscal(ctx context.Context, sessionID string, opts RevenueOptions) (RevenueReport, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "StartDate", Value: opts.StartDate},
+		{Name: "EndDate", Value: opts.EndDate},
+	}
+	data, err := c.call(ctx, "Accounting", "NetRevenueFiscal", params)
+	if err != nil {
+		return RevenueReport{}, err
+	}
+	var env netRevenueFiscalEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return RevenueReport{}, fmt.Errorf("parse NetRevenueFiscal response: %w", err)
+	}
+	return RevenueReport{
+		AdministrationID: opts.AdministrationID,
+		StartDate:        opts.StartDate,
+		EndDate:          opts.EndDate,
+		Amount:           env.Body.Response.Result,
+	}, nil
+}
+
 type glAccountBalanceEnvelope struct {
 	Body struct {
 		Response struct {
@@ -108,6 +131,14 @@ type netRevenueEnvelope struct {
 		Response struct {
 			Result string `xml:"NetRevenueResult"`
 		} `xml:"NetRevenueResponse"`
+	} `xml:"Body"`
+}
+
+type netRevenueFiscalEnvelope struct {
+	Body struct {
+		Response struct {
+			Result string `xml:"NetRevenueFiscalResult"`
+		} `xml:"NetRevenueFiscalResponse"`
 	} `xml:"Body"`
 }
 

@@ -143,7 +143,8 @@ func renderGLAccountBalances(rt *Runtime, balances []api.GLAccountBalanceItem) e
 }
 
 type RevenueCmd struct {
-	Net RevenueNetCmd `cmd:"" help:"Get net revenue for a date range."`
+	Net       RevenueNetCmd       `cmd:"" help:"Get net revenue for a date range."`
+	NetFiscal RevenueNetFiscalCmd `cmd:"" name:"net-fiscal" help:"Get fiscal net revenue for a date range."`
 }
 
 type RevenueNetCmd struct {
@@ -173,6 +174,40 @@ func (c *RevenueNetCmd) Run(rt *Runtime, globals *Globals) error {
 	if globals.JSON {
 		return output.JSON(rt.Out, report)
 	}
+	return renderRevenueReport(rt, report)
+}
+
+type RevenueNetFiscalCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	From           string `name:"from" required:"" help:"Start date, YYYY-MM-DD."`
+	To             string `name:"to" required:"" help:"End date, YYYY-MM-DD."`
+}
+
+func (c *RevenueNetFiscalCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	report, err := client.NetRevenueFiscal(rt.Context, sessionID, api.RevenueOptions{
+		AdministrationID: administrationID,
+		StartDate:        c.From,
+		EndDate:          c.To,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, report)
+	}
+	return renderRevenueReport(rt, report)
+}
+
+func renderRevenueReport(rt *Runtime, report api.RevenueReport) error {
 	return output.Table(rt.Out, []string{"FROM", "TO", "AMOUNT"}, [][]string{{report.StartDate, report.EndDate, report.Amount}})
 }
 

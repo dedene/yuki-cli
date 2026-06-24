@@ -298,6 +298,46 @@ func TestRevenueNetJSONUsesDateRange(t *testing.T) {
 	}
 }
 
+func TestRevenueNetFiscalJSONUsesDateRange(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		revenueReport: api.RevenueReport{
+			AdministrationID: "admin-1",
+			StartDate:        "2020-01-01",
+			EndDate:          "2020-01-31",
+			Amount:           "1868.36",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "revenue", "net-fiscal",
+		"--administration", "admin-1",
+		"--from", "2020-01-01",
+		"--to", "2020-01-31",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.revenueOpts.AdministrationID != "admin-1" ||
+		client.revenueOpts.StartDate != "2020-01-01" ||
+		client.revenueOpts.EndDate != "2020-01-31" {
+		t.Fatalf("revenueOpts = %#v", client.revenueOpts)
+	}
+	var report api.RevenueReport
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if report.Amount != "1868.36" {
+		t.Fatalf("report = %#v", report)
+	}
+}
+
 func TestCreditorItemsListFiltersPaymentMethod(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -695,6 +735,15 @@ func (c *cmdFakeClient) GLAccountBalanceYearEnd(_ context.Context, _ string, opt
 
 func (c *cmdFakeClient) NetRevenue(_ context.Context, _ string, opts api.RevenueOptions) (api.RevenueReport, error) {
 	c.revenueOpts = opts
+	return c.revenueReportWithDefaults(opts), nil
+}
+
+func (c *cmdFakeClient) NetRevenueFiscal(_ context.Context, _ string, opts api.RevenueOptions) (api.RevenueReport, error) {
+	c.revenueOpts = opts
+	return c.revenueReportWithDefaults(opts), nil
+}
+
+func (c *cmdFakeClient) revenueReportWithDefaults(opts api.RevenueOptions) api.RevenueReport {
 	if c.revenueReport.AdministrationID == "" {
 		c.revenueReport.AdministrationID = opts.AdministrationID
 	}
@@ -704,7 +753,7 @@ func (c *cmdFakeClient) NetRevenue(_ context.Context, _ string, opts api.Revenue
 	if c.revenueReport.EndDate == "" {
 		c.revenueReport.EndDate = opts.EndDate
 	}
-	return c.revenueReport, nil
+	return c.revenueReport
 }
 
 func (c *cmdFakeClient) OutstandingCreditorItems(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {

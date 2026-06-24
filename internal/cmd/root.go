@@ -31,6 +31,7 @@ type Client interface {
 	GLAccountBalanceFiscal(context.Context, string, api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error)
 	GLAccountBalanceYearEnd(context.Context, string, api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error)
 	NetRevenue(context.Context, string, api.RevenueOptions) (api.RevenueReport, error)
+	NetRevenueFiscal(context.Context, string, api.RevenueOptions) (api.RevenueReport, error)
 	OutstandingCreditorItems(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
 	OutstandingCreditorItemsByDate(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
 	Transactions(context.Context, string, api.TransactionsOptions) ([]api.Transaction, error)
