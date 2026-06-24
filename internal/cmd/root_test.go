@@ -436,6 +436,7 @@ type cmdFakeClient struct {
 	searchDocuments       []api.Document
 	searchDocumentsOpts   api.SearchDocumentsOptions
 	document              api.Document
+	documentBundle        []api.Document
 	documentFile          api.DocumentFile
 	documentBinaryData    api.DocumentBinaryData
 	documentImageCount    api.DocumentImageCount
@@ -543,6 +544,11 @@ func (c *cmdFakeClient) SearchDocuments(_ context.Context, _ string, opts api.Se
 func (c *cmdFakeClient) FindDocument(_ context.Context, _ string, documentID string) (api.Document, error) {
 	c.documentID = documentID
 	return c.document, nil
+}
+
+func (c *cmdFakeClient) DocumentBundle(_ context.Context, _ string, documentID string) ([]api.Document, error) {
+	c.documentID = documentID
+	return c.documentBundle, nil
 }
 
 func (c *cmdFakeClient) DocumentFile(_ context.Context, _ string, documentID string) (api.DocumentFile, error) {

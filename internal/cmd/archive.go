@@ -169,6 +169,7 @@ type ArchiveDocumentsCmd struct {
 	ModifiedByType   ArchiveDocumentsModifiedByTypeCmd   `cmd:"" name:"modified-by-type" help:"List archive documents modified since a date by document type."`
 	Search           ArchiveDocumentsSearchCmd           `cmd:"" help:"Search archive documents."`
 	Find             ArchiveDocumentsFindCmd             `cmd:"" help:"Find document metadata by document ID."`
+	Bundle           ArchiveDocumentsBundleCmd           `cmd:"" help:"List documents bundled with a main document."`
 	Download         ArchiveDocumentsDownloadCmd         `cmd:"" help:"Download a document file by document ID."`
 	Binary           ArchiveDocumentsBinaryCmd           `cmd:"" help:"Download raw document binary data by document ID."`
 	ImageCount       ArchiveDocumentsImageCountCmd       `cmd:"" name:"image-count" help:"Count rendered images for a document."`
