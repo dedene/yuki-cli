@@ -721,6 +721,56 @@ func TestDebtorItemsListJSONUsesDateRange(t *testing.T) {
 	}
 }
 
+func TestDebtorItemsWithPaymentReferenceJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		debtorItems: []api.DebtorItem{{
+			Date:             "2020-01-31",
+			Contact:          "Apple Sales International",
+			OriginalAmount:   "29.76",
+			OpenAmount:       "29.76",
+			PaymentMethod:    "Overschrijving",
+			Reference:        "XX-12534",
+			PaymentReference: "RF18539007547034",
+			DocumentID:       "doc-1",
+			Description:      "Testfactuur - 1",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "debtor-items", "with-payment-reference",
+		"--administration", "admin-1",
+		"--from", "2020-01-01",
+		"--to", "2020-01-31",
+		"--include-bank-transactions",
+		"--sort-order", "DateDesc",
+		"--payment-method", "Overschrijving",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.debtorOpts.AdministrationID != "admin-1" ||
+		client.debtorOpts.StartDate != "2020-01-01" ||
+		client.debtorOpts.EndDate != "2020-01-31" ||
+		!client.debtorOpts.IncludeBankTransactions ||
+		client.debtorOpts.SortOrder != "DateDesc" {
+		t.Fatalf("debtorOpts = %#v", client.debtorOpts)
+	}
+	var items []api.DebtorItem
+	if err := json.Unmarshal(out.Bytes(), &items); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(items) != 1 || items[0].PaymentReference != "RF18539007547034" {
+		t.Fatalf("items = %#v", items)
+	}
+}
+
 func TestTransactionDetailsJSONUsesFlags(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1079,6 +1129,11 @@ func (c *cmdFakeClient) OutstandingDebtorItems(_ context.Context, _ string, opts
 }
 
 func (c *cmdFakeClient) OutstandingDebtorItemsByDate(_ context.Context, _ string, opts api.DebtorItemsOptions) ([]api.DebtorItem, error) {
+	c.debtorOpts = opts
+	return c.debtorItems, nil
+}
+
+func (c *cmdFakeClient) OutstandingDebtorWithPaymentReference(_ context.Context, _ string, opts api.DebtorItemsOptions) ([]api.DebtorItem, error) {
 	c.debtorOpts = opts
 	return c.debtorItems, nil
 }

@@ -81,6 +81,42 @@ func TestOutstandingDebtorItemsByDateParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestOutstandingDebtorWithPaymentReferenceParsesWSDLCompatibleResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Accounting", "OutstandingDebtorWithPaymentReference", outstandingDebtorWithPaymentReferenceResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:includeBankTransactions>true</they:includeBankTransactions>",
+			"<they:sortOrder>DateDesc</they:sortOrder>",
+			"<they:startDate>2020-01-01</they:startDate>",
+			"<they:endDate>2020-01-31</they:endDate>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	items, err := client.OutstandingDebtorWithPaymentReference(context.Background(), "session-1", DebtorItemsOptions{
+		AdministrationID:        "admin-1",
+		StartDate:               "2020-01-01",
+		EndDate:                 "2020-01-31",
+		IncludeBankTransactions: true,
+		SortOrder:               "DateDesc",
+	})
+	if err != nil {
+		t.Fatalf("OutstandingDebtorWithPaymentReference: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("len(items) = %d, want 1", len(items))
+	}
+	if items[0].PaymentReference != "RF18539007547034" ||
+		items[0].DocumentID != "c9cc2001-2ea4-41ee-a20e-48f40cdf4e38" ||
+		items[0].PaymentMethod != "Overschrijving" {
+		t.Fatalf("item = %#v", items[0])
+	}
+}
+
 const outstandingDebtorItemsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -120,6 +156,32 @@ const outstandingDebtorItemsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </OutstandingDebtorItems>
       </OutstandingDebtorItemsResult>
     </OutstandingDebtorItemsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const outstandingDebtorWithPaymentReferenceResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <OutstandingDebtorWithPaymentReferenceResponse xmlns="http://www.theyukicompany.com/">
+      <OutstandingDebtorWithPaymentReferenceResult>
+        <OutstandingDebtorItems xmlns="">
+          <Item ID="ef1a1588-fd5d-49a2-a478-2609012ddae6">
+            <Date>2020-01-31</Date>
+            <Description>Testfactuur - 1</Description>
+            <Contact>Apple Sales International</Contact>
+            <ContactID>22f8a673-d5de-4b85-a845-814d15dd33cd</ContactID>
+            <OpenAmount>29.76</OpenAmount>
+            <OriginalAmount>29.76</OriginalAmount>
+            <Type ID="6">Verkoopfactuur</Type>
+            <Reference>XX-12534</Reference>
+            <PaymentReference>RF18539007547034</PaymentReference>
+            <DueDate>2012-07-22</DueDate>
+            <DocumentID>c9cc2001-2ea4-41ee-a20e-48f40cdf4e38</DocumentID>
+            <PaymentMethod>Overschrijving</PaymentMethod>
+          </Item>
+        </OutstandingDebtorItems>
+      </OutstandingDebtorWithPaymentReferenceResult>
+    </OutstandingDebtorWithPaymentReferenceResponse>
   </soap:Body>
 </soap:Envelope>`
 

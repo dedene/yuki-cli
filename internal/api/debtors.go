@@ -52,6 +52,26 @@ func (c *Client) OutstandingDebtorItemsByDate(ctx context.Context, sessionID str
 	return env.Body.Response.Result.Items.Items, nil
 }
 
+func (c *Client) OutstandingDebtorWithPaymentReference(ctx context.Context, sessionID string, opts DebtorItemsOptions) ([]DebtorItem, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "includeBankTransactions", Value: boolString(opts.IncludeBankTransactions)},
+		{Name: "sortOrder", Value: opts.SortOrder},
+		{Name: "startDate", Value: opts.StartDate},
+		{Name: "endDate", Value: opts.EndDate},
+	}
+	data, err := c.call(ctx, "Accounting", "OutstandingDebtorWithPaymentReference", params)
+	if err != nil {
+		return nil, err
+	}
+	var env outstandingDebtorWithPaymentReferenceEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse OutstandingDebtorWithPaymentReference response: %w", err)
+	}
+	return env.Body.Response.Result.Items.Items, nil
+}
+
 type outstandingDebtorItemsEnvelope struct {
 	Body struct {
 		Response struct {
@@ -61,6 +81,18 @@ type outstandingDebtorItemsEnvelope struct {
 				} `xml:"OutstandingDebtorItems"`
 			} `xml:"OutstandingDebtorItemsResult"`
 		} `xml:"OutstandingDebtorItemsResponse"`
+	} `xml:"Body"`
+}
+
+type outstandingDebtorWithPaymentReferenceEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Items struct {
+					Items []DebtorItem `xml:"Item"`
+				} `xml:"OutstandingDebtorItems"`
+			} `xml:"OutstandingDebtorWithPaymentReferenceResult"`
+		} `xml:"OutstandingDebtorWithPaymentReferenceResponse"`
 	} `xml:"Body"`
 }
 

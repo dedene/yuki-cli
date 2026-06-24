@@ -40,6 +40,7 @@ type Client interface {
 	OutstandingCreditorWithPaymentReference(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
 	OutstandingDebtorItems(context.Context, string, api.DebtorItemsOptions) ([]api.DebtorItem, error)
 	OutstandingDebtorItemsByDate(context.Context, string, api.DebtorItemsOptions) ([]api.DebtorItem, error)
+	OutstandingDebtorWithPaymentReference(context.Context, string, api.DebtorItemsOptions) ([]api.DebtorItem, error)
 	Transactions(context.Context, string, api.TransactionsOptions) ([]api.Transaction, error)
 	TransactionDetails(context.Context, string, api.TransactionDetailsOptions) ([]api.TransactionInfo, error)
 	TransactionDocument(context.Context, string, string, string) (api.TransactionDocument, error)
