@@ -1260,6 +1260,46 @@ func TestVATCodesActiveJSONUsesAdministration(t *testing.T) {
 	}
 }
 
+func TestVATReturnsListJSONUsesScope(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		vatReturns: []api.VATReturnInfo{{
+			StartDate: "2023-07-01T00:00:00",
+			EndDate:   "2023-07-31T00:00:00",
+			Status:    "Draft",
+			Modified:  "2023-08-01T09:14:43.033",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"vat", "returns", "list",
+		"--administration", "admin-1",
+		"--year", "2023",
+		"--modified-after", "2021-01-01",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.vatReturnOpts.AdministrationID != "admin-1" ||
+		client.vatReturnOpts.Year != 2023 ||
+		client.vatReturnOpts.ModifiedAfter != "2021-01-01" {
+		t.Fatalf("vatReturnOpts = %#v", client.vatReturnOpts)
+	}
+	var returns []api.VATReturnInfo
+	if err := json.Unmarshal(out.Bytes(), &returns); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(returns) != 1 || returns[0].Status != "Draft" {
+		t.Fatalf("returns = %#v", returns)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1525,6 +1565,8 @@ type cmdFakeClient struct {
 	documentXMLDataOperation    string
 	transactionDocument         api.TransactionDocument
 	vatCodes                    []api.VATCode
+	vatReturns                  []api.VATReturnInfo
+	vatReturnOpts               api.VATReturnListOptions
 	maxWidth                    int
 	maxHeight                   int
 }
@@ -1852,4 +1894,9 @@ func (c *cmdFakeClient) Menu(context.Context, string) ([]api.MenuEntry, error) {
 func (c *cmdFakeClient) ActiveVATCodes(_ context.Context, _ string, administrationID string) ([]api.VATCode, error) {
 	c.administrationID = administrationID
 	return c.vatCodes, nil
+}
+
+func (c *cmdFakeClient) VATReturns(_ context.Context, _ string, opts api.VATReturnListOptions) ([]api.VATReturnInfo, error) {
+	c.vatReturnOpts = opts
+	return c.vatReturns, nil
 }

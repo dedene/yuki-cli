@@ -79,6 +79,7 @@ type Client interface {
 	CostCategories(context.Context, string) ([]api.CostCategory, error)
 	Menu(context.Context, string) ([]api.MenuEntry, error)
 	ActiveVATCodes(context.Context, string, string) ([]api.VATCode, error)
+	VATReturns(context.Context, string, api.VATReturnListOptions) ([]api.VATReturnInfo, error)
 }
 
 type Runtime struct {

@@ -37,6 +37,42 @@ func TestActiveVATCodesParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestVATReturnsParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Vat", "VATReturnList", vatReturnListResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:year>2023</they:year>",
+			"<they:modifiedAfter>2021-01-01</they:modifiedAfter>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	returns, err := client.VATReturns(context.Background(), "session-1", VATReturnListOptions{
+		AdministrationID: "admin-1",
+		Year:             2023,
+		ModifiedAfter:    "2021-01-01",
+	})
+	if err != nil {
+		t.Fatalf("VATReturns: %v", err)
+	}
+	if len(returns) != 2 {
+		t.Fatalf("len(returns) = %d, want 2", len(returns))
+	}
+	if returns[0].StartDate != "2023-07-01T00:00:00" ||
+		returns[0].EndDate != "2023-07-31T00:00:00" ||
+		returns[0].Status != "Draft" ||
+		returns[0].SendDate != "" ||
+		returns[0].AcknowledgeDate != "" ||
+		returns[0].Modified != "2023-08-01T09:14:43.033" ||
+		returns[1].StartDate != "2023-03-01T00:00:00" {
+		t.Fatalf("returns = %#v", returns)
+	}
+}
+
 const activeVATCodesResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <soap:Body>
@@ -69,5 +105,31 @@ const activeVATCodesResponse = `<?xml version="1.0" encoding="utf-8"?>
         </VATCode>
       </ActiveVATCodesListResult>
     </ActiveVATCodesListResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const vatReturnListResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <VATReturnListResponse xmlns="http://www.theyukicompany.com/">
+      <VATReturnListResult>
+        <VATReturnInfo>
+          <startDate>2023-07-01T00:00:00</startDate>
+          <endDate>2023-07-31T00:00:00</endDate>
+          <status>Draft</status>
+          <sendDate xsi:nil="true"/>
+          <acknowledgeDate xsi:nil="true"/>
+          <modified>2023-08-01T09:14:43.033</modified>
+        </VATReturnInfo>
+        <VATReturnInfo>
+          <startDate>2023-03-01T00:00:00</startDate>
+          <endDate>2023-03-31T00:00:00</endDate>
+          <status>Draft</status>
+          <sendDate xsi:nil="true"/>
+          <acknowledgeDate xsi:nil="true"/>
+          <modified>2023-03-02T09:30:37.707</modified>
+        </VATReturnInfo>
+      </VATReturnListResult>
+    </VATReturnListResponse>
   </soap:Body>
 </soap:Envelope>`

@@ -278,6 +278,16 @@ type VATCode struct {
 	EndDate         string `json:"end_date,omitempty" xml:"endDate"`
 }
 
+type VATReturnInfo struct {
+	DocumentID      string `json:"document_id,omitempty" xml:"documentID"`
+	StartDate       string `json:"start_date" xml:"startDate"`
+	EndDate         string `json:"end_date" xml:"endDate"`
+	Status          string `json:"status,omitempty" xml:"status"`
+	SendDate        string `json:"send_date,omitempty" xml:"sendDate"`
+	AcknowledgeDate string `json:"acknowledge_date,omitempty" xml:"acknowledgeDate"`
+	Modified        string `json:"modified" xml:"modified"`
+}
+
 type ProjectInfo struct {
 	Code        string `json:"code,omitempty" xml:"code"`
 	Description string `json:"description,omitempty" xml:"description"`
