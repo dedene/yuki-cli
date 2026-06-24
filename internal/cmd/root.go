@@ -81,6 +81,7 @@ type Client interface {
 	ActiveVATCodes(context.Context, string, string) ([]api.VATCode, error)
 	VATReturns(context.Context, string, api.VATReturnListOptions) ([]api.VATReturnInfo, error)
 	AdministrationData(context.Context, string, string) (api.AdministrationIntegrationData, error)
+	FiscalTable(context.Context, string, string, int) (api.FiscalTableTotals, error)
 }
 
 type Runtime struct {
@@ -111,6 +112,7 @@ type CLI struct {
 	Archive         ArchiveCmd         `cmd:"" help:"Read archive document information."`
 	VAT             VATCmd             `cmd:"" name:"vat" help:"Read VAT information."`
 	Integration     IntegrationCmd     `cmd:"" help:"Read integration information."`
+	FiscalTable     FiscalTableCmd     `cmd:"" name:"fiscal-table" help:"Read fiscal table information."`
 }
 
 func Execute(ctx context.Context, args []string, rt Runtime) (err error) {

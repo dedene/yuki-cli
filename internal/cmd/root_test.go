@@ -1336,6 +1336,43 @@ func TestIntegrationAdministrationDataJSONUsesAdministration(t *testing.T) {
 	}
 }
 
+func TestFiscalTableTotalsJSONUsesCompanyAndYear(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		fiscalTableTotals: api.FiscalTableTotals{
+			RevenueTotal:             "1000.00",
+			GrossMarginTotal:         "800.00",
+			ProfessionalCostsTotal:   "300.00",
+			SocialContributionsTotal: "120.00",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"fiscal-table", "totals",
+		"--company", "company-1",
+		"--year", "2023",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.companyID != "company-1" || client.fiscalTableYear != 2023 {
+		t.Fatalf("company/year = %q/%d", client.companyID, client.fiscalTableYear)
+	}
+	var totals api.FiscalTableTotals
+	if err := json.Unmarshal(out.Bytes(), &totals); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if totals.RevenueTotal != "1000.00" || totals.SocialContributionsTotal != "120.00" {
+		t.Fatalf("totals = %#v", totals)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1536,6 +1573,7 @@ type cmdFakeClient struct {
 	sessionID                   string
 	accessKey                   string
 	administrationID            string
+	companyID                   string
 	documentID                  string
 	transactionID               string
 	domains                     []api.Domain
@@ -1604,6 +1642,8 @@ type cmdFakeClient struct {
 	vatReturns                  []api.VATReturnInfo
 	vatReturnOpts               api.VATReturnListOptions
 	administrationData          api.AdministrationIntegrationData
+	fiscalTableTotals           api.FiscalTableTotals
+	fiscalTableYear             int
 	maxWidth                    int
 	maxHeight                   int
 }
@@ -1941,4 +1981,10 @@ func (c *cmdFakeClient) VATReturns(_ context.Context, _ string, opts api.VATRetu
 func (c *cmdFakeClient) AdministrationData(_ context.Context, _ string, administrationID string) (api.AdministrationIntegrationData, error) {
 	c.administrationID = administrationID
 	return c.administrationData, nil
+}
+
+func (c *cmdFakeClient) FiscalTable(_ context.Context, _ string, companyID string, year int) (api.FiscalTableTotals, error) {
+	c.companyID = companyID
+	c.fiscalTableYear = year
+	return c.fiscalTableTotals, nil
 }

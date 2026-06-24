@@ -63,6 +63,7 @@ yuki accounting projects balance --administration <administration-id> --project-
 yuki vat codes active --administration <administration-id> --json
 yuki vat returns list --administration <administration-id> --year 2023 --modified-after 2021-01-01 --json
 yuki integration administration-data --administration <administration-id> --json
+yuki fiscal-table totals --company <company-id> --year 2023 --json
 yuki archive payment-methods list
 yuki archive currencies list
 yuki archive cost-categories list

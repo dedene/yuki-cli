@@ -310,6 +310,15 @@ type AdministrationIntegrationData struct {
 	VATNumber             string `json:"vat_number,omitempty" xml:"VATNumber"`
 }
 
+type FiscalTableTotals struct {
+	CompanyID                string `json:"company_id,omitempty"`
+	Year                     int    `json:"year,omitempty"`
+	RevenueTotal             string `json:"revenue_total,omitempty" xml:"RevenueTotal"`
+	GrossMarginTotal         string `json:"gross_margin_total,omitempty" xml:"GrossMarginTotal"`
+	ProfessionalCostsTotal   string `json:"professional_costs_total,omitempty" xml:"ProfessionalCostsTotal"`
+	SocialContributionsTotal string `json:"social_contributions_total,omitempty" xml:"SocialContributionsTotal"`
+}
+
 type ProjectInfo struct {
 	Code        string `json:"code,omitempty" xml:"code"`
 	Description string `json:"description,omitempty" xml:"description"`
