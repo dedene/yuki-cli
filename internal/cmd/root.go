@@ -27,6 +27,11 @@ type Client interface {
 	Administrations(context.Context, string) ([]api.Administration, error)
 	Companies(context.Context, string) ([]api.Company, error)
 	GLAccounts(context.Context, string, string) ([]api.GLAccount, error)
+	OutstandingCreditorItemsByDate(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
+	TransactionDetails(context.Context, string, api.TransactionDetailsOptions) ([]api.TransactionInfo, error)
+	TransactionDocument(context.Context, string, string, string) (api.TransactionDocument, error)
+	FindDocument(context.Context, string, string) (api.Document, error)
+	DocumentFile(context.Context, string, string) (api.DocumentFile, error)
 }
 
 type Runtime struct {
@@ -54,6 +59,7 @@ type CLI struct {
 	Domains         DomainsCmd         `cmd:"" help:"Inspect accessible domains."`
 	Administrations AdministrationsCmd `cmd:"" help:"Inspect accessible administrations."`
 	Accounting      AccountingCmd      `cmd:"" help:"Read accounting information."`
+	Archive         ArchiveCmd         `cmd:"" help:"Read archive document information."`
 }
 
 func Execute(ctx context.Context, args []string, rt Runtime) (err error) {

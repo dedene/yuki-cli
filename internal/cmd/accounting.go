@@ -7,7 +7,9 @@ import (
 )
 
 type AccountingCmd struct {
-	GLAccounts GLAccountsCmd `cmd:"" name:"gl-accounts" help:"Inspect GL accounts."`
+	GLAccounts    GLAccountsCmd    `cmd:"" name:"gl-accounts" help:"Inspect GL accounts."`
+	CreditorItems CreditorItemsCmd `cmd:"" name:"creditor-items" help:"Inspect outstanding creditor purchase invoices."`
+	Transactions  TransactionsCmd  `cmd:"" help:"Inspect accounting transactions."`
 }
 
 type GLAccountsCmd struct {
@@ -19,16 +21,9 @@ type GLAccountsListCmd struct {
 }
 
 func (c *GLAccountsListCmd) Run(rt *Runtime, globals *Globals) error {
-	profile, err := loadProfile(globals)
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
 	if err != nil {
 		return err
-	}
-	administrationID := c.Administration
-	if administrationID == "" {
-		administrationID = profile.AdministrationID
-	}
-	if administrationID == "" {
-		return errors.New("missing --administration; set it in config or pass --administration <id>")
 	}
 
 	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
@@ -47,4 +42,19 @@ func (c *GLAccountsListCmd) Run(rt *Runtime, globals *Globals) error {
 		rows = append(rows, []string{account.Code, account.Type, account.Subtype, output.Bool(account.Enabled), account.Description})
 	}
 	return output.Table(rt.Out, []string{"CODE", "TYPE", "SUBTYPE", "ENABLED", "DESCRIPTION"}, rows)
+}
+
+func resolveAdministrationID(globals *Globals, explicit string) (string, error) {
+	profile, err := loadProfile(globals)
+	if err != nil {
+		return "", err
+	}
+	administrationID := explicit
+	if administrationID == "" {
+		administrationID = profile.AdministrationID
+	}
+	if administrationID == "" {
+		return "", errors.New("missing --administration; set it in config or pass --administration <id>")
+	}
+	return administrationID, nil
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"html"
+	"strconv"
 	"strings"
 )
 
@@ -34,4 +35,8 @@ func Envelope(operation string, params []Param) string {
 
 func SOAPAction(operation string) string {
 	return Namespace + operation
+}
+
+func boolString(value bool) string {
+	return strconv.FormatBool(value)
 }

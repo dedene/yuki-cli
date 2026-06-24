@@ -25,13 +25,18 @@ For CI or agent runs, use:
 YUKI_ACCESS_KEY=<key> yuki auth status --json
 ```
 
-## First Slice
+## Read-Only Workflows
 
 ```bash
 yuki domains list
 yuki domains current
 yuki administrations list
 yuki accounting gl-accounts list --administration <administration-id>
+yuki accounting creditor-items list --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --payment-method Creditcard
+yuki accounting transactions details --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --gl-account 400000 --json
+yuki accounting transactions document --administration <administration-id> --transaction <transaction-id> --output invoice.pdf
+yuki archive documents find --document <document-id>
+yuki archive documents download --document <document-id> --output invoice.pdf
 ```
 
 Global flags:
@@ -42,4 +47,4 @@ yuki --base-url https://api.yukiworks.nl/ws domains list
 yuki --profile zenjoy auth status
 ```
 
-The first implementation is intentionally read-only. Mutating workflows such as sales invoice creation, document upload, journals, contact updates, and project updates are deferred until their command contracts and docs-parity rows are settled.
+The implemented CLI surface is intentionally read-only against Yuki. Mutating workflows such as sales invoice creation, document upload, journals, contact updates, and project updates are deferred until their command contracts and docs-parity rows are settled.

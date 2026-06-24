@@ -144,6 +144,138 @@ func TestGLAccountsListJSONUsesAdministrationFlag(t *testing.T) {
 	}
 }
 
+func TestCreditorItemsListFiltersPaymentMethod(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		creditorItems: []api.CreditorItem{{
+			Date:           "2026-01-03",
+			Contact:        "AD Delhaize",
+			OriginalAmount: "242.00",
+			OpenAmount:     "242.00",
+			PaymentMethod:  "Creditcard",
+			Reference:      "test",
+			DocumentID:     "doc-1",
+			Description:    "Factuur van AD Delhaize",
+		}, {
+			Date:           "2026-01-04",
+			Contact:        "Other Vendor",
+			OriginalAmount: "10.00",
+			OpenAmount:     "10.00",
+			PaymentMethod:  "Transfer",
+			DocumentID:     "doc-2",
+			Description:    "Bank transfer",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"accounting", "creditor-items", "list",
+		"--administration", "admin-1",
+		"--from", "2026-01-01",
+		"--to", "2026-01-31",
+		"--payment-method", "Creditcard",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.creditorOpts.AdministrationID != "admin-1" ||
+		client.creditorOpts.StartDate != "2026-01-01" ||
+		client.creditorOpts.EndDate != "2026-01-31" {
+		t.Fatalf("creditorOpts = %#v", client.creditorOpts)
+	}
+	got := out.String()
+	for _, want := range []string{"DATE", "AD Delhaize", "Creditcard", "doc-1"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("creditor-items output missing %q in:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "Other Vendor") {
+		t.Fatalf("creditor-items output was not filtered:\n%s", got)
+	}
+}
+
+func TestTransactionDetailsJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		transactions: []api.TransactionInfo{{
+			ID:                "tx-1",
+			TransactionDate:   "2026-01-03",
+			GLAccountCode:     "400000",
+			TransactionAmount: "-242.00",
+			DocumentID:        "doc-1",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "transactions", "details",
+		"--administration", "admin-1",
+		"--gl-account", "400000",
+		"--from", "2026-01-01",
+		"--to", "2026-01-31",
+		"--financial-mode", "1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.transactionOpts.AdministrationID != "admin-1" ||
+		client.transactionOpts.GLAccountCode != "400000" ||
+		client.transactionOpts.StartDate != "2026-01-01" ||
+		client.transactionOpts.FinancialMode != "1" {
+		t.Fatalf("transactionOpts = %#v", client.transactionOpts)
+	}
+	var transactions []api.TransactionInfo
+	if err := json.Unmarshal(out.Bytes(), &transactions); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(transactions) != 1 || transactions[0].ID != "tx-1" {
+		t.Fatalf("transactions = %#v", transactions)
+	}
+}
+
+func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		document: api.Document{
+			ID:              "doc-1",
+			Subject:         "Invoice",
+			DocumentDate:    "2026-01-03",
+			Amount:          "242.00",
+			TypeDescription: "Aankoopfactuur",
+			FileName:        "invoice.pdf",
+			ContactName:     "AD Delhaize",
+		},
+	}
+
+	err := Execute(context.Background(), []string{"archive", "documents", "find", "--document", "doc-1"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.documentID != "doc-1" {
+		t.Fatalf("documentID = %q", client.documentID)
+	}
+	got := out.String()
+	for _, want := range []string{"ID", "doc-1", "Invoice", "invoice.pdf"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("archive document output missing %q in:\n%s", want, got)
+		}
+	}
+}
+
 type cmdFakeStore struct {
 	key string
 	err error
@@ -171,11 +303,20 @@ func (s *cmdFakeStore) DeleteAccessKey(context.Context, string) error {
 }
 
 type cmdFakeClient struct {
-	sessionID        string
-	accessKey        string
-	administrationID string
-	domains          []api.Domain
-	accounts         []api.GLAccount
+	sessionID           string
+	accessKey           string
+	administrationID    string
+	documentID          string
+	transactionID       string
+	domains             []api.Domain
+	accounts            []api.GLAccount
+	creditorItems       []api.CreditorItem
+	creditorOpts        api.CreditorItemsOptions
+	transactions        []api.TransactionInfo
+	transactionOpts     api.TransactionDetailsOptions
+	document            api.Document
+	documentFile        api.DocumentFile
+	transactionDocument api.TransactionDocument
 }
 
 func (c *cmdFakeClient) Authenticate(_ context.Context, accessKey string) (string, error) {
@@ -202,4 +343,30 @@ func (c *cmdFakeClient) Companies(context.Context, string) ([]api.Company, error
 func (c *cmdFakeClient) GLAccounts(_ context.Context, _ string, administrationID string) ([]api.GLAccount, error) {
 	c.administrationID = administrationID
 	return c.accounts, nil
+}
+
+func (c *cmdFakeClient) OutstandingCreditorItemsByDate(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {
+	c.creditorOpts = opts
+	return c.creditorItems, nil
+}
+
+func (c *cmdFakeClient) TransactionDetails(_ context.Context, _ string, opts api.TransactionDetailsOptions) ([]api.TransactionInfo, error) {
+	c.transactionOpts = opts
+	return c.transactions, nil
+}
+
+func (c *cmdFakeClient) TransactionDocument(_ context.Context, _ string, administrationID string, transactionID string) (api.TransactionDocument, error) {
+	c.administrationID = administrationID
+	c.transactionID = transactionID
+	return c.transactionDocument, nil
+}
+
+func (c *cmdFakeClient) FindDocument(_ context.Context, _ string, documentID string) (api.Document, error) {
+	c.documentID = documentID
+	return c.document, nil
+}
+
+func (c *cmdFakeClient) DocumentFile(_ context.Context, _ string, documentID string) (api.DocumentFile, error) {
+	c.documentID = documentID
+	return c.documentFile, nil
 }

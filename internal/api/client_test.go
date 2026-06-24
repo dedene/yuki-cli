@@ -146,11 +146,17 @@ func TestSOAPFaultParsesFaultString(t *testing.T) {
 
 func fixtureClient(t *testing.T, operation string, response string) *Client {
 	t.Helper()
+	return fixtureClientForService(t, "AccountingInfo", operation, response, nil)
+}
+
+func fixtureClientForService(t *testing.T, service string, operation string, response string, assertBody func(*testing.T, string)) *Client {
+	t.Helper()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Cleanup(srvCloseOnce(t, r))
-		if r.URL.Path != "/AccountingInfo.asmx" {
-			t.Fatalf("path = %s, want /AccountingInfo.asmx", r.URL.Path)
+		wantPath := "/" + service + ".asmx"
+		if r.URL.Path != wantPath {
+			t.Fatalf("path = %s, want %s", r.URL.Path, wantPath)
 		}
 		if got := r.Header.Get("SOAPAction"); got != SOAPAction(operation) {
 			t.Fatalf("SOAPAction = %q, want %q", got, SOAPAction(operation))
@@ -162,8 +168,8 @@ func fixtureClient(t *testing.T, operation string, response string) *Client {
 		if !strings.Contains(string(body), "<they:sessionID>session-1</they:sessionID>") {
 			t.Fatalf("request body missing session ID:\n%s", body)
 		}
-		if operation == "GetGLAccountScheme" && !strings.Contains(string(body), "<they:administrationID>admin-1</they:administrationID>") {
-			t.Fatalf("request body missing administration ID:\n%s", body)
+		if assertBody != nil {
+			assertBody(t, string(body))
 		}
 		w.Header().Set("Content-Type", "text/xml; charset=utf-8")
 		_, _ = w.Write([]byte(response))
