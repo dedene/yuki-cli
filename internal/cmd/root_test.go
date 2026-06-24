@@ -2242,6 +2242,12 @@ type cmdFakeClient struct {
 	administrationDomainName    string
 	domainNameResult            api.DomainNameResult
 	domainUsers                 []api.DomainUser
+	domainCreateOperation       string
+	domainCreateOpts            api.DomainCreateOptions
+	domainUserAddOpts           api.DomainUserAddOptions
+	domainAdminResult           api.DomainAdminResult
+	lyantheDomainID             string
+	lyantheEnabled              bool
 	domains                     []api.Domain
 	domainFunctions             []api.DomainFunctionAssignment
 	domainFunctionUpdateOpts    api.UpdateDomainFunctionOptions
@@ -2395,6 +2401,51 @@ func (c *cmdFakeClient) DomainName(_ context.Context, _ string, administrationNa
 func (c *cmdFakeClient) DomainUsers(_ context.Context, _ string, domainID string) ([]api.DomainUser, error) {
 	c.domainID = domainID
 	return c.domainUsers, nil
+}
+
+func (c *cmdFakeClient) CreateDomain(_ context.Context, _ string, opts api.DomainCreateOptions) (api.DomainAdminResult, error) {
+	c.domainCreateOperation = "CreateDomain"
+	c.domainCreateOpts = opts
+	return c.domainAdminResultOrDefault("CreateDomain"), nil
+}
+
+func (c *cmdFakeClient) CreateTrialDomain(_ context.Context, _ string, opts api.DomainCreateOptions) (api.DomainAdminResult, error) {
+	c.domainCreateOperation = "CreateTrialDomain"
+	c.domainCreateOpts = opts
+	return c.domainAdminResultOrDefault("CreateTrialDomain"), nil
+}
+
+func (c *cmdFakeClient) AddDomainUser(_ context.Context, _ string, opts api.DomainUserAddOptions) (api.DomainAdminResult, error) {
+	c.domainUserAddOpts = opts
+	result := c.domainAdminResultOrDefault("AddDomainUser")
+	result.DomainID = opts.DomainID
+	result.Email = opts.Email
+	result.Name = opts.Name
+	result.Roles = opts.Roles
+	result.Administrations = opts.Administrations
+	result.SendMessage = &opts.SendMessage
+	result.CustomMessage = opts.CustomMessage
+	result.Language = opts.Language
+	return result, nil
+}
+
+func (c *cmdFakeClient) SetLyantheRecognitionEngine(_ context.Context, _ string, domainID string, enabled bool) (api.DomainAdminResult, error) {
+	c.lyantheDomainID = domainID
+	c.lyantheEnabled = enabled
+	result := c.domainAdminResultOrDefault("LyantheRecognitionEngine")
+	result.DomainID = domainID
+	result.Enabled = &enabled
+	return result, nil
+}
+
+func (c *cmdFakeClient) domainAdminResultOrDefault(operation string) api.DomainAdminResult {
+	if c.domainAdminResult.Operation != "" {
+		return c.domainAdminResult
+	}
+	return api.DomainAdminResult{
+		Operation: operation,
+		Message:   "ok",
+	}
 }
 
 func (c *cmdFakeClient) DomainFunctions(_ context.Context, _ string, domainID string) ([]api.DomainFunctionAssignment, error) {

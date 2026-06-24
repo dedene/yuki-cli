@@ -29,6 +29,10 @@ type Client interface {
 	SetCurrentDomain(context.Context, string, string) error
 	DomainName(context.Context, string, string) (api.DomainNameResult, error)
 	DomainUsers(context.Context, string, string) ([]api.DomainUser, error)
+	CreateDomain(context.Context, string, api.DomainCreateOptions) (api.DomainAdminResult, error)
+	CreateTrialDomain(context.Context, string, api.DomainCreateOptions) (api.DomainAdminResult, error)
+	AddDomainUser(context.Context, string, api.DomainUserAddOptions) (api.DomainAdminResult, error)
+	SetLyantheRecognitionEngine(context.Context, string, string, bool) (api.DomainAdminResult, error)
 	DomainFunctions(context.Context, string, string) ([]api.DomainFunctionAssignment, error)
 	UpdateDomainFunction(context.Context, string, api.UpdateDomainFunctionOptions) (api.DomainFunctionUpdateResult, error)
 	SearchContacts(context.Context, string, api.ContactSearchOptions) ([]api.Contact, error)

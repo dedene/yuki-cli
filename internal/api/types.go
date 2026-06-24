@@ -53,6 +53,41 @@ type DomainUser struct {
 	Fields          []XMLField `json:"fields,omitempty"`
 }
 
+type DomainCreateOptions struct {
+	AdministrationName string
+	DomainName         string
+	DefaultLanguage    string
+}
+
+type DomainUserAddOptions struct {
+	DomainID        string
+	Email           string
+	Name            string
+	Roles           string
+	Administrations string
+	SendMessage     bool
+	CustomMessage   string
+	Language        string
+}
+
+type DomainAdminResult struct {
+	Operation          string `json:"operation"`
+	DomainID           string `json:"domain_id,omitempty"`
+	AdministrationName string `json:"administration_name,omitempty"`
+	DomainName         string `json:"domain_name,omitempty"`
+	Email              string `json:"email,omitempty"`
+	Name               string `json:"name,omitempty"`
+	Roles              string `json:"roles,omitempty"`
+	Administrations    string `json:"administrations,omitempty"`
+	SendMessage        *bool  `json:"send_message,omitempty"`
+	CustomMessage      string `json:"custom_message,omitempty"`
+	Language           string `json:"language,omitempty"`
+	DefaultLanguage    string `json:"default_language,omitempty"`
+	Enabled            *bool  `json:"enabled,omitempty"`
+	Message            string `json:"message,omitempty"`
+	DryRun             bool   `json:"dry_run,omitempty"`
+}
+
 type XMLField struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`

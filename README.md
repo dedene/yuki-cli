@@ -36,6 +36,10 @@ yuki --default-domain <domain-id> domains current --json
 yuki domains set-current --domain <domain-id> --json
 yuki domains name --administration-name "Highpro BV" --json
 yuki domains users --domain <domain-id> --json
+yuki domains create --administration-name "Highpro BV" --domain-name "Highpro" --default-language nl-be --dry-run --json
+yuki domains create-trial --administration-name "Highpro BV" --domain-name "Trial Highpro" --default-language en --dry-run --json
+yuki domains add-user --domain <domain-id> --email user@example.com --name "User Name" --roles Backoffice --dry-run --json
+yuki domains lyanthe --domain <domain-id> --enabled true --dry-run --json
 yuki domains functions --domain <domain-id> --json
 yuki domains update-function --domain <domain-id> --function BOAccountManager --login test@test.be --dry-run --json
 yuki administrations list

@@ -42,6 +42,94 @@ func (c *Client) DomainUsers(ctx context.Context, sessionID, domainID string) ([
 	return env.Body.Response.Result.users(), nil
 }
 
+func (c *Client) CreateDomain(ctx context.Context, sessionID string, opts DomainCreateOptions) (DomainAdminResult, error) {
+	return c.createDomain(ctx, "CreateDomain", sessionID, opts)
+}
+
+func (c *Client) CreateTrialDomain(ctx context.Context, sessionID string, opts DomainCreateOptions) (DomainAdminResult, error) {
+	return c.createDomain(ctx, "CreateTrialDomain", sessionID, opts)
+}
+
+func (c *Client) createDomain(ctx context.Context, operation, sessionID string, opts DomainCreateOptions) (DomainAdminResult, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationName", Value: opts.AdministrationName},
+		{Name: "domainName", Value: opts.DomainName},
+		{Name: "defaultLanguage", Value: opts.DefaultLanguage},
+	}
+	data, err := c.call(ctx, "Domains", operation, params)
+	if err != nil {
+		return DomainAdminResult{}, err
+	}
+	message, err := optionalTextAt(data, []string{"Envelope", "Body", operation + "Response", operation + "Result"})
+	if err != nil {
+		return DomainAdminResult{}, fmt.Errorf("parse %s response: %w", operation, err)
+	}
+	return DomainAdminResult{
+		Operation:          operation,
+		AdministrationName: opts.AdministrationName,
+		DomainName:         opts.DomainName,
+		DefaultLanguage:    opts.DefaultLanguage,
+		Message:            message,
+	}, nil
+}
+
+func (c *Client) AddDomainUser(ctx context.Context, sessionID string, opts DomainUserAddOptions) (DomainAdminResult, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "domain", Value: opts.DomainID},
+		{Name: "email", Value: opts.Email},
+		{Name: "name", Value: opts.Name},
+		{Name: "roles", Value: opts.Roles},
+		{Name: "administrations", Value: opts.Administrations},
+		{Name: "sendMessage", Value: boolString(opts.SendMessage)},
+		{Name: "customMessage", Value: opts.CustomMessage},
+		{Name: "language", Value: opts.Language},
+	}
+	data, err := c.call(ctx, "Domains", "AddDomainUser", params)
+	if err != nil {
+		return DomainAdminResult{}, err
+	}
+	message, err := optionalTextAt(data, []string{"Envelope", "Body", "AddDomainUserResponse", "AddDomainUserResult"})
+	if err != nil {
+		return DomainAdminResult{}, fmt.Errorf("parse AddDomainUser response: %w", err)
+	}
+	return DomainAdminResult{
+		Operation:       "AddDomainUser",
+		DomainID:        opts.DomainID,
+		Email:           opts.Email,
+		Name:            opts.Name,
+		Roles:           opts.Roles,
+		Administrations: opts.Administrations,
+		SendMessage:     &opts.SendMessage,
+		CustomMessage:   opts.CustomMessage,
+		Language:        opts.Language,
+		Message:         message,
+	}, nil
+}
+
+func (c *Client) SetLyantheRecognitionEngine(ctx context.Context, sessionID, domainID string, enabled bool) (DomainAdminResult, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "domain", Value: domainID},
+		{Name: "enableLyanthe", Value: boolString(enabled)},
+	}
+	data, err := c.call(ctx, "Domains", "LyantheRecognitionEngine", params)
+	if err != nil {
+		return DomainAdminResult{}, err
+	}
+	message, err := textAt(data, []string{"Envelope", "Body", "LyantheRecognitionEngineResponse", "LyantheRecognitionEngineResult"})
+	if err != nil {
+		return DomainAdminResult{}, fmt.Errorf("parse LyantheRecognitionEngine response: %w", err)
+	}
+	return DomainAdminResult{
+		Operation: "LyantheRecognitionEngine",
+		DomainID:  domainID,
+		Enabled:   &enabled,
+		Message:   message,
+	}, nil
+}
+
 func (c *Client) DomainFunctions(ctx context.Context, sessionID, domainID string) ([]DomainFunctionAssignment, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
