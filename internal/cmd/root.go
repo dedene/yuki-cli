@@ -33,6 +33,7 @@ type Client interface {
 	GLAccountTransactions(context.Context, string, api.GLAccountTransactionsOptions) ([]api.GLAccountTransaction, error)
 	GLAccountTransactionsFiscal(context.Context, string, api.GLAccountTransactionsOptions) ([]api.GLAccountTransaction, error)
 	GLAccountTransactionsAndContact(context.Context, string, api.GLAccountTransactionsOptions) ([]api.GLAccountTransaction, error)
+	CheckOutstandingItem(context.Context, string, string) ([]api.OutstandingItem, error)
 	NetRevenue(context.Context, string, api.RevenueOptions) (api.RevenueReport, error)
 	NetRevenueFiscal(context.Context, string, api.RevenueOptions) (api.RevenueReport, error)
 	OutstandingCreditorItems(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)

@@ -12,6 +12,7 @@ type AccountingCmd struct {
 	Revenue        RevenueCmd                  `cmd:"" help:"Inspect revenue reports."`
 	CreditorItems  CreditorItemsCmd            `cmd:"" name:"creditor-items" help:"Inspect outstanding creditor purchase invoices."`
 	DebtorItems    DebtorItemsCmd              `cmd:"" name:"debtor-items" help:"Inspect outstanding debtor sales invoices."`
+	Outstanding    OutstandingCmd              `cmd:"" help:"Inspect outstanding items."`
 	Transactions   TransactionsCmd             `cmd:"" help:"Inspect accounting transactions."`
 	PaymentMethods AccountingPaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect accounting payment methods."`
 }

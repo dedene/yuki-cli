@@ -771,6 +771,45 @@ func TestDebtorItemsWithPaymentReferenceJSONUsesFlags(t *testing.T) {
 	}
 }
 
+func TestOutstandingCheckJSONUsesReference(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		outstandingItems: []api.OutstandingItem{{
+			Date:           "2020-12-16",
+			Contact:        "Bol.com",
+			OriginalAmount: "91.96",
+			OpenAmount:     "91.96",
+			PaymentMethod:  "Electronic transfer",
+			Reference:      "NV2018/156",
+			Description:    "Factuur voor Bol.com",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "outstanding", "check",
+		"--reference", "NV2018/156",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.outstandingReference != "NV2018/156" {
+		t.Fatalf("outstandingReference = %q", client.outstandingReference)
+	}
+	var items []api.OutstandingItem
+	if err := json.Unmarshal(out.Bytes(), &items); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(items) != 1 || items[0].Reference != "NV2018/156" {
+		t.Fatalf("items = %#v", items)
+	}
+}
+
 func TestTransactionDetailsJSONUsesFlags(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -995,6 +1034,8 @@ type cmdFakeClient struct {
 	creditorOpts          api.CreditorItemsOptions
 	debtorItems           []api.DebtorItem
 	debtorOpts            api.DebtorItemsOptions
+	outstandingItems      []api.OutstandingItem
+	outstandingReference  string
 	richTransactions      []api.Transaction
 	transactionsOpts      api.TransactionsOptions
 	transactions          []api.TransactionInfo
@@ -1083,6 +1124,11 @@ func (c *cmdFakeClient) GLAccountTransactionsFiscal(_ context.Context, _ string,
 func (c *cmdFakeClient) GLAccountTransactionsAndContact(_ context.Context, _ string, opts api.GLAccountTransactionsOptions) ([]api.GLAccountTransaction, error) {
 	c.glTransactionOpts = opts
 	return c.glTransactions, nil
+}
+
+func (c *cmdFakeClient) CheckOutstandingItem(_ context.Context, _ string, reference string) ([]api.OutstandingItem, error) {
+	c.outstandingReference = reference
+	return c.outstandingItems, nil
 }
 
 func (c *cmdFakeClient) NetRevenue(_ context.Context, _ string, opts api.RevenueOptions) (api.RevenueReport, error) {
