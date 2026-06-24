@@ -6,7 +6,8 @@ import (
 )
 
 type OutstandingCmd struct {
-	Check OutstandingCheckCmd `cmd:"" help:"Check outstanding items by reference."`
+	Check      OutstandingCheckCmd      `cmd:"" help:"Check outstanding items by reference."`
+	CheckAdmin OutstandingCheckAdminCmd `cmd:"" name:"check-admin" help:"Check outstanding items by administration and reference."`
 }
 
 type OutstandingCheckCmd struct {
@@ -19,6 +20,28 @@ func (c *OutstandingCheckCmd) Run(rt *Runtime, globals *Globals) error {
 		return err
 	}
 	items, err := client.CheckOutstandingItem(rt.Context, sessionID, c.Reference)
+	if err != nil {
+		return err
+	}
+	return renderOutstandingItems(rt, globals, items)
+}
+
+type OutstandingCheckAdminCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	Reference      string `name:"reference" required:"" help:"Outstanding item reference."`
+}
+
+func (c *OutstandingCheckAdminCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	items, err := client.CheckOutstandingItemAdmin(rt.Context, sessionID, administrationID, c.Reference)
 	if err != nil {
 		return err
 	}

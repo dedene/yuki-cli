@@ -810,6 +810,47 @@ func TestOutstandingCheckJSONUsesReference(t *testing.T) {
 	}
 }
 
+func TestOutstandingCheckAdminJSONUsesAdministrationAndReference(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		outstandingItems: []api.OutstandingItem{{
+			Date:           "2021-01-22",
+			Contact:        "blabla 007",
+			OriginalAmount: "91.80",
+			OpenAmount:     "91.80",
+			PaymentMethod:  "Electronic transfer",
+			Reference:      "A1010",
+			Description:    "Testfactuur - 1",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "outstanding", "check-admin",
+		"--administration", "admin-1",
+		"--reference", "A1010",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.outstandingAdministrationID != "admin-1" ||
+		client.outstandingReference != "A1010" {
+		t.Fatalf("outstanding administration/reference = %q/%q", client.outstandingAdministrationID, client.outstandingReference)
+	}
+	var items []api.OutstandingItem
+	if err := json.Unmarshal(out.Bytes(), &items); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(items) != 1 || items[0].Reference != "A1010" {
+		t.Fatalf("items = %#v", items)
+	}
+}
+
 func TestTransactionDetailsJSONUsesFlags(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1017,57 +1058,58 @@ func (s *cmdFakeStore) DeleteAccessKey(context.Context, string) error {
 }
 
 type cmdFakeClient struct {
-	sessionID             string
-	accessKey             string
-	administrationID      string
-	documentID            string
-	transactionID         string
-	domains               []api.Domain
-	accounts              []api.GLAccount
-	balances              []api.GLAccountBalanceItem
-	balanceOpts           api.GLAccountBalanceOptions
-	glTransactions        []api.GLAccountTransaction
-	glTransactionOpts     api.GLAccountTransactionsOptions
-	revenueReport         api.RevenueReport
-	revenueOpts           api.RevenueOptions
-	creditorItems         []api.CreditorItem
-	creditorOpts          api.CreditorItemsOptions
-	debtorItems           []api.DebtorItem
-	debtorOpts            api.DebtorItemsOptions
-	outstandingItems      []api.OutstandingItem
-	outstandingReference  string
-	richTransactions      []api.Transaction
-	transactionsOpts      api.TransactionsOptions
-	transactions          []api.TransactionInfo
-	transactionOpts       api.TransactionDetailsOptions
-	customMethods         []api.PaymentMethod
-	archiveMethods        []api.PaymentMethod
-	folders               []api.DocumentFolder
-	tabs                  []api.DocumentFolderTab
-	currencies            []api.Currency
-	costCategories        []api.CostCategory
-	menuEntries           []api.MenuEntry
-	folderID              string
-	documents             []api.Document
-	documentsOpts         api.DocumentsOptions
-	documentsInFolderOpts api.DocumentsInFolderOptions
-	documentsInTabOpts    api.DocumentsInTabOptions
-	documentsByTypeOpts   api.DocumentsByTypeOptions
-	modifiedInFolderOpts  api.ModifiedDocumentsInFolderOptions
-	modifiedByTypeOpts    api.ModifiedDocumentsByTypeOptions
-	searchDocuments       []api.Document
-	searchDocumentsOpts   api.SearchDocumentsOptions
-	document              api.Document
-	documentBundle        []api.Document
-	documentFile          api.DocumentFile
-	documentBinaryData    api.DocumentBinaryData
-	documentImageData     api.DocumentImageData
-	documentImageCount    api.DocumentImageCount
-	documentXMLBinaryData api.DocumentXMLBinaryData
-	documentXMLData       api.DocumentXMLData
-	transactionDocument   api.TransactionDocument
-	maxWidth              int
-	maxHeight             int
+	sessionID                   string
+	accessKey                   string
+	administrationID            string
+	documentID                  string
+	transactionID               string
+	domains                     []api.Domain
+	accounts                    []api.GLAccount
+	balances                    []api.GLAccountBalanceItem
+	balanceOpts                 api.GLAccountBalanceOptions
+	glTransactions              []api.GLAccountTransaction
+	glTransactionOpts           api.GLAccountTransactionsOptions
+	revenueReport               api.RevenueReport
+	revenueOpts                 api.RevenueOptions
+	creditorItems               []api.CreditorItem
+	creditorOpts                api.CreditorItemsOptions
+	debtorItems                 []api.DebtorItem
+	debtorOpts                  api.DebtorItemsOptions
+	outstandingItems            []api.OutstandingItem
+	outstandingReference        string
+	outstandingAdministrationID string
+	richTransactions            []api.Transaction
+	transactionsOpts            api.TransactionsOptions
+	transactions                []api.TransactionInfo
+	transactionOpts             api.TransactionDetailsOptions
+	customMethods               []api.PaymentMethod
+	archiveMethods              []api.PaymentMethod
+	folders                     []api.DocumentFolder
+	tabs                        []api.DocumentFolderTab
+	currencies                  []api.Currency
+	costCategories              []api.CostCategory
+	menuEntries                 []api.MenuEntry
+	folderID                    string
+	documents                   []api.Document
+	documentsOpts               api.DocumentsOptions
+	documentsInFolderOpts       api.DocumentsInFolderOptions
+	documentsInTabOpts          api.DocumentsInTabOptions
+	documentsByTypeOpts         api.DocumentsByTypeOptions
+	modifiedInFolderOpts        api.ModifiedDocumentsInFolderOptions
+	modifiedByTypeOpts          api.ModifiedDocumentsByTypeOptions
+	searchDocuments             []api.Document
+	searchDocumentsOpts         api.SearchDocumentsOptions
+	document                    api.Document
+	documentBundle              []api.Document
+	documentFile                api.DocumentFile
+	documentBinaryData          api.DocumentBinaryData
+	documentImageData           api.DocumentImageData
+	documentImageCount          api.DocumentImageCount
+	documentXMLBinaryData       api.DocumentXMLBinaryData
+	documentXMLData             api.DocumentXMLData
+	transactionDocument         api.TransactionDocument
+	maxWidth                    int
+	maxHeight                   int
 }
 
 func (c *cmdFakeClient) Authenticate(_ context.Context, accessKey string) (string, error) {
@@ -1127,6 +1169,12 @@ func (c *cmdFakeClient) GLAccountTransactionsAndContact(_ context.Context, _ str
 }
 
 func (c *cmdFakeClient) CheckOutstandingItem(_ context.Context, _ string, reference string) ([]api.OutstandingItem, error) {
+	c.outstandingReference = reference
+	return c.outstandingItems, nil
+}
+
+func (c *cmdFakeClient) CheckOutstandingItemAdmin(_ context.Context, _ string, administrationID string, reference string) ([]api.OutstandingItem, error) {
+	c.outstandingAdministrationID = administrationID
 	c.outstandingReference = reference
 	return c.outstandingItems, nil
 }
