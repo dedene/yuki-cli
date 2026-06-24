@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"errors"
+	"strconv"
+	"strings"
+
 	"github.com/dedene/yuki-cli/internal/api"
 	"github.com/dedene/yuki-cli/internal/output"
 )
@@ -8,6 +12,7 @@ import (
 type ProjectsCmd struct {
 	List       ProjectsListCmd       `cmd:"" help:"List projects for an administration."`
 	ListWithID ProjectsListWithIDCmd `cmd:"" name:"list-with-id" help:"List projects with Yuki IDs for an administration."`
+	Upsert     ProjectsUpsertCmd     `cmd:"" help:"Create or update a project by description."`
 	Balance    ProjectsBalanceCmd    `cmd:"" help:"List project balances for a date range."`
 }
 
@@ -94,6 +99,109 @@ func (c *ProjectsListWithIDCmd) Run(rt *Runtime, globals *Globals) error {
 		})
 	}
 	return output.Table(rt.Out, []string{"ID", "HID", "CODE", "DESCRIPTION", "COMPANY", "CONTACT"}, rows)
+}
+
+type ProjectsUpsertCmd struct {
+	Administration   string `help:"Administration ID. Defaults to profile/global administration."`
+	Description      string `name:"description" required:"" help:"Unique project description/name."`
+	Code             string `name:"code" help:"Project code."`
+	Company          string `name:"company" help:"Company/administration ID to store on the project."`
+	Manager          string `name:"manager" help:"Manager user email address."`
+	Contact          string `name:"contact" help:"Contact ID to assign."`
+	Notes            string `name:"notes" help:"Project notes."`
+	SecurityLevel    int    `name:"security-level" help:"Security level code: 1 all users, 2 employees, 3 management, 4 manager and members."`
+	AllowOCRMatching string `name:"allow-ocr-matching" help:"Set OCR project-code matching: true or false."`
+	StartDate        string `name:"start-date" help:"Start date, YYYY-MM-DD."`
+	EndDate          string `name:"end-date" help:"End date, YYYY-MM-DD."`
+	BudgetRevenue    string `name:"budget-revenue" help:"Estimated project revenue."`
+	BudgetCosts      string `name:"budget-costs" help:"Estimated project costs."`
+	DryRun           bool   `name:"dry-run" help:"Preview the project update without authenticating or sending it."`
+}
+
+func (c *ProjectsUpsertCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+	opts, err := c.options(administrationID)
+	if err != nil {
+		return err
+	}
+	if c.DryRun {
+		result := api.ProjectUpdateResult{
+			AdministrationID: administrationID,
+			Project:          opts.Project,
+			DryRun:           true,
+			Message:          "dry run; no project update sent",
+		}
+		return renderProjectUpdateResult(rt, globals, result)
+	}
+	if globals.Readonly {
+		return errors.New("--readonly blocks mutating command: accounting projects upsert")
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	result, err := client.UpdateProject(rt.Context, sessionID, opts)
+	if err != nil {
+		return err
+	}
+	return renderProjectUpdateResult(rt, globals, result)
+}
+
+func (c *ProjectsUpsertCmd) options(administrationID string) (api.ProjectUpdateOptions, error) {
+	ocrMatching, err := normalizeOptionalBool(c.AllowOCRMatching)
+	if err != nil {
+		return api.ProjectUpdateOptions{}, err
+	}
+	project := api.ProjectUpdate{
+		Description:      c.Description,
+		Code:             c.Code,
+		Company:          c.Company,
+		Manager:          c.Manager,
+		Contact:          c.Contact,
+		Notes:            c.Notes,
+		AllowOCRMatching: ocrMatching,
+		StartDate:        c.StartDate,
+		EndDate:          c.EndDate,
+		BudgetRevenue:    c.BudgetRevenue,
+		BudgetCosts:      c.BudgetCosts,
+	}
+	if c.SecurityLevel != 0 {
+		project.SecurityLevel = strconv.Itoa(c.SecurityLevel)
+	}
+	return api.ProjectUpdateOptions{
+		AdministrationID: administrationID,
+		Project:          project,
+	}, nil
+}
+
+func normalizeOptionalBool(value string) (string, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "":
+		return "", nil
+	case "true", "1", "yes":
+		return "true", nil
+	case "false", "0", "no":
+		return "false", nil
+	default:
+		return "", errors.New("invalid --allow-ocr-matching; use true or false")
+	}
+}
+
+func renderProjectUpdateResult(rt *Runtime, globals *Globals, result api.ProjectUpdateResult) error {
+	if globals.JSON {
+		return output.JSON(rt.Out, result)
+	}
+	return output.Table(rt.Out, []string{"ADMINISTRATION", "DESCRIPTION", "CODE", "DRY RUN", "MESSAGE"}, [][]string{{
+		result.AdministrationID,
+		result.Project.Description,
+		result.Project.Code,
+		output.Bool(result.DryRun),
+		result.Message,
+	}})
 }
 
 type ProjectsBalanceCmd struct {

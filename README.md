@@ -78,6 +78,7 @@ yuki accounting change-digest transactions --administration <administration-id> 
 yuki accounting change-digest detail --administration <administration-id> --transaction <transaction-id> --json
 yuki accounting projects list --administration <administration-id> --search-option All --json
 yuki accounting projects list-with-id --administration <administration-id> --search-option Code --search-value WELLNESS --json
+yuki accounting projects upsert --administration <administration-id> --description "New Project" --code PROJECTNEW --dry-run --json
 yuki accounting projects balance --administration <administration-id> --project-code DOS1 --from 2018-01-01 --to 2020-12-31 --json
 yuki vat codes active --administration <administration-id> --json
 yuki vat returns list --administration <administration-id> --year 2023 --modified-after 2021-01-01 --json

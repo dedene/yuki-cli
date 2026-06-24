@@ -112,6 +112,52 @@ func TestProjectBalanceParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestUpdateProjectPostsDocumentedProjectFields(t *testing.T) {
+	client := fixtureClientForService(t, "Projects", "UpdateProject", updateProjectResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:project><they:Description>New Project</they:Description>",
+			"<they:Code>PROJECTNEW</they:Code>",
+			"<they:Manager>manager@example.com</they:Manager>",
+			"<they:Notes>R&amp;D &lt;internal&gt;</they:Notes>",
+			"<they:SecurityLevel>1</they:SecurityLevel>",
+			"<they:AllowOCRMatching>true</they:AllowOCRMatching>",
+			"<they:BudgetCosts>1000</they:BudgetCosts>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	result, err := client.UpdateProject(context.Background(), "session-1", ProjectUpdateOptions{
+		AdministrationID: "admin-1",
+		Project: ProjectUpdate{
+			Description:      "New Project",
+			Code:             "PROJECTNEW",
+			Company:          "admin-1",
+			Manager:          "manager@example.com",
+			Contact:          "contact-1",
+			Notes:            "R&D <internal>",
+			SecurityLevel:    "1",
+			AllowOCRMatching: "true",
+			StartDate:        "2020-01-20",
+			EndDate:          "2022-12-31",
+			BudgetRevenue:    "3000",
+			BudgetCosts:      "1000",
+		},
+	})
+	if err != nil {
+		t.Fatalf("UpdateProject: %v", err)
+	}
+	if result.AdministrationID != "admin-1" ||
+		result.Project.Description != "New Project" ||
+		result.Message != "project upserted" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
 const projectsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -179,6 +225,13 @@ const projectBalanceResponse = `<?xml version="1.0" encoding="utf-8"?>
         </ProjectBalance>
       </GetProjectBalanceResult>
     </GetProjectBalanceResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const updateProjectResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <UpdateProjectResponse xmlns="http://www.theyukicompany.com/" />
   </soap:Body>
 </soap:Envelope>`
 
