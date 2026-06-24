@@ -20,6 +20,14 @@ type SearchDocumentsOptions struct {
 	StartRecord     int
 }
 
+type DocumentsOptions struct {
+	SortOrder       string
+	StartDate       string
+	EndDate         string
+	NumberOfRecords int
+	StartRecord     int
+}
+
 func (c *Client) DocumentFolders(ctx context.Context, sessionID string) ([]DocumentFolder, error) {
 	data, err := c.call(ctx, "Archive", "DocumentFolders", sessionParams(sessionID))
 	if err != nil {
@@ -46,6 +54,26 @@ func (c *Client) DocumentFolderTabs(ctx context.Context, sessionID, folderID str
 		return nil, fmt.Errorf("parse DocumentFolderTabs response: %w", err)
 	}
 	return env.Body.Response.Result.DocumentFolderTabs.Tabs, nil
+}
+
+func (c *Client) Documents(ctx context.Context, sessionID string, opts DocumentsOptions) ([]Document, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "sortOrder", Value: opts.SortOrder},
+		{Name: "startDate", Value: opts.StartDate},
+		{Name: "endDate", Value: opts.EndDate},
+		{Name: "numberOfRecords", Value: strconv.Itoa(opts.NumberOfRecords)},
+		{Name: "startRecord", Value: strconv.Itoa(opts.StartRecord)},
+	}
+	data, err := c.call(ctx, "Archive", "Documents", params)
+	if err != nil {
+		return nil, err
+	}
+	var env documentsEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse Documents response: %w", err)
+	}
+	return env.Body.Response.Result.Documents.Documents, nil
 }
 
 func (c *Client) SearchDocuments(ctx context.Context, sessionID string, opts SearchDocumentsOptions) ([]Document, error) {
@@ -216,6 +244,18 @@ type menuEnvelope struct {
 				} `xml:"Menu"`
 			} `xml:"MenuResult"`
 		} `xml:"MenuResponse"`
+	} `xml:"Body"`
+}
+
+type documentsEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Documents struct {
+					Documents []Document `xml:"Document"`
+				} `xml:"Documents"`
+			} `xml:"DocumentsResult"`
+		} `xml:"DocumentsResponse"`
 	} `xml:"Body"`
 }
 

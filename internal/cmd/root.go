@@ -34,6 +34,7 @@ type Client interface {
 	CustomPaymentMethods(context.Context, string, string) ([]api.PaymentMethod, error)
 	DocumentFolders(context.Context, string) ([]api.DocumentFolder, error)
 	DocumentFolderTabs(context.Context, string, string) ([]api.DocumentFolderTab, error)
+	Documents(context.Context, string, api.DocumentsOptions) ([]api.Document, error)
 	SearchDocuments(context.Context, string, api.SearchDocumentsOptions) ([]api.Document, error)
 	FindDocument(context.Context, string, string) (api.Document, error)
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)

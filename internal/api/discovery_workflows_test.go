@@ -128,6 +128,42 @@ func TestSearchDocumentsParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentsParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "Documents", documentsResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:sortOrder>CreatedAsc</they:sortOrder>",
+			"<they:startDate>2020-01-01</they:startDate>",
+			"<they:endDate>2020-05-30</they:endDate>",
+			"<they:numberOfRecords>10</they:numberOfRecords>",
+			"<they:startRecord>0</they:startRecord>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	documents, err := client.Documents(context.Background(), "session-1", DocumentsOptions{
+		SortOrder:       "CreatedAsc",
+		StartDate:       "2020-01-01",
+		EndDate:         "2020-05-30",
+		NumberOfRecords: 10,
+		StartRecord:     0,
+	})
+	if err != nil {
+		t.Fatalf("Documents: %v", err)
+	}
+	if len(documents) != 2 {
+		t.Fatalf("len(documents) = %d, want 2", len(documents))
+	}
+	if documents[0].ID != "4e47ac57-c219-4c1f-a582-6f3ec94015b2" ||
+		documents[0].Folder.Text != "Sales" ||
+		documents[1].ContactName != " Engie ;Electrabel" {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
 const transactionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -216,6 +252,48 @@ const customPaymentMethodsPostmanResponse = `<?xml version="1.0" encoding="utf-8
         </PaymentMethod>
       </GetPaymentMethodsResult>
     </GetPaymentMethodsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentsResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentsResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentsResult>
+        <Documents xmlns="">
+          <Document ID="4e47ac57-c219-4c1f-a582-6f3ec94015b2">
+            <Subject>Factuur voor  NMBS</Subject>
+            <DocumentDate>2020-01-02</DocumentDate>
+            <Amount>121.00</Amount>
+            <Folder ID="2">Sales</Folder>
+            <Tab ID="201">Invoices</Tab>
+            <Type>31</Type>
+            <TypeDescription>Sales invoice</TypeDescription>
+            <FileName>Document 2 (2).pdf</FileName>
+            <ContentType>application/pdf</ContentType>
+            <FileSize>206896</FileSize>
+            <ContactName> NMBS</ContactName>
+            <Created>2020-01-02T11:12:22</Created>
+            <Creator>yuki</Creator>
+            <Modified>2020-01-02T11:13:55</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+          <Document ID="83e15108-6243-41ca-b665-8490053211e1">
+            <Subject>Invoice for  Engie Electrabel</Subject>
+            <Amount>0.00</Amount>
+            <Folder ID="2">Sales</Folder>
+            <Tab ID="201">Invoices</Tab>
+            <Type>6</Type>
+            <TypeDescription>Sales invoice</TypeDescription>
+            <ContactName> Engie ;Electrabel</ContactName>
+            <Created>2020-01-02T11:53:27</Created>
+            <Creator>yuki</Creator>
+            <Modified>2020-01-02T11:53:27</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+        </Documents>
+      </DocumentsResult>
+    </DocumentsResponse>
   </soap:Body>
 </soap:Envelope>`
 

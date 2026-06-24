@@ -159,9 +159,36 @@ func (c *ArchiveFoldersTabsCmd) Run(rt *Runtime, globals *Globals) error {
 }
 
 type ArchiveDocumentsCmd struct {
+	List     ArchiveDocumentsListCmd     `cmd:"" help:"List archive documents by document date range."`
 	Search   ArchiveDocumentsSearchCmd   `cmd:"" help:"Search archive documents."`
 	Find     ArchiveDocumentsFindCmd     `cmd:"" help:"Find document metadata by document ID."`
 	Download ArchiveDocumentsDownloadCmd `cmd:"" help:"Download a document file by document ID."`
+}
+
+type ArchiveDocumentsListCmd struct {
+	SortOrder   string `name:"sort-order" default:"CreatedAsc" help:"Yuki document sort order."`
+	From        string `name:"from" required:"" help:"Start date, YYYY-MM-DD."`
+	To          string `name:"to" required:"" help:"End date, YYYY-MM-DD."`
+	Limit       int    `name:"limit" default:"25" help:"Number of records to request."`
+	StartRecord int    `name:"start-record" default:"0" help:"Start record to request."`
+}
+
+func (c *ArchiveDocumentsListCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	documents, err := client.Documents(rt.Context, sessionID, api.DocumentsOptions{
+		SortOrder:       c.SortOrder,
+		StartDate:       c.From,
+		EndDate:         c.To,
+		NumberOfRecords: c.Limit,
+		StartRecord:     c.StartRecord,
+	})
+	if err != nil {
+		return err
+	}
+	return renderDocuments(rt, globals, documents)
 }
 
 type ArchiveDocumentsSearchCmd struct {
