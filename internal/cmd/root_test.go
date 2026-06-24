@@ -2229,11 +2229,16 @@ func (s *cmdFakeStore) DeleteAccessKey(context.Context, string) error {
 type cmdFakeClient struct {
 	sessionID                   string
 	accessKey                   string
+	clientID                    string
+	clientSecret                string
+	userName                    string
+	password                    string
 	administrationID            string
 	companyID                   string
 	documentID                  string
 	transactionID               string
 	domainID                    string
+	setCurrentDomainID          string
 	domains                     []api.Domain
 	domainFunctions             []api.DomainFunctionAssignment
 	domainFunctionUpdateOpts    api.UpdateDomainFunctionOptions
@@ -2247,6 +2252,7 @@ type cmdFakeClient struct {
 	administrationResolvedID    string
 	companies                   []api.Company
 	language                    string
+	setLanguage                 string
 	supportedLanguages          []api.SupportedLanguage
 	accounts                    []api.GLAccount
 	rgsEntries                  []api.RGSEntry
@@ -2347,12 +2353,30 @@ func (c *cmdFakeClient) Authenticate(_ context.Context, accessKey string) (strin
 	return c.sessionID, nil
 }
 
+func (c *cmdFakeClient) AuthenticateClient(_ context.Context, clientID, clientSecret, accessKey string) (string, error) {
+	c.clientID = clientID
+	c.clientSecret = clientSecret
+	c.accessKey = accessKey
+	return c.sessionID, nil
+}
+
+func (c *cmdFakeClient) AuthenticateByUserName(_ context.Context, userName, password string) (string, error) {
+	c.userName = userName
+	c.password = password
+	return c.sessionID, nil
+}
+
 func (c *cmdFakeClient) Domains(context.Context, string) ([]api.Domain, error) {
 	return c.domains, nil
 }
 
 func (c *cmdFakeClient) CurrentDomain(context.Context, string) (api.Domain, error) {
 	return api.Domain{ID: "domain-1", Name: "Acme"}, nil
+}
+
+func (c *cmdFakeClient) SetCurrentDomain(_ context.Context, _ string, domainID string) error {
+	c.setCurrentDomainID = domainID
+	return nil
 }
 
 func (c *cmdFakeClient) DomainFunctions(_ context.Context, _ string, domainID string) ([]api.DomainFunctionAssignment, error) {
@@ -2411,6 +2435,11 @@ func (c *cmdFakeClient) Language(context.Context, string) (string, error) {
 
 func (c *cmdFakeClient) SupportedLanguages(context.Context, string) ([]api.SupportedLanguage, error) {
 	return c.supportedLanguages, nil
+}
+
+func (c *cmdFakeClient) SetLanguage(_ context.Context, _ string, language string) error {
+	c.setLanguage = language
+	return nil
 }
 
 func (c *cmdFakeClient) GLAccounts(_ context.Context, _ string, administrationID string) ([]api.GLAccount, error) {

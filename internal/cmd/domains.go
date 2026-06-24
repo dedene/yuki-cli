@@ -12,6 +12,7 @@ import (
 type DomainsCmd struct {
 	List           DomainsListCmd           `cmd:"" help:"List accessible domains."`
 	Current        DomainsCurrentCmd        `cmd:"" help:"Show the current session domain."`
+	SetCurrent     DomainsSetCurrentCmd     `cmd:"" name:"set-current" help:"Set the current domain for this session."`
 	Functions      DomainsFunctionsCmd      `cmd:"" help:"Inspect backoffice role assignments for a domain."`
 	UpdateFunction DomainsUpdateFunctionCmd `cmd:"" name:"update-function" help:"Update one backoffice role assignment for a domain."`
 }
@@ -52,6 +53,31 @@ func (c *DomainsCurrentCmd) Run(rt *Runtime, globals *Globals) error {
 		return output.JSON(rt.Out, domain)
 	}
 	return output.Table(rt.Out, []string{"ID", "NAME", "URL"}, [][]string{{domain.ID, domain.Name, domain.URL}})
+}
+
+type DomainsSetCurrentCmd struct {
+	Domain string `name:"domain" required:"" help:"Domain ID."`
+	DryRun bool   `name:"dry-run" help:"Print the planned session update without authenticating or sending it."`
+}
+
+func (c *DomainsSetCurrentCmd) Run(rt *Runtime, globals *Globals) error {
+	result := sessionSettingResult{
+		DomainID: c.Domain,
+		Message:  "current domain set for this session",
+	}
+	if c.DryRun {
+		result.DryRun = true
+		result.Message = "dry run; current domain not sent"
+		return renderSessionSetting(rt, globals, result)
+	}
+	client, sessionID, _, err := authenticatedSession(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	if err := client.SetCurrentDomain(rt.Context, sessionID, c.Domain); err != nil {
+		return err
+	}
+	return renderSessionSetting(rt, globals, result)
 }
 
 type DomainsFunctionsCmd struct {
@@ -143,4 +169,23 @@ func validDomainFunction(value string) bool {
 		}
 	}
 	return false
+}
+
+type sessionSettingResult struct {
+	DomainID string `json:"domain_id,omitempty"`
+	Language string `json:"language,omitempty"`
+	DryRun   bool   `json:"dry_run,omitempty"`
+	Message  string `json:"message"`
+}
+
+func renderSessionSetting(rt *Runtime, globals *Globals, result sessionSettingResult) error {
+	if globals.JSON {
+		return output.JSON(rt.Out, result)
+	}
+	return output.Table(rt.Out, []string{"DOMAIN", "LANGUAGE", "DRY RUN", "MESSAGE"}, [][]string{{
+		result.DomainID,
+		result.Language,
+		output.Bool(result.DryRun),
+		result.Message,
+	}})
 }

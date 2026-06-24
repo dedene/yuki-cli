@@ -23,6 +23,8 @@ For CI or agent runs, use:
 
 ```bash
 YUKI_ACCESS_KEY=<key> yuki auth status --json
+yuki auth session client --client-id <client-id> --client-secret <client-secret> --json
+yuki auth session username --username user@example.com --password <password> --json
 ```
 
 ## Read-Only Workflows
@@ -30,6 +32,8 @@ YUKI_ACCESS_KEY=<key> yuki auth status --json
 ```bash
 yuki domains list
 yuki domains current
+yuki --default-domain <domain-id> domains current --json
+yuki domains set-current --domain <domain-id> --json
 yuki domains functions --domain <domain-id> --json
 yuki domains update-function --domain <domain-id> --function BOAccountManager --login test@test.be --dry-run --json
 yuki administrations list
@@ -41,6 +45,7 @@ yuki contacts upsert --domain <domain-id> --file contact.xml --dry-run --json
 yuki companies list --json
 yuki language current --json
 yuki language supported --json
+yuki language set --language en --json
 yuki sales invoices schema-path
 yuki sales items list --administration <administration-id> --json
 yuki sales invoices create --administration <administration-id> --file sales-invoices.xml --dry-run --json
@@ -125,6 +130,7 @@ Global flags:
 yuki --json domains list
 yuki --base-url https://api.yukiworks.nl/ws domains list
 yuki --profile zenjoy auth status
+yuki --default-domain <domain-id> --session-language en domains current
 ```
 
 Mutating commands support `--dry-run` when they can validate locally and honor global `--readonly` before authentication or network calls.

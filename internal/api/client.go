@@ -51,6 +51,35 @@ func (c *Client) Authenticate(ctx context.Context, accessKey string) (string, er
 	return textAt(data, []string{"Envelope", "Body", "AuthenticateResponse", "AuthenticateResult"})
 }
 
+func (c *Client) AuthenticateClient(ctx context.Context, clientID, clientSecret, accessKey string) (string, error) {
+	params := []Param{
+		{Name: "clientID", Value: clientID},
+		{Name: "clientSecret", Value: clientSecret},
+		{Name: "accessKey", Value: accessKey},
+	}
+	data, err := c.call(ctx, generalService, "AuthenticateClient", params)
+	if err != nil {
+		return "", err
+	}
+	sessionID, err := textAt(data, []string{"Envelope", "Body", "AuthenticateClientResponse", "AuthenticateClientResult"})
+	if err == nil {
+		return sessionID, nil
+	}
+	return textAt(data, []string{"Envelope", "Body", "AuthenticateResponse", "AuthenticateClientResult"})
+}
+
+func (c *Client) AuthenticateByUserName(ctx context.Context, userName, password string) (string, error) {
+	params := []Param{
+		{Name: "userName", Value: userName},
+		{Name: "password", Value: password},
+	}
+	data, err := c.call(ctx, generalService, "AuthenticateByUserName", params)
+	if err != nil {
+		return "", err
+	}
+	return textAt(data, []string{"Envelope", "Body", "AuthenticateByUserNameResponse", "AuthenticateByUserNameResult"})
+}
+
 func (c *Client) Domains(ctx context.Context, sessionID string) ([]Domain, error) {
 	data, err := c.call(ctx, generalService, "Domains", sessionParams(sessionID))
 	if err != nil {
@@ -126,6 +155,18 @@ func (c *Client) CurrentDomain(ctx context.Context, sessionID string) (Domain, e
 	return env.Body.Response.Result.Domains.Domains[0], nil
 }
 
+func (c *Client) SetCurrentDomain(ctx context.Context, sessionID, domainID string) error {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "domainID", Value: domainID},
+	}
+	_, err := c.call(ctx, generalService, "SetCurrentDomain", params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *Client) Language(ctx context.Context, sessionID string) (string, error) {
 	data, err := c.call(ctx, generalService, "Language", sessionParams(sessionID))
 	if err != nil {
@@ -148,6 +189,18 @@ func (c *Client) SupportedLanguages(ctx context.Context, sessionID string) ([]Su
 		return nil, fmt.Errorf("parse SupportedLanguages result: %w", err)
 	}
 	return languages, nil
+}
+
+func (c *Client) SetLanguage(ctx context.Context, sessionID, language string) error {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "language", Value: language},
+	}
+	_, err := c.call(ctx, generalService, "SetLanguage", params)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Client) GLAccounts(ctx context.Context, sessionID, administrationID string) ([]GLAccount, error) {

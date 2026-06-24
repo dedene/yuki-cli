@@ -22,8 +22,11 @@ var (
 
 type Client interface {
 	Authenticate(context.Context, string) (string, error)
+	AuthenticateClient(context.Context, string, string, string) (string, error)
+	AuthenticateByUserName(context.Context, string, string) (string, error)
 	Domains(context.Context, string) ([]api.Domain, error)
 	CurrentDomain(context.Context, string) (api.Domain, error)
+	SetCurrentDomain(context.Context, string, string) error
 	DomainFunctions(context.Context, string, string) ([]api.DomainFunctionAssignment, error)
 	UpdateDomainFunction(context.Context, string, api.UpdateDomainFunctionOptions) (api.DomainFunctionUpdateResult, error)
 	SearchContacts(context.Context, string, api.ContactSearchOptions) ([]api.Contact, error)
@@ -35,6 +38,7 @@ type Client interface {
 	Companies(context.Context, string) ([]api.Company, error)
 	Language(context.Context, string) (string, error)
 	SupportedLanguages(context.Context, string) ([]api.SupportedLanguage, error)
+	SetLanguage(context.Context, string, string) error
 	GLAccounts(context.Context, string, string) ([]api.GLAccount, error)
 	RGSScheme(context.Context, string, api.RGSSchemeOptions) ([]api.RGSEntry, error)
 	StartBalanceByGLAccount(context.Context, string, api.StartBalanceByGLAccountOptions) ([]api.GLAccountStartBalance, error)
@@ -122,12 +126,14 @@ type Runtime struct {
 }
 
 type Globals struct {
-	JSON           bool   `help:"Output JSON to stdout."`
-	NoInput        bool   `name:"no-input" help:"Fail instead of prompting."`
-	Readonly       bool   `help:"Block mutating commands before network calls."`
-	Profile        string `help:"Config/auth profile." default:"default"`
-	BaseURL        string `name:"base-url" help:"Override Yuki SOAP base URL, e.g. https://api.yukiworks.nl/ws."`
-	Administration string `name:"default-administration" help:"Default administration ID for commands that need one."`
+	JSON            bool   `help:"Output JSON to stdout."`
+	NoInput         bool   `name:"no-input" help:"Fail instead of prompting."`
+	Readonly        bool   `help:"Block mutating commands before network calls."`
+	Profile         string `help:"Config/auth profile." default:"default"`
+	BaseURL         string `name:"base-url" help:"Override Yuki SOAP base URL, e.g. https://api.yukiworks.nl/ws."`
+	Administration  string `name:"default-administration" help:"Default administration ID for commands that need one."`
+	Domain          string `name:"default-domain" help:"Set this domain ID on each authenticated session."`
+	SessionLanguage string `name:"session-language" help:"Set this session language after authentication, e.g. en or nl-be."`
 }
 
 type CLI struct {
@@ -246,27 +252,48 @@ func loadProfile(globals *Globals) (config.Profile, error) {
 	if globals.Administration != "" {
 		profile.AdministrationID = globals.Administration
 	}
+	if globals.Domain != "" {
+		profile.DomainID = globals.Domain
+	}
 	return profile, nil
 }
 
 func authenticatedClient(ctx context.Context, rt *Runtime, globals *Globals) (Client, string, error) {
-	profile, err := loadProfile(globals)
+	client, sessionID, profile, err := authenticatedSession(ctx, rt, globals)
 	if err != nil {
 		return nil, "", err
+	}
+	if profile.DomainID != "" {
+		if err := client.SetCurrentDomain(ctx, sessionID, profile.DomainID); err != nil {
+			return nil, "", fmt.Errorf("set current domain %s: %w", profile.DomainID, err)
+		}
+	}
+	if globals.SessionLanguage != "" {
+		if err := client.SetLanguage(ctx, sessionID, globals.SessionLanguage); err != nil {
+			return nil, "", fmt.Errorf("set session language %s: %w", globals.SessionLanguage, err)
+		}
+	}
+	return client, sessionID, nil
+}
+
+func authenticatedSession(ctx context.Context, rt *Runtime, globals *Globals) (Client, string, config.Profile, error) {
+	profile, err := loadProfile(globals)
+	if err != nil {
+		return nil, "", config.Profile{}, err
 	}
 	accessKey, _, err := resolveAccessKey(ctx, rt, globals.Profile)
 	if err != nil {
 		if errors.Is(err, auth.ErrAccessKeyNotFound) {
-			return nil, "", fmt.Errorf("%w; run 'yuki auth login --access-key <key>' or set %s", err, auth.AccessKeyEnv)
+			return nil, "", config.Profile{}, fmt.Errorf("%w; run 'yuki auth login --access-key <key>' or set %s", err, auth.AccessKeyEnv)
 		}
-		return nil, "", err
+		return nil, "", config.Profile{}, err
 	}
 	client := rt.client(globals, profile)
 	sessionID, err := client.Authenticate(ctx, accessKey)
 	if err != nil {
-		return nil, "", err
+		return nil, "", config.Profile{}, err
 	}
-	return client, sessionID, nil
+	return client, sessionID, profile, nil
 }
 
 func resolveAccessKey(ctx context.Context, rt *Runtime, profile string) (string, auth.Source, error) {

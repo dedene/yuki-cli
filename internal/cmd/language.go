@@ -5,6 +5,7 @@ import "github.com/dedene/yuki-cli/internal/output"
 type LanguageCmd struct {
 	Current   LanguageCurrentCmd   `cmd:"" help:"Show the current session language."`
 	Supported LanguageSupportedCmd `cmd:"" help:"List supported session languages."`
+	Set       LanguageSetCmd       `cmd:"" help:"Set the language for this session."`
 }
 
 type LanguageCurrentCmd struct{}
@@ -49,4 +50,29 @@ func (c *LanguageSupportedCmd) Run(rt *Runtime, globals *Globals) error {
 		rows = append(rows, []string{language.Code, language.Description, language.NativeDescription})
 	}
 	return output.Table(rt.Out, []string{"CODE", "DESCRIPTION", "NATIVE DESCRIPTION"}, rows)
+}
+
+type LanguageSetCmd struct {
+	Language string `name:"language" required:"" help:"Session language code, e.g. en or nl-be."`
+	DryRun   bool   `name:"dry-run" help:"Print the planned session update without authenticating or sending it."`
+}
+
+func (c *LanguageSetCmd) Run(rt *Runtime, globals *Globals) error {
+	result := sessionSettingResult{
+		Language: c.Language,
+		Message:  "language set for this session",
+	}
+	if c.DryRun {
+		result.DryRun = true
+		result.Message = "dry run; language not sent"
+		return renderSessionSetting(rt, globals, result)
+	}
+	client, sessionID, _, err := authenticatedSession(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	if err := client.SetLanguage(rt.Context, sessionID, c.Language); err != nil {
+		return err
+	}
+	return renderSessionSetting(rt, globals, result)
 }

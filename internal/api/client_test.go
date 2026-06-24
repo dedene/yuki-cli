@@ -42,6 +42,99 @@ func TestAuthenticatePostsSOAPEnvelopeAndParsesSession(t *testing.T) {
 	}
 }
 
+func TestAuthenticateClientPostsDocumentedFieldsAndParsesPostmanResponse(t *testing.T) {
+	client := fixtureClientForServiceWithSessionElement(t, "AccountingInfo", "AuthenticateClient", authenticateClientPostmanResponse, "", func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:clientID>client-1</they:clientID>",
+			"<they:clientSecret>secret-1</they:clientSecret>",
+			"<they:accessKey>access-1</they:accessKey>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	sessionID, err := client.AuthenticateClient(context.Background(), "client-1", "secret-1", "access-1")
+	if err != nil {
+		t.Fatalf("AuthenticateClient: %v", err)
+	}
+	if sessionID != "client-session-1" {
+		t.Fatalf("sessionID = %q", sessionID)
+	}
+}
+
+func TestAuthenticateClientParsesWSDLResponse(t *testing.T) {
+	client := fixtureClientForServiceWithSessionElement(t, "AccountingInfo", "AuthenticateClient", authenticateClientWSDLResponse, "", nil)
+
+	sessionID, err := client.AuthenticateClient(context.Background(), "client-1", "secret-1", "access-1")
+	if err != nil {
+		t.Fatalf("AuthenticateClient: %v", err)
+	}
+	if sessionID != "client-session-wsdl" {
+		t.Fatalf("sessionID = %q", sessionID)
+	}
+}
+
+func TestAuthenticateByUserNamePostsDocumentedFieldsAndParsesResponse(t *testing.T) {
+	client := fixtureClientForServiceWithSessionElement(t, "AccountingInfo", "AuthenticateByUserName", authenticateByUserNameResponse, "", func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:userName>peter@example.com</they:userName>",
+			"<they:password>secret-1</they:password>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	sessionID, err := client.AuthenticateByUserName(context.Background(), "peter@example.com", "secret-1")
+	if err != nil {
+		t.Fatalf("AuthenticateByUserName: %v", err)
+	}
+	if sessionID != "username-session-1" {
+		t.Fatalf("sessionID = %q", sessionID)
+	}
+}
+
+func TestSetCurrentDomainPostsDocumentedFields(t *testing.T) {
+	client := fixtureClientForService(t, "AccountingInfo", "SetCurrentDomain", setCurrentDomainResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:sessionID>session-1</they:sessionID>",
+			"<they:domainID>domain-1</they:domainID>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	if err := client.SetCurrentDomain(context.Background(), "session-1", "domain-1"); err != nil {
+		t.Fatalf("SetCurrentDomain: %v", err)
+	}
+}
+
+func TestSetLanguagePostsDocumentedFields(t *testing.T) {
+	client := fixtureClientForService(t, "AccountingInfo", "SetLanguage", setLanguageResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:sessionID>session-1</they:sessionID>",
+			"<they:language>en</they:language>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	if err := client.SetLanguage(context.Background(), "session-1", "en"); err != nil {
+		t.Fatalf("SetLanguage: %v", err)
+	}
+}
+
 func TestListDomainsParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClient(t, "Domains", domainsResponse)
 
@@ -236,9 +329,11 @@ func fixtureClientForServiceWithSessionElement(t *testing.T, service string, ope
 		if err != nil {
 			t.Fatalf("read body: %v", err)
 		}
-		wantSession := "<they:" + sessionElement + ">session-1</they:" + sessionElement + ">"
-		if !strings.Contains(string(body), wantSession) {
-			t.Fatalf("request body missing session ID:\n%s", body)
+		if sessionElement != "" {
+			wantSession := "<they:" + sessionElement + ">session-1</they:" + sessionElement + ">"
+			if !strings.Contains(string(body), wantSession) {
+				t.Fatalf("request body missing session ID:\n%s", body)
+			}
 		}
 		if assertBody != nil {
 			assertBody(t, string(body))
@@ -264,6 +359,47 @@ const authenticateResponse = `<?xml version="1.0" encoding="utf-8"?>
     <AuthenticateResponse xmlns="http://www.theyukicompany.com/">
       <AuthenticateResult>a00912fb-558c-4165-a521-d3a095f88cc7</AuthenticateResult>
     </AuthenticateResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const authenticateClientPostmanResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <AuthenticateResponse xmlns="http://www.theyukicompany.com/">
+      <AuthenticateClientResult>client-session-1</AuthenticateClientResult>
+    </AuthenticateResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const authenticateClientWSDLResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <AuthenticateClientResponse xmlns="http://www.theyukicompany.com/">
+      <AuthenticateClientResult>client-session-wsdl</AuthenticateClientResult>
+    </AuthenticateClientResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const authenticateByUserNameResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <AuthenticateByUserNameResponse xmlns="http://www.theyukicompany.com/">
+      <AuthenticateByUserNameResult>username-session-1</AuthenticateByUserNameResult>
+    </AuthenticateByUserNameResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const setCurrentDomainResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <SetCurrentDomainResponse xmlns="http://www.theyukicompany.com/" />
+  </soap:Body>
+</soap:Envelope>`
+
+const setLanguageResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <SetLanguageResponse xmlns="http://www.theyukicompany.com/" />
   </soap:Body>
 </soap:Envelope>`
 
