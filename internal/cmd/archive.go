@@ -12,7 +12,34 @@ type ArchiveCmd struct {
 	Folders        ArchiveFoldersCmd        `cmd:"" help:"Inspect archive folders."`
 	Currencies     ArchiveCurrenciesCmd     `cmd:"" help:"Inspect archive currencies."`
 	CostCategories ArchiveCostCategoriesCmd `cmd:"" name:"cost-categories" help:"Inspect archive cost categories."`
+	Menu           ArchiveMenuCmd           `cmd:"" help:"Inspect archive menu entries."`
 	PaymentMethods ArchivePaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect archive payment methods."`
+}
+
+type ArchiveMenuCmd struct {
+	List ArchiveMenuListCmd `cmd:"" help:"List archive menu entries."`
+}
+
+type ArchiveMenuListCmd struct{}
+
+func (c *ArchiveMenuListCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	entries, err := client.Menu(rt.Context, sessionID)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, entries)
+	}
+
+	rows := make([][]string, 0, len(entries))
+	for _, entry := range entries {
+		rows = append(rows, []string{entry.ID, entry.Text, entry.Alert, entry.Link, entry.Icon})
+	}
+	return output.Table(rt.Out, []string{"ID", "TEXT", "ALERT", "LINK", "ICON"}, rows)
 }
 
 type ArchiveCostCategoriesCmd struct {

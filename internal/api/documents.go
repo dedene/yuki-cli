@@ -147,6 +147,18 @@ func (c *Client) CostCategories(ctx context.Context, sessionID string) ([]CostCa
 	return env.Body.Response.Result.CostCategories.CostCategories, nil
 }
 
+func (c *Client) Menu(ctx context.Context, sessionID string) ([]MenuEntry, error) {
+	data, err := c.call(ctx, "Archive", "Menu", sessionParams(sessionID))
+	if err != nil {
+		return nil, err
+	}
+	var env menuEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse Menu response: %w", err)
+	}
+	return env.Body.Response.Result.Menu.Entries, nil
+}
+
 type documentFoldersEnvelope struct {
 	Body struct {
 		Response struct {
@@ -192,6 +204,18 @@ type costCategoriesEnvelope struct {
 				} `xml:"CostCategories"`
 			} `xml:"CostCategoriesResult"`
 		} `xml:"CostCategoriesResponse"`
+	} `xml:"Body"`
+}
+
+type menuEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Menu struct {
+					Entries []MenuEntry `xml:"MenuEntry"`
+				} `xml:"Menu"`
+			} `xml:"MenuResult"`
+		} `xml:"MenuResponse"`
 	} `xml:"Body"`
 }
 

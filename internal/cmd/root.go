@@ -40,6 +40,7 @@ type Client interface {
 	PaymentMethods(context.Context, string) ([]api.PaymentMethod, error)
 	Currencies(context.Context, string) ([]api.Currency, error)
 	CostCategories(context.Context, string) ([]api.CostCategory, error)
+	Menu(context.Context, string) ([]api.MenuEntry, error)
 }
 
 type Runtime struct {

@@ -278,3 +278,32 @@ func TestArchiveCostCategoriesListPrintsRows(t *testing.T) {
 		}
 	}
 }
+
+func TestArchiveMenuListPrintsRows(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		menuEntries: []api.MenuEntry{{
+			ID:    "2",
+			Text:  "Aandacht",
+			Icon:  "yw3-alert",
+			Link:  "IPAlert.aspx",
+			Alert: "314",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{"archive", "menu", "list"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{"ID", "TEXT", "ALERT", "LINK", "ICON", "2", "Aandacht", "314", "IPAlert.aspx"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("archive menu output missing %q in:\n%s", want, got)
+		}
+	}
+}

@@ -220,6 +220,14 @@ type CostCategory struct {
 	Description string `json:"description" xml:"Description"`
 }
 
+type MenuEntry struct {
+	ID    string `json:"id" xml:"ID,attr"`
+	Text  string `json:"text" xml:"Text"`
+	Icon  string `json:"icon,omitempty" xml:"Icon"`
+	Link  string `json:"link,omitempty" xml:"Link"`
+	Alert string `json:"alert,omitempty" xml:"Alert"`
+}
+
 type PaymentMethod struct {
 	ID          string `json:"id" xml:"ID"`
 	Description string `json:"description" xml:"Description"`

@@ -40,6 +40,7 @@ yuki accounting transactions document --administration <administration-id> --tra
 yuki archive payment-methods list
 yuki archive currencies list
 yuki archive cost-categories list
+yuki archive menu list
 yuki archive folders list
 yuki archive folders tabs --folder 3
 yuki archive documents search --search-text apple --limit 25 --json

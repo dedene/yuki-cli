@@ -225,6 +225,25 @@ func TestCostCategoriesParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestMenuParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "Menu", menuResponse, nil)
+
+	entries, err := client.Menu(context.Background(), "session-1")
+	if err != nil {
+		t.Fatalf("Menu: %v", err)
+	}
+	if len(entries) != 3 {
+		t.Fatalf("len(entries) = %d, want 3", len(entries))
+	}
+	if entries[0].ID != "1" ||
+		entries[0].Text != "Vragen" ||
+		entries[0].Icon != "yw3-question" ||
+		entries[1].Alert != "314" ||
+		entries[2].Link != "IPPLReport.aspx" {
+		t.Fatalf("entries = %#v", entries)
+	}
+}
+
 const transactionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -466,5 +485,35 @@ const costCategoriesResponse = `<?xml version="1.0" encoding="utf-8"?>
         </CostCategories>
       </CostCategoriesResult>
     </CostCategoriesResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const menuResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <MenuResponse xmlns="http://www.theyukicompany.com/">
+      <MenuResult>
+        <Menu xmlns="">
+          <MenuEntry ID="1">
+            <Text>Vragen</Text>
+            <Icon>yw3-question</Icon>
+            <Link>IPQuestions.aspx</Link>
+            <Alert>0</Alert>
+          </MenuEntry>
+          <MenuEntry ID="2">
+            <Text>Aandacht</Text>
+            <Icon>yw3-alert</Icon>
+            <Link>IPAlert.aspx</Link>
+            <Alert>314</Alert>
+          </MenuEntry>
+          <MenuEntry ID="3">
+            <Text>Resultaten</Text>
+            <Icon>yw3-chart</Icon>
+            <Link>IPPLReport.aspx</Link>
+            <Alert>0</Alert>
+          </MenuEntry>
+        </Menu>
+      </MenuResult>
+    </MenuResponse>
   </soap:Body>
 </soap:Envelope>`
