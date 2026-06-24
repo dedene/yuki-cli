@@ -63,6 +63,7 @@ type Client interface {
 	DocumentBinaryData(context.Context, string, string) (api.DocumentBinaryData, error)
 	DocumentImage(context.Context, string, string, int, int) (api.DocumentImageData, error)
 	DocumentImageCount(context.Context, string, string) (api.DocumentImageCount, error)
+	DocumentXMLData(context.Context, string, string) (api.DocumentXMLData, error)
 	DocumentXMLDataAsBinary(context.Context, string, string) (api.DocumentXMLBinaryData, error)
 	DocumentXMLDataAsString(context.Context, string, string) (api.DocumentXMLData, error)
 	PaymentMethods(context.Context, string) ([]api.PaymentMethod, error)

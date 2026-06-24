@@ -1019,8 +1019,42 @@ func TestArchiveDocumentsXMLJSONPrintsXMLData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
-	if client.documentID != "doc-1" {
-		t.Fatalf("documentID = %q", client.documentID)
+	if client.documentID != "doc-1" || client.documentXMLDataOperation != "string" {
+		t.Fatalf("document call = %q/%q", client.documentID, client.documentXMLDataOperation)
+	}
+	var data api.DocumentXMLData
+	if err := json.Unmarshal(out.Bytes(), &data); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if data.DocumentID != "doc-1" || data.XML != "<SalesInvoice><Reference>A1040</Reference></SalesInvoice>" {
+		t.Fatalf("data = %#v", data)
+	}
+}
+
+func TestArchiveDocumentsXMLDataJSONPrintsEmbeddedXMLData(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		documentXMLData: api.DocumentXMLData{
+			DocumentID: "doc-1",
+			XML:        "<SalesInvoice><Reference>A1040</Reference></SalesInvoice>",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"archive", "documents", "xml-data",
+		"--document", "doc-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.documentID != "doc-1" || client.documentXMLDataOperation != "raw" {
+		t.Fatalf("document call = %q/%q", client.documentID, client.documentXMLDataOperation)
 	}
 	var data api.DocumentXMLData
 	if err := json.Unmarshal(out.Bytes(), &data); err != nil {
@@ -1109,6 +1143,7 @@ type cmdFakeClient struct {
 	documentImageCount          api.DocumentImageCount
 	documentXMLBinaryData       api.DocumentXMLBinaryData
 	documentXMLData             api.DocumentXMLData
+	documentXMLDataOperation    string
 	transactionDocument         api.TransactionDocument
 	maxWidth                    int
 	maxHeight                   int
@@ -1353,8 +1388,18 @@ func (c *cmdFakeClient) DocumentXMLDataAsBinary(_ context.Context, _ string, doc
 	return c.documentXMLBinaryData, nil
 }
 
+func (c *cmdFakeClient) DocumentXMLData(_ context.Context, _ string, documentID string) (api.DocumentXMLData, error) {
+	c.documentID = documentID
+	c.documentXMLDataOperation = "raw"
+	if c.documentXMLData.DocumentID == "" {
+		c.documentXMLData.DocumentID = documentID
+	}
+	return c.documentXMLData, nil
+}
+
 func (c *cmdFakeClient) DocumentXMLDataAsString(_ context.Context, _ string, documentID string) (api.DocumentXMLData, error) {
 	c.documentID = documentID
+	c.documentXMLDataOperation = "string"
 	if c.documentXMLData.DocumentID == "" {
 		c.documentXMLData.DocumentID = documentID
 	}

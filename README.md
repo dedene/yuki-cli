@@ -71,6 +71,7 @@ yuki archive documents bundle --document <document-id> --json
 yuki archive documents image --document <document-id> --max-width 1200 --max-height 1600 --output invoice.png
 yuki archive documents image-count --document <document-id> --json
 yuki archive documents xml --document <document-id> --output invoice.xml
+yuki archive documents xml-data --document <document-id> --output invoice.xml
 yuki archive documents xml-binary --document <document-id> --output invoice.xml
 yuki archive documents binary --document <document-id> --output invoice.pdf
 yuki archive documents download --document <document-id> --output invoice.pdf

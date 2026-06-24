@@ -204,6 +204,7 @@ type ArchiveDocumentsCmd struct {
 	Image            ArchiveDocumentsImageCmd            `cmd:"" help:"Download a rendered document image by document ID."`
 	ImageCount       ArchiveDocumentsImageCountCmd       `cmd:"" name:"image-count" help:"Count rendered images for a document."`
 	XML              ArchiveDocumentsXMLCmd              `cmd:"" name:"xml" help:"Fetch XML data for a document."`
+	XMLData          ArchiveDocumentsXMLDataCmd          `cmd:"" name:"xml-data" help:"Fetch embedded XML data for a document."`
 	XMLBinary        ArchiveDocumentsXMLBinaryCmd        `cmd:"" name:"xml-binary" help:"Download XML data as base64Binary by document ID."`
 }
 
@@ -498,6 +499,30 @@ func (c *ArchiveDocumentsXMLCmd) Run(rt *Runtime, globals *Globals) error {
 		return err
 	}
 	data, err := client.DocumentXMLDataAsString(rt.Context, sessionID, c.Document)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, data)
+	}
+	if c.Output != "" {
+		return writeTextFile(rt.Out, c.Output, data.XML)
+	}
+	_, err = fmt.Fprintln(rt.Out, data.XML)
+	return err
+}
+
+type ArchiveDocumentsXMLDataCmd struct {
+	Document string `name:"document" required:"" help:"Document ID."`
+	Output   string `name:"output" short:"o" help:"Write XML to this path instead of stdout."`
+}
+
+func (c *ArchiveDocumentsXMLDataCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	data, err := client.DocumentXMLData(rt.Context, sessionID, c.Document)
 	if err != nil {
 		return err
 	}
