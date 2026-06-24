@@ -202,6 +202,44 @@ func TestDocumentsInFolderParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentsInTabParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentsInTab", documentsInTabResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:tabID>201</they:tabID>",
+			"<they:sortOrder>CreatedAsc</they:sortOrder>",
+			"<they:startDate>2020-01-01</they:startDate>",
+			"<they:endDate>2020-12-31</they:endDate>",
+			"<they:numberOfRecords>100</they:numberOfRecords>",
+			"<they:startRecord>1</they:startRecord>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	documents, err := client.DocumentsInTab(context.Background(), "session-1", DocumentsInTabOptions{
+		TabID:           201,
+		SortOrder:       "CreatedAsc",
+		StartDate:       "2020-01-01",
+		EndDate:         "2020-12-31",
+		NumberOfRecords: 100,
+		StartRecord:     1,
+	})
+	if err != nil {
+		t.Fatalf("DocumentsInTab: %v", err)
+	}
+	if len(documents) != 3 {
+		t.Fatalf("len(documents) = %d, want 3", len(documents))
+	}
+	if documents[0].ID != "8de9f559-e123-4715-b68e-6fcae2b592c4" ||
+		documents[0].FileName != "YukiSmartForm_DeclarationForm.xml" ||
+		documents[1].TypeDescription != "Aankoopfactuur" {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
 const transactionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -374,6 +412,60 @@ const documentsInFolderResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Documents>
       </DocumentsInFolderResult>
     </DocumentsInFolderResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentsInTabResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentsInTabResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentsInTabResult>
+        <Documents xmlns="">
+          <Document ID="8de9f559-e123-4715-b68e-6fcae2b592c4">
+            <DocumentDate>2020-11-12</DocumentDate>
+            <Amount>242.00</Amount>
+            <Type>0</Type>
+            <TypeDescription>Standaard</TypeDescription>
+            <FileName>YukiSmartForm_DeclarationForm.xml</FileName>
+            <ContentType>text/xml</ContentType>
+            <FileSize>665</FileSize>
+            <ContactName>katrien 2</ContactName>
+            <Created>2020-11-12T15:38:11</Created>
+            <Creator>yuki</Creator>
+            <Modified>2021-03-10T09:41:51</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+          <Document ID="669226dc-2cbc-4eff-916b-58ea790d82a7">
+            <Subject>Factuur van  Sodexo Pass Belgium, Aankopen van handelsgoederen, borgtochten</Subject>
+            <DocumentDate>2020-02-12</DocumentDate>
+            <Amount>252.81</Amount>
+            <Type>2</Type>
+            <TypeDescription>Aankoopfactuur</TypeDescription>
+            <FileName>document.htm</FileName>
+            <ContentType>text/html</ContentType>
+            <FileSize>0</FileSize>
+            <ContactName> Sodexo Pass Belgium</ContactName>
+            <Created>2020-02-12T11:14:04</Created>
+            <Creator>yuki</Creator>
+            <Modified>2020-02-12T11:15:51</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+          <Document ID="7c88ab36-5637-4609-934c-74ed1d88a779">
+            <DocumentDate>2019-10-23</DocumentDate>
+            <Amount>0.00</Amount>
+            <Type>0</Type>
+            <TypeDescription>Standaard</TypeDescription>
+            <FileName>Invoice 20193.pdf</FileName>
+            <ContentType>application/pdf</ContentType>
+            <FileSize>63361</FileSize>
+            <Created>2019-10-23T14:33:37</Created>
+            <Creator>yuki</Creator>
+            <Modified>2019-10-23T14:33:37</Modified>
+            <Modifier>yuki</Modifier>
+          </Document>
+        </Documents>
+      </DocumentsInTabResult>
+    </DocumentsInTabResponse>
   </soap:Body>
 </soap:Envelope>`
 

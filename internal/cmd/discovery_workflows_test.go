@@ -201,6 +201,53 @@ func TestArchiveDocumentsInFolderJSONUsesPagingFlags(t *testing.T) {
 	}
 }
 
+func TestArchiveDocumentsInTabJSONUsesPagingFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		documents: []api.Document{{
+			ID:           "doc-1",
+			DocumentDate: "2020-11-12",
+			Amount:       "242.00",
+			ContactName:  "katrien 2",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"archive", "documents", "in-tab",
+		"--tab", "201",
+		"--from", "2020-01-01",
+		"--to", "2020-12-31",
+		"--sort-order", "CreatedAsc",
+		"--limit", "100",
+		"--start-record", "1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	opts := client.documentsInTabOpts
+	if opts.TabID != 201 ||
+		opts.SortOrder != "CreatedAsc" ||
+		opts.StartDate != "2020-01-01" ||
+		opts.EndDate != "2020-12-31" ||
+		opts.NumberOfRecords != 100 ||
+		opts.StartRecord != 1 {
+		t.Fatalf("documentsInTabOpts = %#v", opts)
+	}
+	var documents []api.Document
+	if err := json.Unmarshal(out.Bytes(), &documents); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(documents) != 1 || documents[0].ContactName != "katrien 2" {
+		t.Fatalf("documents = %#v", documents)
+	}
+}
+
 func TestArchiveFoldersListPrintsRows(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
