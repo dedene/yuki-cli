@@ -11,6 +11,11 @@
 # Test binary, built with `go test -c`
 *.test
 
+# Built CLI artifacts
+/bin/
+/dist/
+/yuki
+
 # Code coverage profiles and other test artifacts
 *.out
 coverage.*
@@ -26,6 +31,10 @@ go.work.sum
 
 # env file
 .env
+
+# Local agent workflow notes
+.workflow/
+.cache/
 
 # Editor/IDE
 # .idea/
