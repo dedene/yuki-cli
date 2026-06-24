@@ -11,6 +11,7 @@ type AccountingCmd struct {
 	GLAccounts     GLAccountsCmd               `cmd:"" name:"gl-accounts" help:"Inspect GL accounts."`
 	Revenue        RevenueCmd                  `cmd:"" help:"Inspect revenue reports."`
 	CreditorItems  CreditorItemsCmd            `cmd:"" name:"creditor-items" help:"Inspect outstanding creditor purchase invoices."`
+	DebtorItems    DebtorItemsCmd              `cmd:"" name:"debtor-items" help:"Inspect outstanding debtor sales invoices."`
 	Transactions   TransactionsCmd             `cmd:"" help:"Inspect accounting transactions."`
 	PaymentMethods AccountingPaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect accounting payment methods."`
 }

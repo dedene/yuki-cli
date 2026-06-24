@@ -626,6 +626,53 @@ func TestCreditorItemsWithPaymentReferenceJSONUsesFlags(t *testing.T) {
 	}
 }
 
+func TestDebtorItemsAllJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		debtorItems: []api.DebtorItem{{
+			Date:           "2026-01-03",
+			Contact:        "Customer",
+			OriginalAmount: "1000.00",
+			OpenAmount:     "1000.00",
+			PaymentMethod:  "Creditcard",
+			Reference:      "INV-1",
+			DocumentID:     "doc-1",
+			Description:    "Sales invoice",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "debtor-items", "all",
+		"--administration", "admin-1",
+		"--include-bank-transactions",
+		"--sort-order", "DateDesc",
+		"--payment-method", "Creditcard",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.debtorOpts.AdministrationID != "admin-1" ||
+		!client.debtorOpts.IncludeBankTransactions ||
+		client.debtorOpts.SortOrder != "DateDesc" ||
+		client.debtorOpts.StartDate != "" ||
+		client.debtorOpts.EndDate != "" {
+		t.Fatalf("debtorOpts = %#v", client.debtorOpts)
+	}
+	var items []api.DebtorItem
+	if err := json.Unmarshal(out.Bytes(), &items); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(items) != 1 || items[0].Reference != "INV-1" {
+		t.Fatalf("items = %#v", items)
+	}
+}
+
 func TestTransactionDetailsJSONUsesFlags(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -848,6 +895,8 @@ type cmdFakeClient struct {
 	revenueOpts           api.RevenueOptions
 	creditorItems         []api.CreditorItem
 	creditorOpts          api.CreditorItemsOptions
+	debtorItems           []api.DebtorItem
+	debtorOpts            api.DebtorItemsOptions
 	richTransactions      []api.Transaction
 	transactionsOpts      api.TransactionsOptions
 	transactions          []api.TransactionInfo
@@ -974,6 +1023,11 @@ func (c *cmdFakeClient) OutstandingCreditorItemsByDate(_ context.Context, _ stri
 func (c *cmdFakeClient) OutstandingCreditorWithPaymentReference(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {
 	c.creditorOpts = opts
 	return c.creditorItems, nil
+}
+
+func (c *cmdFakeClient) OutstandingDebtorItems(_ context.Context, _ string, opts api.DebtorItemsOptions) ([]api.DebtorItem, error) {
+	c.debtorOpts = opts
+	return c.debtorItems, nil
 }
 
 func (c *cmdFakeClient) Transactions(_ context.Context, _ string, opts api.TransactionsOptions) ([]api.Transaction, error) {

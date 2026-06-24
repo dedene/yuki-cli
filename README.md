@@ -44,6 +44,7 @@ yuki accounting payment-methods list --administration <administration-id>
 yuki accounting creditor-items all --administration <administration-id> --payment-method Creditcard
 yuki accounting creditor-items list --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --payment-method Creditcard
 yuki accounting creditor-items with-payment-reference --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --payment-method Creditcard --json
+yuki accounting debtor-items all --administration <administration-id> --json
 yuki accounting transactions list --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --gl-account 550002 --limit 100 --json
 yuki accounting transactions details --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --gl-account 400000 --json
 yuki accounting transactions document --administration <administration-id> --transaction <transaction-id> --output invoice.pdf

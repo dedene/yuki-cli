@@ -84,7 +84,7 @@ type RevenueReport struct {
 	Amount           string `json:"amount"`
 }
 
-type CreditorItem struct {
+type OutstandingItem struct {
 	ID               string  `json:"id" xml:"ID,attr"`
 	Date             string  `json:"date" xml:"Date"`
 	Description      string  `json:"description" xml:"Description"`
@@ -99,9 +99,28 @@ type CreditorItem struct {
 	DocumentID       string  `json:"document_id,omitempty" xml:"DocumentID"`
 	PaymentMethod    string  `json:"payment_method,omitempty" xml:"PaymentMethod"`
 	ContactCode      string  `json:"contact_code,omitempty" xml:"ContactCode"`
+	CoCNumber        string  `json:"coc_number,omitempty" xml:"CoCNumber"`
 	VATNumber        string  `json:"vat_number,omitempty" xml:"VATNumber"`
+	AddressLine1     string  `json:"address_line_1,omitempty" xml:"AddressLine_1"`
+	AddressLine2     string  `json:"address_line_2,omitempty" xml:"AddressLine_2"`
+	Postcode         string  `json:"postcode,omitempty" xml:"Postcode"`
+	City             string  `json:"city,omitempty" xml:"City"`
+	MailAddressLine1 string  `json:"mail_address_line_1,omitempty" xml:"MailAddressLine_1"`
+	MailAddressLine2 string  `json:"mail_address_line_2,omitempty" xml:"MailAddressLine_2"`
+	MailPostcode     string  `json:"mail_postcode,omitempty" xml:"MailPostcode"`
+	MailCity         string  `json:"mail_city,omitempty" xml:"MailCity"`
 	Country          string  `json:"country,omitempty" xml:"Country"`
+	RecipientEmail   string  `json:"recipient_email,omitempty" xml:"RecipientEmail"`
+	PhoneHome        string  `json:"phone_home,omitempty" xml:"PhoneHome"`
+	PhoneWork        string  `json:"phone_work,omitempty" xml:"PhoneWork"`
+	EmailHome        string  `json:"email_home,omitempty" xml:"EmailHome"`
+	EmailWork        string  `json:"email_work,omitempty" xml:"EmailWork"`
 }
+
+type (
+	CreditorItem = OutstandingItem
+	DebtorItem   = OutstandingItem
+)
 
 type TransactionInfo struct {
 	ID                               string `json:"id" xml:"id"`
