@@ -26,6 +26,8 @@ type Client interface {
 	CurrentDomain(context.Context, string) (api.Domain, error)
 	DomainFunctions(context.Context, string, string) ([]api.DomainFunctionAssignment, error)
 	UpdateDomainFunction(context.Context, string, api.UpdateDomainFunctionOptions) (api.DomainFunctionUpdateResult, error)
+	SearchContacts(context.Context, string, api.ContactSearchOptions) ([]api.Contact, error)
+	SuppliersAndCustomers(context.Context, string, api.ContactSearchOptions) ([]api.Contact, error)
 	Administrations(context.Context, string) ([]api.Administration, error)
 	Companies(context.Context, string) ([]api.Company, error)
 	GLAccounts(context.Context, string, string) ([]api.GLAccount, error)
@@ -114,6 +116,7 @@ type CLI struct {
 	Administrations AdministrationsCmd `cmd:"" help:"Inspect accessible administrations."`
 	Accounting      AccountingCmd      `cmd:"" help:"Read accounting information."`
 	Archive         ArchiveCmd         `cmd:"" help:"Read archive document information."`
+	Contacts        ContactsCmd        `cmd:"" help:"Read contact information."`
 	VAT             VATCmd             `cmd:"" name:"vat" help:"Read VAT information."`
 	Integration     IntegrationCmd     `cmd:"" help:"Read integration information."`
 	FiscalTable     FiscalTableCmd     `cmd:"" name:"fiscal-table" help:"Read fiscal table information."`

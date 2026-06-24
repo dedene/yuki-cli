@@ -48,6 +48,51 @@ type DomainFunctionUpdateResult struct {
 	DryRun   bool   `json:"dry_run,omitempty"`
 }
 
+type ContactSearchOptions struct {
+	DomainID      string
+	SearchOption  string
+	SearchValue   string
+	SortOrder     string
+	ModifiedAfter string
+	Active        string
+	PageNumber    int
+	ContactType   string
+}
+
+type Contact struct {
+	ID                string `json:"id" xml:"ID,attr"`
+	Type              string `json:"type,omitempty" xml:"Type"`
+	HID               string `json:"hid,omitempty" xml:"HID"`
+	Code              string `json:"code,omitempty" xml:"Code"`
+	Name              string `json:"name,omitempty" xml:"Name"`
+	AddressLine1      string `json:"address_line_1,omitempty" xml:"AddressLine_1"`
+	AddressLine2      string `json:"address_line_2,omitempty" xml:"AddressLine_2"`
+	Postcode          string `json:"postcode,omitempty" xml:"Postcode"`
+	City              string `json:"city,omitempty" xml:"City"`
+	MailAddressLine1  string `json:"mail_address_line_1,omitempty" xml:"MailAddressLine_1"`
+	MailAddressLine2  string `json:"mail_address_line_2,omitempty" xml:"MailAddressLine_2"`
+	MailPostcode      string `json:"mail_postcode,omitempty" xml:"MailPostcode"`
+	MailCity          string `json:"mail_city,omitempty" xml:"MailCity"`
+	Country           string `json:"country,omitempty" xml:"Country"`
+	PhoneHome         string `json:"phone_home,omitempty" xml:"PhoneHome"`
+	PhoneWork         string `json:"phone_work,omitempty" xml:"PhoneWork"`
+	MobileHome        string `json:"mobile_home,omitempty" xml:"MobileHome"`
+	MobileWork        string `json:"mobile_work,omitempty" xml:"MobileWork"`
+	EmailHome         string `json:"email_home,omitempty" xml:"EMailHome"`
+	EmailWork         string `json:"email_work,omitempty" xml:"EMailWork"`
+	Website           string `json:"website,omitempty" xml:"Website"`
+	VATNumber         string `json:"vat_number,omitempty" xml:"VATNumber"`
+	CoCNumber         string `json:"coc_number,omitempty" xml:"CoCNumber"`
+	IncomeTaxNumber   string `json:"income_tax_number,omitempty" xml:"IncomeTaxNumber"`
+	Created           string `json:"created,omitempty" xml:"Created"`
+	Modified          string `json:"modified,omitempty" xml:"Modified"`
+	MainContactPerson string `json:"main_contact_person,omitempty" xml:"MainContactPerson"`
+	Tags              string `json:"tags,omitempty" xml:"Tags"`
+	BackofficeStatus  string `json:"backoffice_status,omitempty" xml:"BackofficeStatus"`
+	IsSupplier        bool   `json:"is_supplier,omitempty" xml:"IsSupplier"`
+	IsCustomer        bool   `json:"is_customer,omitempty" xml:"IsCustomer"`
+}
+
 type Company struct {
 	ID     string `json:"id" xml:"ID,attr"`
 	Name   string `json:"name" xml:"Name"`

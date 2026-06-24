@@ -243,6 +243,94 @@ func TestDomainsUpdateFunctionRejectsUnknownFunction(t *testing.T) {
 	}
 }
 
+func TestContactsSearchJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		contacts: []api.Contact{{
+			ID:        "contact-1",
+			Name:      "Bol.com",
+			EmailWork: "klantenservice@bol.com",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json", "contacts", "search",
+		"--domain", "domain-1",
+		"--search-option", "Email",
+		"--search-value", "klantenservice@bol.com",
+		"--sort-order", "ModifiedDesc",
+		"--modified-after", "2024-01-01",
+		"--active", "Active",
+		"--page", "2",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.contactSearchOpts.DomainID != "domain-1" ||
+		client.contactSearchOpts.SearchOption != "Email" ||
+		client.contactSearchOpts.SearchValue != "klantenservice@bol.com" ||
+		client.contactSearchOpts.SortOrder != "ModifiedDesc" ||
+		client.contactSearchOpts.ModifiedAfter != "2024-01-01" ||
+		client.contactSearchOpts.Active != "Active" ||
+		client.contactSearchOpts.PageNumber != 2 {
+		t.Fatalf("opts = %#v", client.contactSearchOpts)
+	}
+	var contacts []api.Contact
+	if err := json.Unmarshal(out.Bytes(), &contacts); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(contacts) != 1 || contacts[0].ID != "contact-1" {
+		t.Fatalf("contacts = %#v", contacts)
+	}
+}
+
+func TestContactsSuppliersCustomersJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		contacts: []api.Contact{{
+			ID:         "contact-1",
+			Name:       "Telenet",
+			IsSupplier: true,
+			IsCustomer: true,
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json", "contacts", "suppliers-customers",
+		"--domain", "domain-1",
+		"--search-option", "ContactType",
+		"--search-value", "Supplier",
+		"--contact-type", "Supplier",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.contactSearchOpts.DomainID != "domain-1" ||
+		client.contactSearchOpts.SearchOption != "ContactType" ||
+		client.contactSearchOpts.SearchValue != "Supplier" ||
+		client.contactSearchOpts.ContactType != "Supplier" ||
+		client.contactSearchOpts.PageNumber != 1 {
+		t.Fatalf("opts = %#v", client.contactSearchOpts)
+	}
+	var contacts []api.Contact
+	if err := json.Unmarshal(out.Bytes(), &contacts); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(contacts) != 1 || !contacts[0].IsSupplier {
+		t.Fatalf("contacts = %#v", contacts)
+	}
+}
+
 func TestGLAccountsListJSONUsesAdministrationFlag(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1784,6 +1872,8 @@ type cmdFakeClient struct {
 	domainFunctions             []api.DomainFunctionAssignment
 	domainFunctionUpdateOpts    api.UpdateDomainFunctionOptions
 	domainFunctionUpdateResult  api.DomainFunctionUpdateResult
+	contacts                    []api.Contact
+	contactSearchOpts           api.ContactSearchOptions
 	accounts                    []api.GLAccount
 	rgsEntries                  []api.RGSEntry
 	rgsOpts                     api.RGSSchemeOptions
@@ -1886,6 +1976,16 @@ func (c *cmdFakeClient) UpdateDomainFunction(_ context.Context, _ string, opts a
 		}
 	}
 	return c.domainFunctionUpdateResult, nil
+}
+
+func (c *cmdFakeClient) SearchContacts(_ context.Context, _ string, opts api.ContactSearchOptions) ([]api.Contact, error) {
+	c.contactSearchOpts = opts
+	return c.contacts, nil
+}
+
+func (c *cmdFakeClient) SuppliersAndCustomers(_ context.Context, _ string, opts api.ContactSearchOptions) ([]api.Contact, error) {
+	c.contactSearchOpts = opts
+	return c.contacts, nil
 }
 
 func (c *cmdFakeClient) Administrations(context.Context, string) ([]api.Administration, error) {
