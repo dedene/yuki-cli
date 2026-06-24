@@ -22,6 +22,7 @@ type AccountingCmd struct {
 type GLAccountsCmd struct {
 	List                    GLAccountsListCmd                    `cmd:"" help:"List GL accounts for an administration."`
 	RGSScheme               GLAccountsRGSSchemeCmd               `cmd:"" name:"rgs-scheme" help:"List GL accounts with RGS codes."`
+	StartBalance            GLAccountsStartBalanceCmd            `cmd:"" name:"start-balance" help:"List GL account start balances for a bookyear."`
 	Balance                 GLAccountsBalanceCmd                 `cmd:"" help:"List GL account balances at a transaction date."`
 	BalanceFiscal           GLAccountsBalanceFiscalCmd           `cmd:"" name:"balance-fiscal" help:"List fiscal GL account balances at a transaction date."`
 	BalanceYearEnd          GLAccountsBalanceYearEndCmd          `cmd:"" name:"balance-year-end" help:"List year-end GL account balances at a transaction date."`
@@ -95,6 +96,40 @@ func (c *GLAccountsRGSSchemeCmd) Run(rt *Runtime, globals *Globals) error {
 		})
 	}
 	return output.Table(rt.Out, []string{"YUKI CODE", "ENABLED", "YUKI DESCRIPTION", "RGS CODE", "RGS DESCRIPTION", "RGS FLIP"}, rows)
+}
+
+type GLAccountsStartBalanceCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	Bookyear       int    `name:"bookyear" required:"" help:"Bookyear to request."`
+	FinancialMode  int    `name:"financial-mode" default:"1" help:"Yuki financial mode."`
+}
+
+func (c *GLAccountsStartBalanceCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	balances, err := client.StartBalanceByGLAccount(rt.Context, sessionID, api.StartBalanceByGLAccountOptions{
+		AdministrationID: administrationID,
+		Bookyear:         c.Bookyear,
+		FinancialMode:    c.FinancialMode,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, balances)
+	}
+	rows := make([][]string, 0, len(balances))
+	for _, balance := range balances {
+		rows = append(rows, []string{balance.AccountID, balance.StartBalance, balance.AccountDescription})
+	}
+	return output.Table(rt.Out, []string{"ACCOUNT", "START BALANCE", "DESCRIPTION"}, rows)
 }
 
 type GLAccountsBalanceCmd struct {

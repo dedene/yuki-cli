@@ -70,6 +70,41 @@ func TestRGSSchemeParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestStartBalanceByGLAccountParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "AccountingInfo", "GetStartBalanceByGlAccount", startBalanceByGLAccountResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:bookyear>2018</they:bookyear>",
+			"<they:financialMode>1</they:financialMode>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	balances, err := client.StartBalanceByGLAccount(context.Background(), "session-1", StartBalanceByGLAccountOptions{
+		AdministrationID: "admin-1",
+		Bookyear:         2018,
+		FinancialMode:    1,
+	})
+	if err != nil {
+		t.Fatalf("StartBalanceByGLAccount: %v", err)
+	}
+	if len(balances) != 2 {
+		t.Fatalf("len(balances) = %d, want 2", len(balances))
+	}
+	if balances[0].AdministrationID != "admin-1" ||
+		balances[0].Bookyear != 2018 ||
+		balances[0].FinancialMode != 1 ||
+		balances[0].AccountID != "100000" ||
+		balances[0].StartBalance != "-500.00" ||
+		balances[1].AccountID != "140000" {
+		t.Fatalf("balances = %#v", balances)
+	}
+}
+
 const periodDateTableResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -103,5 +138,25 @@ const rgsSchemeResponse = `<?xml version="1.0" encoding="utf-8"?>
         </RGSEntry>
       </GetRGSSchemeResult>
     </GetRGSSchemeResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const startBalanceByGLAccountResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetStartBalanceByGlAccountResponse xmlns="http://www.theyukicompany.com/">
+      <GetStartBalanceByGlAccountResult>
+        <AccountStartBalance>
+          <accountID>100000</accountID>
+          <startBalance>-500.00</startBalance>
+          <accountDescription>Share capital</accountDescription>
+        </AccountStartBalance>
+        <AccountStartBalance>
+          <accountID>140000</accountID>
+          <startBalance>-1454.14</startBalance>
+          <accountDescription>Retained earnings</accountDescription>
+        </AccountStartBalance>
+      </GetStartBalanceByGlAccountResult>
+    </GetStartBalanceByGlAccountResponse>
   </soap:Body>
 </soap:Envelope>`

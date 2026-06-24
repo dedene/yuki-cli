@@ -183,6 +183,45 @@ func TestGLAccountsRGSSchemeJSONUsesAdministrationAndVersion(t *testing.T) {
 	}
 }
 
+func TestGLAccountsStartBalanceJSONUsesBookyearAndFinancialMode(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		startBalances: []api.GLAccountStartBalance{{
+			AccountID:          "100000",
+			StartBalance:       "-500.00",
+			AccountDescription: "Share capital",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "gl-accounts", "start-balance",
+		"--administration", "admin-1",
+		"--bookyear", "2018",
+		"--financial-mode", "1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.startBalanceOpts.AdministrationID != "admin-1" ||
+		client.startBalanceOpts.Bookyear != 2018 ||
+		client.startBalanceOpts.FinancialMode != 1 {
+		t.Fatalf("startBalanceOpts = %#v", client.startBalanceOpts)
+	}
+	var balances []api.GLAccountStartBalance
+	if err := json.Unmarshal(out.Bytes(), &balances); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(balances) != 1 || balances[0].AccountID != "100000" {
+		t.Fatalf("balances = %#v", balances)
+	}
+}
+
 func TestGLAccountsBalanceJSONUsesDate(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1179,6 +1218,8 @@ type cmdFakeClient struct {
 	accounts                    []api.GLAccount
 	rgsEntries                  []api.RGSEntry
 	rgsOpts                     api.RGSSchemeOptions
+	startBalances               []api.GLAccountStartBalance
+	startBalanceOpts            api.StartBalanceByGLAccountOptions
 	balances                    []api.GLAccountBalanceItem
 	balanceOpts                 api.GLAccountBalanceOptions
 	glTransactions              []api.GLAccountTransaction
@@ -1260,6 +1301,11 @@ func (c *cmdFakeClient) GLAccounts(_ context.Context, _ string, administrationID
 func (c *cmdFakeClient) RGSScheme(_ context.Context, _ string, opts api.RGSSchemeOptions) ([]api.RGSEntry, error) {
 	c.rgsOpts = opts
 	return c.rgsEntries, nil
+}
+
+func (c *cmdFakeClient) StartBalanceByGLAccount(_ context.Context, _ string, opts api.StartBalanceByGLAccountOptions) ([]api.GLAccountStartBalance, error) {
+	c.startBalanceOpts = opts
+	return c.startBalances, nil
 }
 
 func (c *cmdFakeClient) GLAccountBalance(_ context.Context, _ string, opts api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error) {

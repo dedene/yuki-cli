@@ -28,6 +28,7 @@ type Client interface {
 	Companies(context.Context, string) ([]api.Company, error)
 	GLAccounts(context.Context, string, string) ([]api.GLAccount, error)
 	RGSScheme(context.Context, string, api.RGSSchemeOptions) ([]api.RGSEntry, error)
+	StartBalanceByGLAccount(context.Context, string, api.StartBalanceByGLAccountOptions) ([]api.GLAccountStartBalance, error)
 	GLAccountBalance(context.Context, string, api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error)
 	GLAccountBalanceFiscal(context.Context, string, api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error)
 	GLAccountBalanceYearEnd(context.Context, string, api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error)

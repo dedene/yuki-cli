@@ -17,6 +17,12 @@ type RGSSchemeOptions struct {
 	RGSVersion       string
 }
 
+type StartBalanceByGLAccountOptions struct {
+	AdministrationID string
+	Bookyear         int
+	FinancialMode    int
+}
+
 func (c *Client) RGSScheme(ctx context.Context, sessionID string, opts RGSSchemeOptions) ([]RGSEntry, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -37,6 +43,30 @@ func (c *Client) RGSScheme(ctx context.Context, sessionID string, opts RGSScheme
 		entries[i].RGSVersion = opts.RGSVersion
 	}
 	return entries, nil
+}
+
+func (c *Client) StartBalanceByGLAccount(ctx context.Context, sessionID string, opts StartBalanceByGLAccountOptions) ([]GLAccountStartBalance, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "bookyear", Value: strconv.Itoa(opts.Bookyear)},
+		{Name: "financialMode", Value: strconv.Itoa(opts.FinancialMode)},
+	}
+	data, err := c.call(ctx, "AccountingInfo", "GetStartBalanceByGlAccount", params)
+	if err != nil {
+		return nil, err
+	}
+	var env startBalanceByGLAccountEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse GetStartBalanceByGlAccount response: %w", err)
+	}
+	balances := env.Body.Response.Result.Balances
+	for i := range balances {
+		balances[i].AdministrationID = opts.AdministrationID
+		balances[i].Bookyear = opts.Bookyear
+		balances[i].FinancialMode = opts.FinancialMode
+	}
+	return balances, nil
 }
 
 func (c *Client) PeriodDateTable(ctx context.Context, sessionID string, opts PeriodDateTableOptions) (AdministrationPeriod, error) {
@@ -74,5 +104,15 @@ type rgsSchemeEnvelope struct {
 				Entries []RGSEntry `xml:"RGSEntry"`
 			} `xml:"GetRGSSchemeResult"`
 		} `xml:"GetRGSSchemeResponse"`
+	} `xml:"Body"`
+}
+
+type startBalanceByGLAccountEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Balances []GLAccountStartBalance `xml:"AccountStartBalance"`
+			} `xml:"GetStartBalanceByGlAccountResult"`
+		} `xml:"GetStartBalanceByGlAccountResponse"`
 	} `xml:"Body"`
 }

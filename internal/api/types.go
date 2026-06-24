@@ -66,6 +66,15 @@ type RGSEntry struct {
 	RGSVersion       string `json:"rgs_version,omitempty"`
 }
 
+type GLAccountStartBalance struct {
+	AccountID          string `json:"account_id" xml:"accountID"`
+	StartBalance       string `json:"start_balance" xml:"startBalance"`
+	AccountDescription string `json:"account_description" xml:"accountDescription"`
+	AdministrationID   string `json:"administration_id,omitempty"`
+	Bookyear           int    `json:"bookyear,omitempty"`
+	FinancialMode      int    `json:"financial_mode,omitempty"`
+}
+
 type GLAccountBalanceItem struct {
 	Code        string `json:"code" xml:"Code,attr"`
 	BalanceType string `json:"balance_type" xml:"BalanceType,attr"`
