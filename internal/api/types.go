@@ -288,6 +288,13 @@ type AccountingProject struct {
 	ContactID      string `json:"contact_id,omitempty" xml:"contactID"`
 }
 
+type ProjectBalance struct {
+	GLAccountCode string `json:"gl_account_code,omitempty" xml:"glAccountCode"`
+	Project       string `json:"project,omitempty" xml:"project"`
+	ProjectCode   string `json:"project_code,omitempty" xml:"projectCode"`
+	Amount        string `json:"amount" xml:"amount"`
+}
+
 type TransactionDocument struct {
 	FileName string `json:"file_name" xml:"fileName"`
 	FileData string `json:"file_data" xml:"filedata"`

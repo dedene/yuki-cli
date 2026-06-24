@@ -73,6 +73,45 @@ func TestProjectsAndIDParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestProjectBalanceParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "AccountingInfo", "GetProjectBalance", projectBalanceResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:GLAccountCode>700000</they:GLAccountCode>",
+			"<they:projectCode>DOS1</they:projectCode>",
+			"<they:StartDate>2018-01-01</they:StartDate>",
+			"<they:EndDate>2020-12-31</they:EndDate>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	balances, err := client.ProjectBalance(context.Background(), "session-1", ProjectBalanceOptions{
+		AdministrationID: "admin-1",
+		GLAccountCode:    "700000",
+		ProjectCode:      "DOS1",
+		StartDate:        "2018-01-01",
+		EndDate:          "2020-12-31",
+	})
+	if err != nil {
+		t.Fatalf("ProjectBalance: %v", err)
+	}
+	if len(balances) != 3 {
+		t.Fatalf("len(balances) = %d, want 3", len(balances))
+	}
+	if balances[0].GLAccountCode != "400000" ||
+		balances[0].Project != "Dossier1" ||
+		balances[0].ProjectCode != "DOS1" ||
+		balances[0].Amount != "542.00" ||
+		balances[2].GLAccountCode != "494100" ||
+		balances[2].Amount != "-178.50" {
+		t.Fatalf("balances = %#v", balances)
+	}
+}
+
 const projectsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -112,6 +151,34 @@ const projectsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Project>
       </GetProjectsResult>
     </GetProjectsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const projectBalanceResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetProjectBalanceResponse xmlns="http://www.theyukicompany.com/">
+      <GetProjectBalanceResult>
+        <ProjectBalance>
+          <glAccountCode>400000</glAccountCode>
+          <project>Dossier1</project>
+          <projectCode>DOS1</projectCode>
+          <amount>542.00</amount>
+        </ProjectBalance>
+        <ProjectBalance>
+          <glAccountCode>451020</glAccountCode>
+          <project>Dossier1</project>
+          <projectCode>DOS1</projectCode>
+          <amount>0.00</amount>
+        </ProjectBalance>
+        <ProjectBalance>
+          <glAccountCode>494100</glAccountCode>
+          <project>Dossier1</project>
+          <projectCode>DOS1</projectCode>
+          <amount>-178.50</amount>
+        </ProjectBalance>
+      </GetProjectBalanceResult>
+    </GetProjectBalanceResponse>
   </soap:Body>
 </soap:Envelope>`
 

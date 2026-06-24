@@ -1180,6 +1180,50 @@ func TestProjectsListWithIDJSONUsesSearchFlags(t *testing.T) {
 	}
 }
 
+func TestProjectsBalanceJSONUsesScopeAndDateRange(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		projectBalances: []api.ProjectBalance{{
+			GLAccountCode: "400000",
+			Project:       "Dossier1",
+			ProjectCode:   "DOS1",
+			Amount:        "542.00",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "projects", "balance",
+		"--administration", "admin-1",
+		"--gl-account", "400000",
+		"--project-code", "DOS1",
+		"--from", "2018-01-01",
+		"--to", "2020-12-31",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.projectBalanceOpts.AdministrationID != "admin-1" ||
+		client.projectBalanceOpts.GLAccountCode != "400000" ||
+		client.projectBalanceOpts.ProjectCode != "DOS1" ||
+		client.projectBalanceOpts.StartDate != "2018-01-01" ||
+		client.projectBalanceOpts.EndDate != "2020-12-31" {
+		t.Fatalf("projectBalanceOpts = %#v", client.projectBalanceOpts)
+	}
+	var balances []api.ProjectBalance
+	if err := json.Unmarshal(out.Bytes(), &balances); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(balances) != 1 || balances[0].Amount != "542.00" {
+		t.Fatalf("balances = %#v", balances)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1413,6 +1457,8 @@ type cmdFakeClient struct {
 	projects                    []api.AccountingProject
 	projectsOpts                api.ProjectsOptions
 	projectsAndIDOpts           api.ProjectsOptions
+	projectBalances             []api.ProjectBalance
+	projectBalanceOpts          api.ProjectBalanceOptions
 	customMethods               []api.PaymentMethod
 	archiveMethods              []api.PaymentMethod
 	folders                     []api.DocumentFolder
@@ -1622,6 +1668,11 @@ func (c *cmdFakeClient) Projects(_ context.Context, _ string, opts api.ProjectsO
 func (c *cmdFakeClient) ProjectsAndID(_ context.Context, _ string, opts api.ProjectsOptions) ([]api.AccountingProject, error) {
 	c.projectsAndIDOpts = opts
 	return c.projects, nil
+}
+
+func (c *cmdFakeClient) ProjectBalance(_ context.Context, _ string, opts api.ProjectBalanceOptions) ([]api.ProjectBalance, error) {
+	c.projectBalanceOpts = opts
+	return c.projectBalances, nil
 }
 
 func (c *cmdFakeClient) CustomPaymentMethods(_ context.Context, _ string, administrationID string) ([]api.PaymentMethod, error) {

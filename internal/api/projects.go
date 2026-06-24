@@ -12,6 +12,14 @@ type ProjectsOptions struct {
 	SearchValue      string
 }
 
+type ProjectBalanceOptions struct {
+	AdministrationID string
+	GLAccountCode    string
+	ProjectCode      string
+	StartDate        string
+	EndDate          string
+}
+
 func (c *Client) Projects(ctx context.Context, sessionID string, opts ProjectsOptions) ([]AccountingProject, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -48,6 +56,26 @@ func (c *Client) ProjectsAndID(ctx context.Context, sessionID string, opts Proje
 	return env.Body.Response.Result.Projects, nil
 }
 
+func (c *Client) ProjectBalance(ctx context.Context, sessionID string, opts ProjectBalanceOptions) ([]ProjectBalance, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "GLAccountCode", Value: opts.GLAccountCode},
+		{Name: "projectCode", Value: opts.ProjectCode},
+		{Name: "StartDate", Value: opts.StartDate},
+		{Name: "EndDate", Value: opts.EndDate},
+	}
+	data, err := c.call(ctx, "AccountingInfo", "GetProjectBalance", params)
+	if err != nil {
+		return nil, err
+	}
+	var env projectBalanceEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse GetProjectBalance response: %w", err)
+	}
+	return env.Body.Response.Result.Balances, nil
+}
+
 type projectsEnvelope struct {
 	Body struct {
 		Response struct {
@@ -65,5 +93,15 @@ type projectsAndIDEnvelope struct {
 				Projects []AccountingProject `xml:"Project"`
 			} `xml:"GetProjectsAndIDResult"`
 		} `xml:"GetProjectsAndIDResponse"`
+	} `xml:"Body"`
+}
+
+type projectBalanceEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Balances []ProjectBalance `xml:"ProjectBalance"`
+			} `xml:"GetProjectBalanceResult"`
+		} `xml:"GetProjectBalanceResponse"`
 	} `xml:"Body"`
 }

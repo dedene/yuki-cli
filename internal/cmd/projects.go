@@ -8,6 +8,7 @@ import (
 type ProjectsCmd struct {
 	List       ProjectsListCmd       `cmd:"" help:"List projects for an administration."`
 	ListWithID ProjectsListWithIDCmd `cmd:"" name:"list-with-id" help:"List projects with Yuki IDs for an administration."`
+	Balance    ProjectsBalanceCmd    `cmd:"" help:"List project balances for a date range."`
 }
 
 type ProjectsListCmd struct {
@@ -93,4 +94,48 @@ func (c *ProjectsListWithIDCmd) Run(rt *Runtime, globals *Globals) error {
 		})
 	}
 	return output.Table(rt.Out, []string{"ID", "HID", "CODE", "DESCRIPTION", "COMPANY", "CONTACT"}, rows)
+}
+
+type ProjectsBalanceCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	GLAccount      string `name:"gl-account" help:"Optional GL account code."`
+	ProjectCode    string `name:"project-code" help:"Optional project code."`
+	From           string `name:"from" required:"" help:"Start date, YYYY-MM-DD."`
+	To             string `name:"to" required:"" help:"End date, YYYY-MM-DD."`
+}
+
+func (c *ProjectsBalanceCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	balances, err := client.ProjectBalance(rt.Context, sessionID, api.ProjectBalanceOptions{
+		AdministrationID: administrationID,
+		GLAccountCode:    c.GLAccount,
+		ProjectCode:      c.ProjectCode,
+		StartDate:        c.From,
+		EndDate:          c.To,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, balances)
+	}
+
+	rows := make([][]string, 0, len(balances))
+	for _, balance := range balances {
+		rows = append(rows, []string{
+			balance.GLAccountCode,
+			balance.ProjectCode,
+			balance.Project,
+			balance.Amount,
+		})
+	}
+	return output.Table(rt.Out, []string{"GL", "PROJECT CODE", "PROJECT", "AMOUNT"}, rows)
 }
