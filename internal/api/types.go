@@ -206,6 +206,11 @@ type DocumentXMLData struct {
 	XML        string `json:"xml"`
 }
 
+type DocumentXMLBinaryData struct {
+	DocumentID    string `json:"document_id"`
+	XMLDataBase64 string `json:"xml_data_base64"`
+}
+
 type DocumentBinaryData struct {
 	DocumentID string `json:"document_id"`
 	FileData   string `json:"file_data"`

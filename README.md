@@ -53,6 +53,7 @@ yuki archive documents search --search-text apple --limit 25 --json
 yuki archive documents find --document <document-id>
 yuki archive documents image-count --document <document-id> --json
 yuki archive documents xml --document <document-id> --output invoice.xml
+yuki archive documents xml-binary --document <document-id> --output invoice.xml
 yuki archive documents binary --document <document-id> --output invoice.pdf
 yuki archive documents download --document <document-id> --output invoice.pdf
 ```

@@ -439,6 +439,7 @@ type cmdFakeClient struct {
 	documentFile          api.DocumentFile
 	documentBinaryData    api.DocumentBinaryData
 	documentImageCount    api.DocumentImageCount
+	documentXMLBinaryData api.DocumentXMLBinaryData
 	documentXMLData       api.DocumentXMLData
 	transactionDocument   api.TransactionDocument
 }
@@ -563,6 +564,14 @@ func (c *cmdFakeClient) DocumentImageCount(_ context.Context, _ string, document
 		c.documentImageCount.DocumentID = documentID
 	}
 	return c.documentImageCount, nil
+}
+
+func (c *cmdFakeClient) DocumentXMLDataAsBinary(_ context.Context, _ string, documentID string) (api.DocumentXMLBinaryData, error) {
+	c.documentID = documentID
+	if c.documentXMLBinaryData.DocumentID == "" {
+		c.documentXMLBinaryData.DocumentID = documentID
+	}
+	return c.documentXMLBinaryData, nil
 }
 
 func (c *cmdFakeClient) DocumentXMLDataAsString(_ context.Context, _ string, documentID string) (api.DocumentXMLData, error) {

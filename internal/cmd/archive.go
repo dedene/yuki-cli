@@ -173,6 +173,7 @@ type ArchiveDocumentsCmd struct {
 	Binary           ArchiveDocumentsBinaryCmd           `cmd:"" help:"Download raw document binary data by document ID."`
 	ImageCount       ArchiveDocumentsImageCountCmd       `cmd:"" name:"image-count" help:"Count rendered images for a document."`
 	XML              ArchiveDocumentsXMLCmd              `cmd:"" name:"xml" help:"Fetch XML data for a document."`
+	XMLBinary        ArchiveDocumentsXMLBinaryCmd        `cmd:"" name:"xml-binary" help:"Download XML data as base64Binary by document ID."`
 }
 
 type ArchiveDocumentsListCmd struct {
