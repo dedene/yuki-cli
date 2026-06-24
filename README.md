@@ -58,6 +58,7 @@ yuki accounting transactions document --administration <administration-id> --tra
 yuki accounting change-digest transactions --administration <administration-id> --from 2025-07-23T00:00:00.00Z --to 2025-08-23T13:00:00.00Z --limit 100 --start-record 0 --json
 yuki accounting change-digest detail --administration <administration-id> --transaction <transaction-id> --json
 yuki accounting projects list --administration <administration-id> --search-option All --json
+yuki accounting projects list-with-id --administration <administration-id> --search-option Code --search-value WELLNESS --json
 yuki archive payment-methods list
 yuki archive currencies list
 yuki archive cost-categories list

@@ -40,6 +40,39 @@ func TestProjectsParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestProjectsAndIDParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "AccountingInfo", "GetProjectsAndID", projectsAndIDResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:searchOption>Code</they:searchOption>",
+			"<they:searchValue>WELLNESS</they:searchValue>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	projects, err := client.ProjectsAndID(context.Background(), "session-1", ProjectsOptions{
+		AdministrationID: "admin-1",
+		SearchOption:     "Code",
+		SearchValue:      "WELLNESS",
+	})
+	if err != nil {
+		t.Fatalf("ProjectsAndID: %v", err)
+	}
+	if len(projects) != 2 {
+		t.Fatalf("len(projects) = %d, want 2", len(projects))
+	}
+	if projects[0].ID != "f2e749e4-af93-4259-9351-930ab20a2991" ||
+		projects[0].Code != "WELLNESS" ||
+		projects[1].ID != "b37d5de3-05f1-4061-a495-5591d8baf745" ||
+		projects[1].Code != "18-OH-ALG" {
+		t.Fatalf("projects = %#v", projects)
+	}
+}
+
 const projectsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -79,5 +112,37 @@ const projectsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </Project>
       </GetProjectsResult>
     </GetProjectsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const projectsAndIDResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetProjectsAndIDResponse xmlns="http://www.theyukicompany.com/">
+      <GetProjectsAndIDResult>
+        <Project>
+          <description>Wellness Event</description>
+          <HID>1</HID>
+          <code>WELLNESS</code>
+          <startDate>2018-09-10T00:00:00</startDate>
+          <endDate>0001-01-01T00:00:00</endDate>
+          <company>Highpro BV</company>
+          <budgetSales>0</budgetSales>
+          <budgetPurchase>0</budgetPurchase>
+          <id>f2e749e4-af93-4259-9351-930ab20a2991</id>
+        </Project>
+        <Project>
+          <description>test ttpe</description>
+          <HID>2</HID>
+          <code>18-OH-ALG</code>
+          <startDate>2018-10-15T00:00:00</startDate>
+          <endDate>0001-01-01T00:00:00</endDate>
+          <company>Highpro BV</company>
+          <budgetSales>0</budgetSales>
+          <budgetPurchase>0</budgetPurchase>
+          <id>b37d5de3-05f1-4061-a495-5591d8baf745</id>
+        </Project>
+      </GetProjectsAndIDResult>
+    </GetProjectsAndIDResponse>
   </soap:Body>
 </soap:Envelope>`

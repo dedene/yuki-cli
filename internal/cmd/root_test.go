@@ -1139,6 +1139,47 @@ func TestProjectsListJSONUsesSearchFlags(t *testing.T) {
 	}
 }
 
+func TestProjectsListWithIDJSONUsesSearchFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		projects: []api.AccountingProject{{
+			ID:          "project-1",
+			HID:         "1",
+			Code:        "WELLNESS",
+			Description: "Wellness Event",
+			Company:     "Highpro BV",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "projects", "list-with-id",
+		"--administration", "admin-1",
+		"--search-option", "Code",
+		"--search-value", "WELLNESS",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.projectsAndIDOpts.AdministrationID != "admin-1" ||
+		client.projectsAndIDOpts.SearchOption != "Code" ||
+		client.projectsAndIDOpts.SearchValue != "WELLNESS" {
+		t.Fatalf("projectsAndIDOpts = %#v", client.projectsAndIDOpts)
+	}
+	var projects []api.AccountingProject
+	if err := json.Unmarshal(out.Bytes(), &projects); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(projects) != 1 || projects[0].ID != "project-1" {
+		t.Fatalf("projects = %#v", projects)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1371,6 +1412,7 @@ type cmdFakeClient struct {
 	changeDigestTransaction     api.TransactionInfo
 	projects                    []api.AccountingProject
 	projectsOpts                api.ProjectsOptions
+	projectsAndIDOpts           api.ProjectsOptions
 	customMethods               []api.PaymentMethod
 	archiveMethods              []api.PaymentMethod
 	folders                     []api.DocumentFolder
@@ -1574,6 +1616,11 @@ func (c *cmdFakeClient) ChangeDigestTransactionDetail(_ context.Context, _ strin
 
 func (c *cmdFakeClient) Projects(_ context.Context, _ string, opts api.ProjectsOptions) ([]api.AccountingProject, error) {
 	c.projectsOpts = opts
+	return c.projects, nil
+}
+
+func (c *cmdFakeClient) ProjectsAndID(_ context.Context, _ string, opts api.ProjectsOptions) ([]api.AccountingProject, error) {
+	c.projectsAndIDOpts = opts
 	return c.projects, nil
 }
 
