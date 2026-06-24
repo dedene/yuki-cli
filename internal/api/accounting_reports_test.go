@@ -224,6 +224,41 @@ func TestGLAccountTransactionsFiscalParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestGLAccountTransactionsAndContactParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Accounting", "GLAccountTransactionsAndContact", glAccountTransactionsAndContactResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:GLAccountCode>700000</they:GLAccountCode>",
+			"<they:StartDate>2020-01-01</they:StartDate>",
+			"<they:EndDate>2020-01-31</they:EndDate>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	transactions, err := client.GLAccountTransactionsAndContact(context.Background(), "session-1", GLAccountTransactionsOptions{
+		AdministrationID: "admin-1",
+		GLAccountCode:    "700000",
+		StartDate:        "2020-01-01",
+		EndDate:          "2020-01-31",
+	})
+	if err != nil {
+		t.Fatalf("GLAccountTransactionsAndContact: %v", err)
+	}
+	if len(transactions) != 1 {
+		t.Fatalf("len(transactions) = %d, want 1", len(transactions))
+	}
+	if transactions[0].ID != "43061123-4f79-4b01-9243-0729cf5a1b6d" ||
+		transactions[0].Project.Text != "WELLNESS" ||
+		transactions[0].FileName != "Invoice 2017/149.pdf" ||
+		transactions[0].GLAccountCode != "700000" {
+		t.Fatalf("transaction = %#v", transactions[0])
+	}
+}
+
 const glAccountBalanceResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -283,6 +318,29 @@ const glAccountTransactionsFiscalResponse = `<?xml version="1.0" encoding="utf-8
         </GLAccountTransactions>
       </GLAccountTransactionsFiscalResult>
     </GLAccountTransactionsFiscalResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const glAccountTransactionsAndContactResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GLAccountTransactionsAndContactResponse xmlns="http://www.theyukicompany.com/">
+      <GLAccountTransactionsAndContactResult>
+        <GLAccountTransactions xmlns="">
+          <GLAccountTransaction ID="43061123-4f79-4b01-9243-0729cf5a1b6d">
+            <Date>2020-01-01</Date>
+            <Description>Factuur voor Quentin test</Description>
+            <Amount>-47.45</Amount>
+            <SalesItem />
+            <Contact>Quentin test</Contact>
+            <ContactID>79cea46b-a989-49a3-b320-bbbfeab2ee2e</ContactID>
+            <Project>WELLNESS</Project>
+            <GLAccountCode>700000</GLAccountCode>
+            <FileName>Invoice 2017/149.pdf</FileName>
+          </GLAccountTransaction>
+        </GLAccountTransactions>
+      </GLAccountTransactionsAndContactResult>
+    </GLAccountTransactionsAndContactResponse>
   </soap:Body>
 </soap:Envelope>`
 

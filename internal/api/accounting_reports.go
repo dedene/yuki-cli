@@ -113,6 +113,25 @@ func (c *Client) GLAccountTransactionsFiscal(ctx context.Context, sessionID stri
 	return env.Body.Response.Result.Transactions.Items, nil
 }
 
+func (c *Client) GLAccountTransactionsAndContact(ctx context.Context, sessionID string, opts GLAccountTransactionsOptions) ([]GLAccountTransaction, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "GLAccountCode", Value: opts.GLAccountCode},
+		{Name: "StartDate", Value: opts.StartDate},
+		{Name: "EndDate", Value: opts.EndDate},
+	}
+	data, err := c.call(ctx, "Accounting", "GLAccountTransactionsAndContact", params)
+	if err != nil {
+		return nil, err
+	}
+	var env glAccountTransactionsAndContactEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse GLAccountTransactionsAndContact response: %w", err)
+	}
+	return env.Body.Response.Result.Transactions.Items, nil
+}
+
 func (c *Client) NetRevenue(ctx context.Context, sessionID string, opts RevenueOptions) (RevenueReport, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -192,6 +211,18 @@ type glAccountTransactionsFiscalEnvelope struct {
 				} `xml:"GLAccountTransactions"`
 			} `xml:"GLAccountTransactionsFiscalResult"`
 		} `xml:"GLAccountTransactionsFiscalResponse"`
+	} `xml:"Body"`
+}
+
+type glAccountTransactionsAndContactEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Transactions struct {
+					Items []GLAccountTransaction `xml:"GLAccountTransaction"`
+				} `xml:"GLAccountTransactions"`
+			} `xml:"GLAccountTransactionsAndContactResult"`
+		} `xml:"GLAccountTransactionsAndContactResponse"`
 	} `xml:"Body"`
 }
 
