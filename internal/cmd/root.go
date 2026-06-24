@@ -51,6 +51,7 @@ type Client interface {
 	TransactionDocument(context.Context, string, string, string) (api.TransactionDocument, error)
 	UpdatedAndDeletedTransactions(context.Context, string, api.UpdatedAndDeletedTransactionsOptions) ([]api.UpdatedTransaction, error)
 	ChangeDigestTransactionDetail(context.Context, string, string, string) (api.TransactionInfo, error)
+	Projects(context.Context, string, api.ProjectsOptions) ([]api.AccountingProject, error)
 	CustomPaymentMethods(context.Context, string, string) ([]api.PaymentMethod, error)
 	DocumentFolders(context.Context, string) ([]api.DocumentFolder, error)
 	DocumentFolderCounts(context.Context, string, int) ([]api.DocumentFolderCount, error)

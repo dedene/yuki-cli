@@ -16,6 +16,7 @@ type AccountingCmd struct {
 	Outstanding    OutstandingCmd              `cmd:"" help:"Inspect outstanding items."`
 	Transactions   TransactionsCmd             `cmd:"" help:"Inspect accounting transactions."`
 	ChangeDigest   ChangeDigestCmd             `cmd:"" name:"change-digest" help:"Inspect change digest feeds."`
+	Projects       ProjectsCmd                 `cmd:"" help:"Inspect accounting projects."`
 	PaymentMethods AccountingPaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect accounting payment methods."`
 	Periods        PeriodsCmd                  `cmd:"" help:"Inspect administration periods."`
 }

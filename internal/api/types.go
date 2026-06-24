@@ -273,6 +273,21 @@ type ProjectInfo struct {
 	Description string `json:"description,omitempty" xml:"description"`
 }
 
+type AccountingProject struct {
+	ID             string `json:"id,omitempty" xml:"id"`
+	HID            string `json:"hid" xml:"HID"`
+	Code           string `json:"code,omitempty" xml:"code"`
+	Description    string `json:"description,omitempty" xml:"description"`
+	StartDate      string `json:"start_date" xml:"startDate"`
+	EndDate        string `json:"end_date" xml:"endDate"`
+	Company        string `json:"company,omitempty" xml:"company"`
+	Contact        string `json:"contact,omitempty" xml:"contact"`
+	Tags           string `json:"tags,omitempty" xml:"tags"`
+	BudgetSales    string `json:"budget_sales" xml:"budgetSales"`
+	BudgetPurchase string `json:"budget_purchase" xml:"budgetPurchase"`
+	ContactID      string `json:"contact_id,omitempty" xml:"contactID"`
+}
+
 type TransactionDocument struct {
 	FileName string `json:"file_name" xml:"fileName"`
 	FileData string `json:"file_data" xml:"filedata"`

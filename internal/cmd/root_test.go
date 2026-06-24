@@ -1099,6 +1099,46 @@ func TestChangeDigestDetailJSONUsesTransactionID(t *testing.T) {
 	}
 }
 
+func TestProjectsListJSONUsesSearchFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		projects: []api.AccountingProject{{
+			HID:         "1",
+			Code:        "WELLNESS",
+			Description: "Wellness Event",
+			Company:     "Highpro BV",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "projects", "list",
+		"--administration", "admin-1",
+		"--search-option", "Code",
+		"--search-value", "WELLNESS",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.projectsOpts.AdministrationID != "admin-1" ||
+		client.projectsOpts.SearchOption != "Code" ||
+		client.projectsOpts.SearchValue != "WELLNESS" {
+		t.Fatalf("projectsOpts = %#v", client.projectsOpts)
+	}
+	var projects []api.AccountingProject
+	if err := json.Unmarshal(out.Bytes(), &projects); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(projects) != 1 || projects[0].Code != "WELLNESS" {
+		t.Fatalf("projects = %#v", projects)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1329,6 +1369,8 @@ type cmdFakeClient struct {
 	updatedTransactions         []api.UpdatedTransaction
 	updatedTransactionsOpts     api.UpdatedAndDeletedTransactionsOptions
 	changeDigestTransaction     api.TransactionInfo
+	projects                    []api.AccountingProject
+	projectsOpts                api.ProjectsOptions
 	customMethods               []api.PaymentMethod
 	archiveMethods              []api.PaymentMethod
 	folders                     []api.DocumentFolder
@@ -1528,6 +1570,11 @@ func (c *cmdFakeClient) ChangeDigestTransactionDetail(_ context.Context, _ strin
 	c.administrationID = administrationID
 	c.transactionID = transactionID
 	return c.changeDigestTransaction, nil
+}
+
+func (c *cmdFakeClient) Projects(_ context.Context, _ string, opts api.ProjectsOptions) ([]api.AccountingProject, error) {
+	c.projectsOpts = opts
+	return c.projects, nil
 }
 
 func (c *cmdFakeClient) CustomPaymentMethods(_ context.Context, _ string, administrationID string) ([]api.PaymentMethod, error) {
