@@ -304,6 +304,51 @@ func TestGLAccountsTransactionsJSONUsesDateRange(t *testing.T) {
 	}
 }
 
+func TestGLAccountsTransactionsFiscalJSONUsesDateRange(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		glTransactions: []api.GLAccountTransaction{{
+			ID:            "tx-1",
+			Date:          "2020-01-01",
+			Description:   "Factuur voor Quentin test",
+			Amount:        "-47.45",
+			Contact:       "Quentin test",
+			Project:       api.GLTransactionProject{Code: "WELLNESS", Text: "Wellness Event"},
+			GLAccountCode: "700000",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "gl-accounts", "transactions-fiscal",
+		"--administration", "admin-1",
+		"--gl-account", "700000",
+		"--from", "2020-01-01",
+		"--to", "2020-01-31",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.glTransactionOpts.AdministrationID != "admin-1" ||
+		client.glTransactionOpts.GLAccountCode != "700000" ||
+		client.glTransactionOpts.StartDate != "2020-01-01" ||
+		client.glTransactionOpts.EndDate != "2020-01-31" {
+		t.Fatalf("glTransactionOpts = %#v", client.glTransactionOpts)
+	}
+	var transactions []api.GLAccountTransaction
+	if err := json.Unmarshal(out.Bytes(), &transactions); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(transactions) != 1 || transactions[0].Project.Code != "WELLNESS" {
+		t.Fatalf("transactions = %#v", transactions)
+	}
+}
+
 func TestRevenueNetJSONUsesDateRange(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -782,6 +827,11 @@ func (c *cmdFakeClient) GLAccountBalanceYearEnd(_ context.Context, _ string, opt
 }
 
 func (c *cmdFakeClient) GLAccountTransactions(_ context.Context, _ string, opts api.GLAccountTransactionsOptions) ([]api.GLAccountTransaction, error) {
+	c.glTransactionOpts = opts
+	return c.glTransactions, nil
+}
+
+func (c *cmdFakeClient) GLAccountTransactionsFiscal(_ context.Context, _ string, opts api.GLAccountTransactionsOptions) ([]api.GLAccountTransaction, error) {
 	c.glTransactionOpts = opts
 	return c.glTransactions, nil
 }

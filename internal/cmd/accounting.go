@@ -16,11 +16,12 @@ type AccountingCmd struct {
 }
 
 type GLAccountsCmd struct {
-	List           GLAccountsListCmd           `cmd:"" help:"List GL accounts for an administration."`
-	Balance        GLAccountsBalanceCmd        `cmd:"" help:"List GL account balances at a transaction date."`
-	BalanceFiscal  GLAccountsBalanceFiscalCmd  `cmd:"" name:"balance-fiscal" help:"List fiscal GL account balances at a transaction date."`
-	BalanceYearEnd GLAccountsBalanceYearEndCmd `cmd:"" name:"balance-year-end" help:"List year-end GL account balances at a transaction date."`
-	Transactions   GLAccountsTransactionsCmd   `cmd:"" help:"List transactions for a GL account."`
+	List               GLAccountsListCmd               `cmd:"" help:"List GL accounts for an administration."`
+	Balance            GLAccountsBalanceCmd            `cmd:"" help:"List GL account balances at a transaction date."`
+	BalanceFiscal      GLAccountsBalanceFiscalCmd      `cmd:"" name:"balance-fiscal" help:"List fiscal GL account balances at a transaction date."`
+	BalanceYearEnd     GLAccountsBalanceYearEndCmd     `cmd:"" name:"balance-year-end" help:"List year-end GL account balances at a transaction date."`
+	Transactions       GLAccountsTransactionsCmd       `cmd:"" help:"List transactions for a GL account."`
+	TransactionsFiscal GLAccountsTransactionsFiscalCmd `cmd:"" name:"transactions-fiscal" help:"List fiscal transactions for a GL account."`
 }
 
 type GLAccountsListCmd struct {
@@ -172,6 +173,42 @@ func (c *GLAccountsTransactionsCmd) Run(rt *Runtime, globals *Globals) error {
 	if globals.JSON {
 		return output.JSON(rt.Out, transactions)
 	}
+	return renderGLAccountTransactions(rt, transactions)
+}
+
+type GLAccountsTransactionsFiscalCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	GLAccount      string `name:"gl-account" help:"GL account code. Pass an empty value to include all accounts."`
+	From           string `name:"from" required:"" help:"Start date, YYYY-MM-DD."`
+	To             string `name:"to" required:"" help:"End date, YYYY-MM-DD."`
+}
+
+func (c *GLAccountsTransactionsFiscalCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	transactions, err := client.GLAccountTransactionsFiscal(rt.Context, sessionID, api.GLAccountTransactionsOptions{
+		AdministrationID: administrationID,
+		GLAccountCode:    c.GLAccount,
+		StartDate:        c.From,
+		EndDate:          c.To,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, transactions)
+	}
+	return renderGLAccountTransactions(rt, transactions)
+}
+
+func renderGLAccountTransactions(rt *Runtime, transactions []api.GLAccountTransaction) error {
 	rows := make([][]string, 0, len(transactions))
 	for _, tx := range transactions {
 		project := tx.Project.Text
