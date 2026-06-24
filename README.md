@@ -38,6 +38,7 @@ yuki accounting transactions list --administration <administration-id> --from 20
 yuki accounting transactions details --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --gl-account 400000 --json
 yuki accounting transactions document --administration <administration-id> --transaction <transaction-id> --output invoice.pdf
 yuki archive payment-methods list
+yuki archive currencies list
 yuki archive folders list
 yuki archive folders tabs --folder 3
 yuki archive documents search --search-text apple --limit 25 --json

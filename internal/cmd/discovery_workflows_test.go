@@ -225,3 +225,30 @@ func TestArchivePaymentMethodsListPrintsRows(t *testing.T) {
 		}
 	}
 }
+
+func TestArchiveCurrenciesListPrintsRows(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		currencies: []api.Currency{{
+			ID:          "EUR",
+			Default:     true,
+			Description: "Euro (EUR)",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{"archive", "currencies", "list"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{"ID", "DEFAULT", "DESCRIPTION", "EUR", "true", "Euro (EUR)"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("archive currencies output missing %q in:\n%s", want, got)
+		}
+	}
+}

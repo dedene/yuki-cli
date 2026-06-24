@@ -10,7 +10,38 @@ import (
 type ArchiveCmd struct {
 	Documents      ArchiveDocumentsCmd      `cmd:"" help:"Inspect and download archive documents."`
 	Folders        ArchiveFoldersCmd        `cmd:"" help:"Inspect archive folders."`
+	Currencies     ArchiveCurrenciesCmd     `cmd:"" help:"Inspect archive currencies."`
 	PaymentMethods ArchivePaymentMethodsCmd `cmd:"" name:"payment-methods" help:"Inspect archive payment methods."`
+}
+
+type ArchiveCurrenciesCmd struct {
+	List ArchiveCurrenciesListCmd `cmd:"" help:"List available archive currencies."`
+}
+
+type ArchiveCurrenciesListCmd struct{}
+
+func (c *ArchiveCurrenciesListCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	currencies, err := client.Currencies(rt.Context, sessionID)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, currencies)
+	}
+
+	rows := make([][]string, 0, len(currencies))
+	for _, currency := range currencies {
+		rows = append(rows, []string{
+			currency.ID,
+			output.Bool(currency.Default),
+			currency.Description,
+		})
+	}
+	return output.Table(rt.Out, []string{"ID", "DEFAULT", "DESCRIPTION"}, rows)
 }
 
 type ArchiveFoldersCmd struct {

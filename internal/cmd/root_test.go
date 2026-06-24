@@ -320,6 +320,7 @@ type cmdFakeClient struct {
 	archiveMethods      []api.PaymentMethod
 	folders             []api.DocumentFolder
 	tabs                []api.DocumentFolderTab
+	currencies          []api.Currency
 	folderID            string
 	searchDocuments     []api.Document
 	searchDocumentsOpts api.SearchDocumentsOptions
@@ -406,4 +407,8 @@ func (c *cmdFakeClient) DocumentFile(_ context.Context, _ string, documentID str
 
 func (c *cmdFakeClient) PaymentMethods(context.Context, string) ([]api.PaymentMethod, error) {
 	return c.archiveMethods, nil
+}
+
+func (c *cmdFakeClient) Currencies(context.Context, string) ([]api.Currency, error) {
+	return c.currencies, nil
 }

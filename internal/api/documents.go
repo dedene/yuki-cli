@@ -123,6 +123,18 @@ func (c *Client) PaymentMethods(ctx context.Context, sessionID string) ([]Paymen
 	return methods, nil
 }
 
+func (c *Client) Currencies(ctx context.Context, sessionID string) ([]Currency, error) {
+	data, err := c.call(ctx, "Archive", "Currencies", sessionParams(sessionID))
+	if err != nil {
+		return nil, err
+	}
+	var env currenciesEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse Currencies response: %w", err)
+	}
+	return env.Body.Response.Result.Currencies.Currencies, nil
+}
+
 type documentFoldersEnvelope struct {
 	Body struct {
 		Response struct {
@@ -144,6 +156,18 @@ type documentFolderTabsEnvelope struct {
 				} `xml:"DocumentFolderTabs"`
 			} `xml:"DocumentFolderTabsResult"`
 		} `xml:"DocumentFolderTabsResponse"`
+	} `xml:"Body"`
+}
+
+type currenciesEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Currencies struct {
+					Currencies []Currency `xml:"Currency"`
+				} `xml:"Currencies"`
+			} `xml:"CurrenciesResult"`
+		} `xml:"CurrenciesResponse"`
 	} `xml:"Body"`
 }
 

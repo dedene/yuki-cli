@@ -188,6 +188,25 @@ func TestPaymentMethodsParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestCurrenciesParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "Currencies", currenciesResponse, nil)
+
+	currencies, err := client.Currencies(context.Background(), "session-1")
+	if err != nil {
+		t.Fatalf("Currencies: %v", err)
+	}
+	if len(currencies) != 4 {
+		t.Fatalf("len(currencies) = %d, want 4", len(currencies))
+	}
+	if currencies[0].ID != "EUR" ||
+		!currencies[0].Default ||
+		currencies[0].Description != "Euro (EUR)" ||
+		currencies[3].ID != "USD" ||
+		currencies[3].Default {
+		t.Fatalf("currencies = %#v", currencies)
+	}
+}
+
 const transactionsResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -387,5 +406,29 @@ const documentFolderTabsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </DocumentFolderTabs>
       </DocumentFolderTabsResult>
     </DocumentFolderTabsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const currenciesResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <CurrenciesResponse xmlns="http://www.theyukicompany.com/">
+      <CurrenciesResult>
+        <Currencies xmlns="">
+          <Currency ID="EUR" Default="True">
+            <Description>Euro (EUR)</Description>
+          </Currency>
+          <Currency ID="GBP">
+            <Description>British pound</Description>
+          </Currency>
+          <Currency ID="ISK">
+            <Description>Icelandic króna</Description>
+          </Currency>
+          <Currency ID="USD">
+            <Description>US dollar</Description>
+          </Currency>
+        </Currencies>
+      </CurrenciesResult>
+    </CurrenciesResponse>
   </soap:Body>
 </soap:Envelope>`

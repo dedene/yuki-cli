@@ -38,6 +38,7 @@ type Client interface {
 	FindDocument(context.Context, string, string) (api.Document, error)
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)
 	PaymentMethods(context.Context, string) ([]api.PaymentMethod, error)
+	Currencies(context.Context, string) ([]api.Currency, error)
 }
 
 type Runtime struct {
