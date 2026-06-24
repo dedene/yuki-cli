@@ -4,7 +4,43 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"strings"
 )
+
+func (c *Client) DomainName(ctx context.Context, sessionID, administrationName string) (DomainNameResult, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationName", Value: administrationName},
+	}
+	data, err := c.call(ctx, "Domains", "GetDomainName", params)
+	if err != nil {
+		return DomainNameResult{}, err
+	}
+	domainName, err := textAt(data, []string{"Envelope", "Body", "GetDomainNameResponse", "GetDomainNameResult"})
+	if err != nil {
+		return DomainNameResult{}, fmt.Errorf("parse GetDomainName response: %w", err)
+	}
+	return DomainNameResult{
+		AdministrationName: administrationName,
+		DomainName:         domainName,
+	}, nil
+}
+
+func (c *Client) DomainUsers(ctx context.Context, sessionID, domainID string) ([]DomainUser, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "domain", Value: domainID},
+	}
+	data, err := c.call(ctx, "Domains", "GetDomainUsers", params)
+	if err != nil {
+		return nil, err
+	}
+	var env domainUsersEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse GetDomainUsers response: %w", err)
+	}
+	return env.Body.Response.Result.users(), nil
+}
 
 func (c *Client) DomainFunctions(ctx context.Context, sessionID, domainID string) ([]DomainFunctionAssignment, error) {
 	params := []Param{
@@ -57,6 +93,93 @@ type domainFunctionsEnvelope struct {
 			} `xml:"GetDomainFunctionsResult"`
 		} `xml:"GetDomainFunctionsResponse"`
 	} `xml:"Body"`
+}
+
+type domainUsersEnvelope struct {
+	Body struct {
+		Response struct {
+			Result domainUsersResult `xml:"GetDomainUsersResult"`
+		} `xml:"GetDomainUsersResponse"`
+	} `xml:"Body"`
+}
+
+type domainUsersResult struct {
+	DirectUsers       []DomainUser `xml:"User"`
+	DirectDomainUsers []DomainUser `xml:"DomainUser"`
+	DomainUsers       struct {
+		Users       []DomainUser `xml:"User"`
+		DomainUsers []DomainUser `xml:"DomainUser"`
+	} `xml:"DomainUsers"`
+	Users struct {
+		Users       []DomainUser `xml:"User"`
+		DomainUsers []DomainUser `xml:"DomainUser"`
+	} `xml:"Users"`
+}
+
+func (r domainUsersResult) users() []DomainUser {
+	users := make([]DomainUser, 0, len(r.DirectUsers)+len(r.DirectDomainUsers)+len(r.DomainUsers.Users)+len(r.DomainUsers.DomainUsers)+len(r.Users.Users)+len(r.Users.DomainUsers))
+	users = append(users, r.DirectUsers...)
+	users = append(users, r.DirectDomainUsers...)
+	users = append(users, r.DomainUsers.Users...)
+	users = append(users, r.DomainUsers.DomainUsers...)
+	users = append(users, r.Users.Users...)
+	users = append(users, r.Users.DomainUsers...)
+	return users
+}
+
+func (u *DomainUser) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
+	*u = DomainUser{}
+	for _, attr := range start.Attr {
+		if strings.EqualFold(attr.Name.Local, "ID") || strings.EqualFold(attr.Name.Local, "id") {
+			u.ID = attr.Value
+		}
+	}
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return err
+		}
+		switch token := token.(type) {
+		case xml.StartElement:
+			var value string
+			if err := decoder.DecodeElement(&value, &token); err != nil {
+				return err
+			}
+			value = strings.TrimSpace(value)
+			name := token.Name.Local
+			u.Fields = append(u.Fields, XMLField{Name: name, Value: value})
+			u.assignField(name, value)
+		case xml.EndElement:
+			if token.Name.Local == start.Name.Local {
+				return nil
+			}
+		}
+	}
+}
+
+func (u *DomainUser) assignField(name, value string) {
+	switch strings.ToLower(name) {
+	case "id":
+		if u.ID == "" {
+			u.ID = value
+		}
+	case "name":
+		u.Name = value
+	case "fullname", "full_name", "full name":
+		u.FullName = value
+	case "login":
+		u.Login = value
+	case "email", "e-mail", "emailaddress", "emailaddresswork":
+		u.Email = value
+	case "language":
+		u.Language = value
+	case "roles":
+		u.Roles = value
+	case "administrations":
+		u.Administrations = value
+	case "active", "isactive":
+		u.Active = value
+	}
 }
 
 type domainFunctions struct {

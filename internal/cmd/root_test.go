@@ -2239,6 +2239,9 @@ type cmdFakeClient struct {
 	transactionID               string
 	domainID                    string
 	setCurrentDomainID          string
+	administrationDomainName    string
+	domainNameResult            api.DomainNameResult
+	domainUsers                 []api.DomainUser
 	domains                     []api.Domain
 	domainFunctions             []api.DomainFunctionAssignment
 	domainFunctionUpdateOpts    api.UpdateDomainFunctionOptions
@@ -2379,6 +2382,19 @@ func (c *cmdFakeClient) CurrentDomain(context.Context, string) (api.Domain, erro
 func (c *cmdFakeClient) SetCurrentDomain(_ context.Context, _ string, domainID string) error {
 	c.setCurrentDomainID = domainID
 	return nil
+}
+
+func (c *cmdFakeClient) DomainName(_ context.Context, _ string, administrationName string) (api.DomainNameResult, error) {
+	c.administrationDomainName = administrationName
+	if c.domainNameResult.AdministrationName == "" {
+		c.domainNameResult.AdministrationName = administrationName
+	}
+	return c.domainNameResult, nil
+}
+
+func (c *cmdFakeClient) DomainUsers(_ context.Context, _ string, domainID string) ([]api.DomainUser, error) {
+	c.domainID = domainID
+	return c.domainUsers, nil
 }
 
 func (c *cmdFakeClient) DomainFunctions(_ context.Context, _ string, domainID string) ([]api.DomainFunctionAssignment, error) {

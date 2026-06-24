@@ -34,6 +34,8 @@ yuki domains list
 yuki domains current
 yuki --default-domain <domain-id> domains current --json
 yuki domains set-current --domain <domain-id> --json
+yuki domains name --administration-name "Highpro BV" --json
+yuki domains users --domain <domain-id> --json
 yuki domains functions --domain <domain-id> --json
 yuki domains update-function --domain <domain-id> --function BOAccountManager --login test@test.be --dry-run --json
 yuki administrations list

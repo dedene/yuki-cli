@@ -35,6 +35,29 @@ type DomainFunctionAssignment struct {
 	Login    string `json:"login,omitempty"`
 }
 
+type DomainNameResult struct {
+	AdministrationName string `json:"administration_name"`
+	DomainName         string `json:"domain_name"`
+}
+
+type DomainUser struct {
+	ID              string     `json:"id,omitempty"`
+	Name            string     `json:"name,omitempty"`
+	FullName        string     `json:"full_name,omitempty"`
+	Login           string     `json:"login,omitempty"`
+	Email           string     `json:"email,omitempty"`
+	Language        string     `json:"language,omitempty"`
+	Roles           string     `json:"roles,omitempty"`
+	Administrations string     `json:"administrations,omitempty"`
+	Active          string     `json:"active,omitempty"`
+	Fields          []XMLField `json:"fields,omitempty"`
+}
+
+type XMLField struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 type UpdateDomainFunctionOptions struct {
 	DomainID string
 	Function string

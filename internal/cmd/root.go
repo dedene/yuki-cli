@@ -27,6 +27,8 @@ type Client interface {
 	Domains(context.Context, string) ([]api.Domain, error)
 	CurrentDomain(context.Context, string) (api.Domain, error)
 	SetCurrentDomain(context.Context, string, string) error
+	DomainName(context.Context, string, string) (api.DomainNameResult, error)
+	DomainUsers(context.Context, string, string) ([]api.DomainUser, error)
 	DomainFunctions(context.Context, string, string) ([]api.DomainFunctionAssignment, error)
 	UpdateDomainFunction(context.Context, string, api.UpdateDomainFunctionOptions) (api.DomainFunctionUpdateResult, error)
 	SearchContacts(context.Context, string, api.ContactSearchOptions) ([]api.Contact, error)

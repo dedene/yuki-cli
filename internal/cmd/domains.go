@@ -13,6 +13,8 @@ type DomainsCmd struct {
 	List           DomainsListCmd           `cmd:"" help:"List accessible domains."`
 	Current        DomainsCurrentCmd        `cmd:"" help:"Show the current session domain."`
 	SetCurrent     DomainsSetCurrentCmd     `cmd:"" name:"set-current" help:"Set the current domain for this session."`
+	Name           DomainsNameCmd           `cmd:"" help:"Resolve a domain name by administration name."`
+	Users          DomainsUsersCmd          `cmd:"" help:"List users for a domain."`
 	Functions      DomainsFunctionsCmd      `cmd:"" help:"Inspect backoffice role assignments for a domain."`
 	UpdateFunction DomainsUpdateFunctionCmd `cmd:"" name:"update-function" help:"Update one backoffice role assignment for a domain."`
 }
@@ -78,6 +80,58 @@ func (c *DomainsSetCurrentCmd) Run(rt *Runtime, globals *Globals) error {
 		return err
 	}
 	return renderSessionSetting(rt, globals, result)
+}
+
+type DomainsNameCmd struct {
+	AdministrationName string `name:"administration-name" required:"" help:"Administration name."`
+}
+
+func (c *DomainsNameCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	result, err := client.DomainName(rt.Context, sessionID, c.AdministrationName)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, result)
+	}
+	return output.Table(rt.Out, []string{"ADMINISTRATION", "DOMAIN"}, [][]string{{
+		result.AdministrationName,
+		result.DomainName,
+	}})
+}
+
+type DomainsUsersCmd struct {
+	Domain string `name:"domain" required:"" help:"Domain ID."`
+}
+
+func (c *DomainsUsersCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	users, err := client.DomainUsers(rt.Context, sessionID, c.Domain)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, users)
+	}
+	rows := make([][]string, 0, len(users))
+	for _, user := range users {
+		rows = append(rows, []string{
+			user.ID,
+			firstNonEmptyString(user.FullName, user.Name),
+			user.Login,
+			user.Email,
+			user.Roles,
+			user.Active,
+		})
+	}
+	return output.Table(rt.Out, []string{"ID", "NAME", "LOGIN", "EMAIL", "ROLES", "ACTIVE"}, rows)
 }
 
 type DomainsFunctionsCmd struct {
