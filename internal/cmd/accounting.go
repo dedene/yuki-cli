@@ -15,8 +15,9 @@ type AccountingCmd struct {
 }
 
 type GLAccountsCmd struct {
-	List    GLAccountsListCmd    `cmd:"" help:"List GL accounts for an administration."`
-	Balance GLAccountsBalanceCmd `cmd:"" help:"List GL account balances at a transaction date."`
+	List          GLAccountsListCmd          `cmd:"" help:"List GL accounts for an administration."`
+	Balance       GLAccountsBalanceCmd       `cmd:"" help:"List GL account balances at a transaction date."`
+	BalanceFiscal GLAccountsBalanceFiscalCmd `cmd:"" name:"balance-fiscal" help:"List fiscal GL account balances at a transaction date."`
 }
 
 type GLAccountsListCmd struct {
@@ -72,6 +73,38 @@ func (c *GLAccountsBalanceCmd) Run(rt *Runtime, globals *Globals) error {
 	if globals.JSON {
 		return output.JSON(rt.Out, balances)
 	}
+	return renderGLAccountBalances(rt, balances)
+}
+
+type GLAccountsBalanceFiscalCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	Date           string `name:"date" required:"" help:"Transaction date, YYYY-MM-DD."`
+}
+
+func (c *GLAccountsBalanceFiscalCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	balances, err := client.GLAccountBalanceFiscal(rt.Context, sessionID, api.GLAccountBalanceOptions{
+		AdministrationID: administrationID,
+		TransactionDate:  c.Date,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, balances)
+	}
+	return renderGLAccountBalances(rt, balances)
+}
+
+func renderGLAccountBalances(rt *Runtime, balances []api.GLAccountBalanceItem) error {
 	rows := make([][]string, 0, len(balances))
 	for _, balance := range balances {
 		rows = append(rows, []string{balance.Code, balance.BalanceType, balance.Amount, balance.Description})

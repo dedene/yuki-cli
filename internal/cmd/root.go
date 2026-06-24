@@ -28,6 +28,7 @@ type Client interface {
 	Companies(context.Context, string) ([]api.Company, error)
 	GLAccounts(context.Context, string, string) ([]api.GLAccount, error)
 	GLAccountBalance(context.Context, string, api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error)
+	GLAccountBalanceFiscal(context.Context, string, api.GLAccountBalanceOptions) ([]api.GLAccountBalanceItem, error)
 	OutstandingCreditorItems(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
 	OutstandingCreditorItemsByDate(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
 	Transactions(context.Context, string, api.TransactionsOptions) ([]api.Transaction, error)

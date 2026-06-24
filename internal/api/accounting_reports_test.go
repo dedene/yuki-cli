@@ -37,6 +37,36 @@ func TestGLAccountBalanceParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestGLAccountBalanceFiscalParsesDocumentedResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Accounting", "GLAccountBalanceFiscal", glAccountBalanceFiscalResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:transactionDate>2020-12-31</they:transactionDate>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	balances, err := client.GLAccountBalanceFiscal(context.Background(), "session-1", GLAccountBalanceOptions{
+		AdministrationID: "admin-1",
+		TransactionDate:  "2020-12-31",
+	})
+	if err != nil {
+		t.Fatalf("GLAccountBalanceFiscal: %v", err)
+	}
+	if len(balances) != 1 {
+		t.Fatalf("len(balances) = %d, want 1", len(balances))
+	}
+	if balances[0].Code != "100000" ||
+		balances[0].Description != "Geplaatst kapitaal" ||
+		balances[0].Amount != "-1222.22" {
+		t.Fatalf("balance = %#v", balances[0])
+	}
+}
+
 const glAccountBalanceResponse = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -54,5 +84,21 @@ const glAccountBalanceResponse = `<?xml version="1.0" encoding="utf-8"?>
         </GLAccountBalance>
       </GLAccountBalanceResult>
     </GLAccountBalanceResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const glAccountBalanceFiscalResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GLAccountBalanceFiscalResponse xmlns="http://www.theyukicompany.com/">
+      <GLAccountBalanceFiscalResult>
+        <GLAccountBalance xmlns="">
+          <GLAccount Code="100000" BalanceType="B">
+            <Description>Geplaatst kapitaal</Description>
+            <Amount>-1222.22</Amount>
+          </GLAccount>
+        </GLAccountBalance>
+      </GLAccountBalanceFiscalResult>
+    </GLAccountBalanceFiscalResponse>
   </soap:Body>
 </soap:Envelope>`
