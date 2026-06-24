@@ -59,9 +59,12 @@ yuki accounting payment-methods list --administration <administration-id>
 yuki accounting periods table --administration <administration-id> --year 2026 --json
 yuki accounting creditor-items all --administration <administration-id> --payment-method Creditcard
 yuki accounting creditor-items list --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --payment-method Creditcard
+yuki accounting creditor-items by-outstanding-date --administration <administration-id> --date 2026-01-31 --payment-method Creditcard --json
 yuki accounting creditor-items with-payment-reference --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --payment-method Creditcard --json
 yuki accounting debtor-items all --administration <administration-id> --json
 yuki accounting debtor-items list --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --json
+yuki accounting debtor-items by-outstanding-date --administration <administration-id> --date 2026-01-31 --json
+yuki accounting debtor-items with-language --administration <administration-id> --json
 yuki accounting debtor-items with-payment-reference --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --json
 yuki accounting outstanding check --reference NV2018/156 --json
 yuki accounting outstanding check-admin --administration <administration-id> --reference A1010 --json

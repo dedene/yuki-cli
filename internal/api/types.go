@@ -204,6 +204,8 @@ type OutstandingItem struct {
 	DueDate          string  `json:"due_date,omitempty" xml:"DueDate"`
 	DocumentID       string  `json:"document_id,omitempty" xml:"DocumentID"`
 	PaymentMethod    string  `json:"payment_method,omitempty" xml:"PaymentMethod"`
+	Language         string  `json:"language,omitempty" xml:"Language"`
+	LayoutLanguage   string  `json:"layout_language,omitempty" xml:"LayoutLanguage"`
 	ContactCode      string  `json:"contact_code,omitempty" xml:"ContactCode"`
 	CoCNumber        string  `json:"coc_number,omitempty" xml:"CoCNumber"`
 	VATNumber        string  `json:"vat_number,omitempty" xml:"VATNumber"`

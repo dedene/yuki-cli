@@ -43,6 +43,39 @@ func TestOutstandingCreditorItemsByDateParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestOutstandingCreditorItemsByDateOutstandingParsesWSDLResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Accounting", "OutstandingCreditorItemsByDateOutstanding", outstandingCreditorItemsByDateOutstandingResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:includeBankTransactions>true</they:includeBankTransactions>",
+			"<they:sortOrder>DateDesc</they:sortOrder>",
+			"<they:dateOutstanding>2020-01-31</they:dateOutstanding>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	items, err := client.OutstandingCreditorItemsByDateOutstanding(context.Background(), "session-1", CreditorItemsOptions{
+		AdministrationID:        "admin-1",
+		DateOutstanding:         "2020-01-31",
+		IncludeBankTransactions: true,
+		SortOrder:               "DateDesc",
+	})
+	if err != nil {
+		t.Fatalf("OutstandingCreditorItemsByDateOutstanding: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("len(items) = %d, want 1", len(items))
+	}
+	if items[0].DocumentID != "c5057bb0-652e-4f8a-ab71-7ecf0e00b82f" ||
+		items[0].PaymentMethod != "Creditcard" {
+		t.Fatalf("item = %#v", items[0])
+	}
+}
+
 func TestOutstandingCreditorItemsParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClientForService(t, "Accounting", "OutstandingCreditorItems", outstandingCreditorItemsResponse, func(t *testing.T, body string) {
 		t.Helper()
@@ -314,6 +347,30 @@ const outstandingCreditorItemsResponse = `<?xml version="1.0" encoding="utf-8"?>
         </OutstandingCreditorItems>
       </OutstandingCreditorItemsResult>
     </OutstandingCreditorItemsResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const outstandingCreditorItemsByDateOutstandingResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <OutstandingCreditorItemsByDateOutstandingResponse xmlns="http://www.theyukicompany.com/">
+      <OutstandingCreditorItemsByDateOutstandingResult>
+        <OutstandingCreditorItems xmlns="">
+          <Item ID="3506683a-f5d1-4904-8957-01c3bc8f8879">
+            <Date>2020-01-03</Date>
+            <Description>Factuur van AD Delhaize, Goodwill</Description>
+            <Contact>AD Delhaize</Contact>
+            <OpenAmount>242.00</OpenAmount>
+            <OriginalAmount>242.00</OriginalAmount>
+            <Type ID="2">Aankoopfactuur</Type>
+            <Reference>test</Reference>
+            <DueDate>2020-01-03</DueDate>
+            <DocumentID>c5057bb0-652e-4f8a-ab71-7ecf0e00b82f</DocumentID>
+            <PaymentMethod>Creditcard</PaymentMethod>
+          </Item>
+        </OutstandingCreditorItems>
+      </OutstandingCreditorItemsByDateOutstandingResult>
+    </OutstandingCreditorItemsByDateOutstandingResponse>
   </soap:Body>
 </soap:Envelope>`
 

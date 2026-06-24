@@ -81,6 +81,69 @@ func TestOutstandingDebtorItemsByDateParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestOutstandingDebtorItemsByDateOutstandingParsesWSDLResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Accounting", "OutstandingDebtorItemsByDateOutstanding", outstandingDebtorItemsByDateOutstandingResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:includeBankTransactions>false</they:includeBankTransactions>",
+			"<they:sortOrder>DateAsc</they:sortOrder>",
+			"<they:dateOutstanding>2020-01-31</they:dateOutstanding>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	items, err := client.OutstandingDebtorItemsByDateOutstanding(context.Background(), "session-1", DebtorItemsOptions{
+		AdministrationID:        "admin-1",
+		DateOutstanding:         "2020-01-31",
+		IncludeBankTransactions: false,
+		SortOrder:               "DateAsc",
+	})
+	if err != nil {
+		t.Fatalf("OutstandingDebtorItemsByDateOutstanding: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("len(items) = %d, want 1", len(items))
+	}
+	if items[0].ID != "ef1a1588-fd5d-49a2-a478-2609012ddae6" ||
+		items[0].Reference != "XX-12534" {
+		t.Fatalf("item = %#v", items[0])
+	}
+}
+
+func TestOutstandingDebtorItemsWithLanguageParsesWSDLResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Accounting", "OutstandingDebtorItemsWithLanguage", outstandingDebtorItemsWithLanguageResponse, func(t *testing.T, body string) {
+		t.Helper()
+		for _, want := range []string{
+			"<they:administrationID>admin-1</they:administrationID>",
+			"<they:includeBankTransactions>true</they:includeBankTransactions>",
+			"<they:sortOrder>DateDesc</they:sortOrder>",
+		} {
+			if !strings.Contains(body, want) {
+				t.Fatalf("request body missing %q:\n%s", want, body)
+			}
+		}
+	})
+
+	items, err := client.OutstandingDebtorItemsWithLanguage(context.Background(), "session-1", DebtorItemsOptions{
+		AdministrationID:        "admin-1",
+		IncludeBankTransactions: true,
+		SortOrder:               "DateDesc",
+	})
+	if err != nil {
+		t.Fatalf("OutstandingDebtorItemsWithLanguage: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("len(items) = %d, want 1", len(items))
+	}
+	if items[0].LayoutLanguage != "en" || items[0].Reference != "XX-12534" {
+		t.Fatalf("item = %#v", items[0])
+	}
+}
+
 func TestOutstandingDebtorWithPaymentReferenceParsesWSDLCompatibleResponse(t *testing.T) {
 	client := fixtureClientForService(t, "Accounting", "OutstandingDebtorWithPaymentReference", outstandingDebtorWithPaymentReferenceResponse, func(t *testing.T, body string) {
 		t.Helper()
@@ -224,5 +287,54 @@ const outstandingDebtorItemsByDateResponse = `<?xml version="1.0" encoding="utf-
         </OutstandingDebtorItems>
       </OutstandingDebtorItemsByDateResult>
     </OutstandingDebtorItemsByDateResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const outstandingDebtorItemsByDateOutstandingResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <OutstandingDebtorItemsByDateOutstandingResponse xmlns="http://www.theyukicompany.com/">
+      <OutstandingDebtorItemsByDateOutstandingResult>
+        <OutstandingDebtorItems xmlns="">
+          <Item ID="ef1a1588-fd5d-49a2-a478-2609012ddae6">
+            <Date>2020-01-31</Date>
+            <Description>Testfactuur - 1</Description>
+            <Contact>Apple Sales International</Contact>
+            <OpenAmount>29.76</OpenAmount>
+            <OriginalAmount>29.76</OriginalAmount>
+            <Type ID="6">Verkoopfactuur</Type>
+            <Reference>XX-12534</Reference>
+            <DueDate>2012-07-22</DueDate>
+            <DocumentID>c9cc2001-2ea4-41ee-a20e-48f40cdf4e38</DocumentID>
+            <PaymentMethod>Overschrijving</PaymentMethod>
+          </Item>
+        </OutstandingDebtorItems>
+      </OutstandingDebtorItemsByDateOutstandingResult>
+    </OutstandingDebtorItemsByDateOutstandingResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const outstandingDebtorItemsWithLanguageResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <OutstandingDebtorItemsWithLanguageResponse xmlns="http://www.theyukicompany.com/">
+      <OutstandingDebtorItemsWithLanguageResult>
+        <OutstandingDebtorItems xmlns="">
+          <Item ID="ef1a1588-fd5d-49a2-a478-2609012ddae6">
+            <Date>2020-01-31</Date>
+            <Description>Testfactuur - 1</Description>
+            <Contact>Apple Sales International</Contact>
+            <OpenAmount>29.76</OpenAmount>
+            <OriginalAmount>29.76</OriginalAmount>
+            <Type ID="6">Verkoopfactuur</Type>
+            <Reference>XX-12534</Reference>
+            <DueDate>2012-07-22</DueDate>
+            <DocumentID>c9cc2001-2ea4-41ee-a20e-48f40cdf4e38</DocumentID>
+            <PaymentMethod>Overschrijving</PaymentMethod>
+            <LayoutLanguage>en</LayoutLanguage>
+          </Item>
+        </OutstandingDebtorItems>
+      </OutstandingDebtorItemsWithLanguageResult>
+    </OutstandingDebtorItemsWithLanguageResponse>
   </soap:Body>
 </soap:Envelope>`

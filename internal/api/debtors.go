@@ -10,6 +10,7 @@ type DebtorItemsOptions struct {
 	AdministrationID        string
 	StartDate               string
 	EndDate                 string
+	DateOutstanding         string
 	IncludeBankTransactions bool
 	SortOrder               string
 }
@@ -48,6 +49,43 @@ func (c *Client) OutstandingDebtorItemsByDate(ctx context.Context, sessionID str
 	var env outstandingDebtorItemsByDateEnvelope
 	if err := xml.Unmarshal(data, &env); err != nil {
 		return nil, fmt.Errorf("parse OutstandingDebtorItemsByDate response: %w", err)
+	}
+	return env.Body.Response.Result.Items.Items, nil
+}
+
+func (c *Client) OutstandingDebtorItemsByDateOutstanding(ctx context.Context, sessionID string, opts DebtorItemsOptions) ([]DebtorItem, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "includeBankTransactions", Value: boolString(opts.IncludeBankTransactions)},
+		{Name: "sortOrder", Value: opts.SortOrder},
+		{Name: "dateOutstanding", Value: opts.DateOutstanding},
+	}
+	data, err := c.call(ctx, "Accounting", "OutstandingDebtorItemsByDateOutstanding", params)
+	if err != nil {
+		return nil, err
+	}
+	var env outstandingDebtorItemsByDateOutstandingEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse OutstandingDebtorItemsByDateOutstanding response: %w", err)
+	}
+	return env.Body.Response.Result.Items.Items, nil
+}
+
+func (c *Client) OutstandingDebtorItemsWithLanguage(ctx context.Context, sessionID string, opts DebtorItemsOptions) ([]DebtorItem, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "includeBankTransactions", Value: boolString(opts.IncludeBankTransactions)},
+		{Name: "sortOrder", Value: opts.SortOrder},
+	}
+	data, err := c.call(ctx, "Accounting", "OutstandingDebtorItemsWithLanguage", params)
+	if err != nil {
+		return nil, err
+	}
+	var env outstandingDebtorItemsWithLanguageEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse OutstandingDebtorItemsWithLanguage response: %w", err)
 	}
 	return env.Body.Response.Result.Items.Items, nil
 }
@@ -105,5 +143,29 @@ type outstandingDebtorItemsByDateEnvelope struct {
 				} `xml:"OutstandingDebtorItems"`
 			} `xml:"OutstandingDebtorItemsByDateResult"`
 		} `xml:"OutstandingDebtorItemsByDateResponse"`
+	} `xml:"Body"`
+}
+
+type outstandingDebtorItemsByDateOutstandingEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Items struct {
+					Items []DebtorItem `xml:"Item"`
+				} `xml:"OutstandingDebtorItems"`
+			} `xml:"OutstandingDebtorItemsByDateOutstandingResult"`
+		} `xml:"OutstandingDebtorItemsByDateOutstandingResponse"`
+	} `xml:"Body"`
+}
+
+type outstandingDebtorItemsWithLanguageEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Items struct {
+					Items []DebtorItem `xml:"Item"`
+				} `xml:"OutstandingDebtorItems"`
+			} `xml:"OutstandingDebtorItemsWithLanguageResult"`
+		} `xml:"OutstandingDebtorItemsWithLanguageResponse"`
 	} `xml:"Body"`
 }

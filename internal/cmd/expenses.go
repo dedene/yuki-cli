@@ -11,6 +11,7 @@ import (
 type CreditorItemsCmd struct {
 	All                  CreditorItemsAllCmd                  `cmd:"" help:"List all outstanding creditor purchase invoice items."`
 	List                 CreditorItemsListCmd                 `cmd:"" help:"List outstanding creditor purchase invoice items."`
+	ByOutstandingDate    CreditorItemsByOutstandingDateCmd    `cmd:"" name:"by-outstanding-date" help:"List creditor items open on an outstanding date."`
 	WithPaymentReference CreditorItemsWithPaymentReferenceCmd `cmd:"" name:"with-payment-reference" help:"List outstanding creditor items with payment references."`
 }
 
@@ -71,6 +72,39 @@ func (c *CreditorItemsListCmd) Run(rt *Runtime, globals *Globals) error {
 		AdministrationID:        administrationID,
 		StartDate:               c.From,
 		EndDate:                 c.To,
+		IncludeBankTransactions: c.IncludeBankTransactions,
+		SortOrder:               c.SortOrder,
+	})
+	if err != nil {
+		return err
+	}
+	if c.PaymentMethod != "" {
+		items = filterCreditorItemsByPaymentMethod(items, c.PaymentMethod)
+	}
+	return renderCreditorItems(rt, globals, items)
+}
+
+type CreditorItemsByOutstandingDateCmd struct {
+	Administration          string `help:"Administration ID. Defaults to profile/global administration."`
+	Date                    string `name:"date" required:"" help:"Outstanding date, YYYY-MM-DD."`
+	IncludeBankTransactions bool   `name:"include-bank-transactions" help:"Include outstanding bank transactions."`
+	SortOrder               string `name:"sort-order" default:"DateDesc" help:"Yuki sort order, e.g. DateAsc or DateDesc."`
+	PaymentMethod           string `name:"payment-method" help:"Filter results by payment method, e.g. Creditcard."`
+}
+
+func (c *CreditorItemsByOutstandingDateCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	items, err := client.OutstandingCreditorItemsByDateOutstanding(rt.Context, sessionID, api.CreditorItemsOptions{
+		AdministrationID:        administrationID,
+		DateOutstanding:         c.Date,
 		IncludeBankTransactions: c.IncludeBankTransactions,
 		SortOrder:               c.SortOrder,
 	})

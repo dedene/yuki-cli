@@ -1049,6 +1049,53 @@ func TestCreditorItemsAllJSONUsesFlags(t *testing.T) {
 	}
 }
 
+func TestCreditorItemsByOutstandingDateJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		creditorItems: []api.CreditorItem{{
+			Date:           "2026-01-03",
+			Contact:        "AD Delhaize",
+			OriginalAmount: "242.00",
+			OpenAmount:     "242.00",
+			PaymentMethod:  "Creditcard",
+			Reference:      "test",
+			DocumentID:     "doc-1",
+			Description:    "Factuur van AD Delhaize",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "creditor-items", "by-outstanding-date",
+		"--administration", "admin-1",
+		"--date", "2020-01-31",
+		"--include-bank-transactions",
+		"--sort-order", "DateDesc",
+		"--payment-method", "Creditcard",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.creditorOpts.AdministrationID != "admin-1" ||
+		client.creditorOpts.DateOutstanding != "2020-01-31" ||
+		!client.creditorOpts.IncludeBankTransactions ||
+		client.creditorOpts.SortOrder != "DateDesc" {
+		t.Fatalf("creditorOpts = %#v", client.creditorOpts)
+	}
+	var items []api.CreditorItem
+	if err := json.Unmarshal(out.Bytes(), &items); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(items) != 1 || items[0].PaymentMethod != "Creditcard" {
+		t.Fatalf("items = %#v", items)
+	}
+}
+
 func TestCreditorItemsWithPaymentReferenceJSONUsesFlags(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1190,6 +1237,99 @@ func TestDebtorItemsListJSONUsesDateRange(t *testing.T) {
 		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
 	}
 	if len(items) != 1 || items[0].Reference != "XX-12534" {
+		t.Fatalf("items = %#v", items)
+	}
+}
+
+func TestDebtorItemsByOutstandingDateJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		debtorItems: []api.DebtorItem{{
+			Date:           "2020-01-31",
+			Contact:        "Apple Sales International",
+			OriginalAmount: "29.76",
+			OpenAmount:     "29.76",
+			PaymentMethod:  "Overschrijving",
+			Reference:      "XX-12534",
+			DocumentID:     "doc-1",
+			Description:    "Testfactuur - 1",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "debtor-items", "by-outstanding-date",
+		"--administration", "admin-1",
+		"--date", "2020-01-31",
+		"--include-bank-transactions",
+		"--sort-order", "DateAsc",
+		"--payment-method", "Overschrijving",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.debtorOpts.AdministrationID != "admin-1" ||
+		client.debtorOpts.DateOutstanding != "2020-01-31" ||
+		!client.debtorOpts.IncludeBankTransactions ||
+		client.debtorOpts.SortOrder != "DateAsc" {
+		t.Fatalf("debtorOpts = %#v", client.debtorOpts)
+	}
+	var items []api.DebtorItem
+	if err := json.Unmarshal(out.Bytes(), &items); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(items) != 1 || items[0].Reference != "XX-12534" {
+		t.Fatalf("items = %#v", items)
+	}
+}
+
+func TestDebtorItemsWithLanguageJSONUsesFlags(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		debtorItems: []api.DebtorItem{{
+			Date:           "2020-01-31",
+			Contact:        "Apple Sales International",
+			OriginalAmount: "29.76",
+			OpenAmount:     "29.76",
+			PaymentMethod:  "Overschrijving",
+			Reference:      "XX-12534",
+			DocumentID:     "doc-1",
+			Description:    "Testfactuur - 1",
+			LayoutLanguage: "en",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "debtor-items", "with-language",
+		"--administration", "admin-1",
+		"--include-bank-transactions",
+		"--sort-order", "DateDesc",
+		"--payment-method", "Overschrijving",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.debtorOpts.AdministrationID != "admin-1" ||
+		!client.debtorOpts.IncludeBankTransactions ||
+		client.debtorOpts.SortOrder != "DateDesc" {
+		t.Fatalf("debtorOpts = %#v", client.debtorOpts)
+	}
+	var items []api.DebtorItem
+	if err := json.Unmarshal(out.Bytes(), &items); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(items) != 1 || items[0].LayoutLanguage != "en" {
 		t.Fatalf("items = %#v", items)
 	}
 }
@@ -2260,6 +2400,11 @@ func (c *cmdFakeClient) OutstandingCreditorItemsByDate(_ context.Context, _ stri
 	return c.creditorItems, nil
 }
 
+func (c *cmdFakeClient) OutstandingCreditorItemsByDateOutstanding(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {
+	c.creditorOpts = opts
+	return c.creditorItems, nil
+}
+
 func (c *cmdFakeClient) OutstandingCreditorWithPaymentReference(_ context.Context, _ string, opts api.CreditorItemsOptions) ([]api.CreditorItem, error) {
 	c.creditorOpts = opts
 	return c.creditorItems, nil
@@ -2271,6 +2416,16 @@ func (c *cmdFakeClient) OutstandingDebtorItems(_ context.Context, _ string, opts
 }
 
 func (c *cmdFakeClient) OutstandingDebtorItemsByDate(_ context.Context, _ string, opts api.DebtorItemsOptions) ([]api.DebtorItem, error) {
+	c.debtorOpts = opts
+	return c.debtorItems, nil
+}
+
+func (c *cmdFakeClient) OutstandingDebtorItemsByDateOutstanding(_ context.Context, _ string, opts api.DebtorItemsOptions) ([]api.DebtorItem, error) {
+	c.debtorOpts = opts
+	return c.debtorItems, nil
+}
+
+func (c *cmdFakeClient) OutstandingDebtorItemsWithLanguage(_ context.Context, _ string, opts api.DebtorItemsOptions) ([]api.DebtorItem, error) {
 	c.debtorOpts = opts
 	return c.debtorItems, nil
 }
