@@ -312,8 +312,14 @@ type cmdFakeClient struct {
 	accounts            []api.GLAccount
 	creditorItems       []api.CreditorItem
 	creditorOpts        api.CreditorItemsOptions
+	richTransactions    []api.Transaction
+	transactionsOpts    api.TransactionsOptions
 	transactions        []api.TransactionInfo
 	transactionOpts     api.TransactionDetailsOptions
+	customMethods       []api.PaymentMethod
+	archiveMethods      []api.PaymentMethod
+	searchDocuments     []api.Document
+	searchDocumentsOpts api.SearchDocumentsOptions
 	document            api.Document
 	documentFile        api.DocumentFile
 	transactionDocument api.TransactionDocument
@@ -350,6 +356,11 @@ func (c *cmdFakeClient) OutstandingCreditorItemsByDate(_ context.Context, _ stri
 	return c.creditorItems, nil
 }
 
+func (c *cmdFakeClient) Transactions(_ context.Context, _ string, opts api.TransactionsOptions) ([]api.Transaction, error) {
+	c.transactionsOpts = opts
+	return c.richTransactions, nil
+}
+
 func (c *cmdFakeClient) TransactionDetails(_ context.Context, _ string, opts api.TransactionDetailsOptions) ([]api.TransactionInfo, error) {
 	c.transactionOpts = opts
 	return c.transactions, nil
@@ -361,6 +372,16 @@ func (c *cmdFakeClient) TransactionDocument(_ context.Context, _ string, adminis
 	return c.transactionDocument, nil
 }
 
+func (c *cmdFakeClient) CustomPaymentMethods(_ context.Context, _ string, administrationID string) ([]api.PaymentMethod, error) {
+	c.administrationID = administrationID
+	return c.customMethods, nil
+}
+
+func (c *cmdFakeClient) SearchDocuments(_ context.Context, _ string, opts api.SearchDocumentsOptions) ([]api.Document, error) {
+	c.searchDocumentsOpts = opts
+	return c.searchDocuments, nil
+}
+
 func (c *cmdFakeClient) FindDocument(_ context.Context, _ string, documentID string) (api.Document, error) {
 	c.documentID = documentID
 	return c.document, nil
@@ -369,4 +390,8 @@ func (c *cmdFakeClient) FindDocument(_ context.Context, _ string, documentID str
 func (c *cmdFakeClient) DocumentFile(_ context.Context, _ string, documentID string) (api.DocumentFile, error) {
 	c.documentID = documentID
 	return c.documentFile, nil
+}
+
+func (c *cmdFakeClient) PaymentMethods(context.Context, string) ([]api.PaymentMethod, error) {
+	return c.archiveMethods, nil
 }

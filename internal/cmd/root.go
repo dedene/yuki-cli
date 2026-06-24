@@ -28,10 +28,14 @@ type Client interface {
 	Companies(context.Context, string) ([]api.Company, error)
 	GLAccounts(context.Context, string, string) ([]api.GLAccount, error)
 	OutstandingCreditorItemsByDate(context.Context, string, api.CreditorItemsOptions) ([]api.CreditorItem, error)
+	Transactions(context.Context, string, api.TransactionsOptions) ([]api.Transaction, error)
 	TransactionDetails(context.Context, string, api.TransactionDetailsOptions) ([]api.TransactionInfo, error)
 	TransactionDocument(context.Context, string, string, string) (api.TransactionDocument, error)
+	CustomPaymentMethods(context.Context, string, string) ([]api.PaymentMethod, error)
+	SearchDocuments(context.Context, string, api.SearchDocumentsOptions) ([]api.Document, error)
 	FindDocument(context.Context, string, string) (api.Document, error)
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)
+	PaymentMethods(context.Context, string) ([]api.PaymentMethod, error)
 }
 
 type Runtime struct {

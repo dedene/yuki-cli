@@ -8,8 +8,80 @@ import (
 )
 
 type TransactionsCmd struct {
+	List     TransactionListCmd     `cmd:"" help:"List GL account transactions with document matching data."`
 	Details  TransactionDetailsCmd  `cmd:"" help:"List transaction details for GL accounts."`
 	Document TransactionDocumentCmd `cmd:"" help:"Fetch the document attached to a transaction."`
+}
+
+type TransactionListCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	GLAccount      string `name:"gl-account" help:"GL account code. Pass an empty value to include all accounts."`
+	From           string `name:"from" help:"Start date, YYYY-MM-DD."`
+	To             string `name:"to" help:"End date, YYYY-MM-DD."`
+	FinancialMode  string `name:"financial-mode" default:"0" help:"Yuki financial mode."`
+	DataGroups     string `name:"data-groups" default:"documentprocessed,document,documentmatching" help:"Comma-separated Yuki transaction data groups."`
+	Limit          int    `name:"limit" default:"100" help:"Number of records to request."`
+	StartRecord    int    `name:"start-record" default:"1" help:"One-based start record."`
+}
+
+func (c *TransactionListCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+	if c.From == "" || c.To == "" {
+		return errors.New("missing --from/--to; pass a Yuki date range like --from 2026-01-01 --to 2026-01-31")
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	transactions, err := client.Transactions(rt.Context, sessionID, api.TransactionsOptions{
+		AdministrationID: administrationID,
+		GLAccountCode:    c.GLAccount,
+		StartDate:        c.From,
+		EndDate:          c.To,
+		FinancialMode:    c.FinancialMode,
+		DataGroups:       c.DataGroups,
+		NumberOfRecords:  c.Limit,
+		StartRecord:      c.StartRecord,
+	})
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, transactions)
+	}
+
+	rows := make([][]string, 0, len(transactions))
+	for _, tx := range transactions {
+		contact := ""
+		if tx.Contact != nil {
+			contact = tx.Contact.FullName
+		}
+		documentID := ""
+		documentReference := ""
+		if tx.Document != nil {
+			documentID = tx.Document.ID
+			documentReference = tx.Document.Reference
+		}
+		matchedAt := ""
+		if tx.DocumentMatched != nil {
+			matchedAt = tx.DocumentMatched.MatchDate
+		}
+		rows = append(rows, []string{
+			tx.TransactionDate,
+			tx.GLAccountCode,
+			tx.Amount,
+			contact,
+			documentID,
+			documentReference,
+			matchedAt,
+			tx.Description,
+		})
+	}
+	return output.Table(rt.Out, []string{"DATE", "GL", "AMOUNT", "CONTACT", "DOCUMENT", "REFERENCE", "MATCHED", "DESCRIPTION"}, rows)
 }
 
 type TransactionDetailsCmd struct {

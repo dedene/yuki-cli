@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"strconv"
 )
 
 type TransactionDetailsOptions struct {
@@ -12,6 +13,40 @@ type TransactionDetailsOptions struct {
 	StartDate        string
 	EndDate          string
 	FinancialMode    string
+}
+
+type TransactionsOptions struct {
+	AdministrationID string
+	GLAccountCode    string
+	StartDate        string
+	EndDate          string
+	FinancialMode    string
+	DataGroups       string
+	NumberOfRecords  int
+	StartRecord      int
+}
+
+func (c *Client) Transactions(ctx context.Context, sessionID string, opts TransactionsOptions) ([]Transaction, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: opts.AdministrationID},
+		{Name: "glAccountCode", Value: opts.GLAccountCode},
+		{Name: "startDate", Value: opts.StartDate},
+		{Name: "endDate", Value: opts.EndDate},
+		{Name: "financialMode", Value: opts.FinancialMode},
+		{Name: "dataGroups", Value: opts.DataGroups},
+		{Name: "numberOfRecords", Value: strconv.Itoa(opts.NumberOfRecords)},
+		{Name: "startRecord", Value: strconv.Itoa(opts.StartRecord)},
+	}
+	data, err := c.call(ctx, "AccountingInfo", "GetTransactions", params)
+	if err != nil {
+		return nil, err
+	}
+	var env transactionsEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse GetTransactions response: %w", err)
+	}
+	return env.Body.Response.Result.Transactions, nil
 }
 
 func (c *Client) TransactionDetails(ctx context.Context, sessionID string, opts TransactionDetailsOptions) ([]TransactionInfo, error) {
@@ -58,6 +93,16 @@ type transactionDetailsEnvelope struct {
 				Transactions []TransactionInfo `xml:"TransactionInfo"`
 			} `xml:"GetTransactionDetailsResult"`
 		} `xml:"GetTransactionDetailsResponse"`
+	} `xml:"Body"`
+}
+
+type transactionsEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Transactions []Transaction `xml:"Transaction"`
+			} `xml:"GetTransactionsResult"`
+		} `xml:"GetTransactionsResponse"`
 	} `xml:"Body"`
 }
 

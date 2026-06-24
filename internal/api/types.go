@@ -96,6 +96,75 @@ type TransactionInfo struct {
 	MutationUser                     string `json:"mutation_user,omitempty" xml:"mutationUser"`
 }
 
+type Transaction struct {
+	ID                string                        `json:"id" xml:"id"`
+	HID               string                        `json:"hid,omitempty" xml:"hID"`
+	TransactionDate   string                        `json:"transaction_date" xml:"transactionDate"`
+	Description       string                        `json:"description,omitempty" xml:"description"`
+	Amount            string                        `json:"amount" xml:"amount"`
+	GLAccountCode     string                        `json:"gl_account_code,omitempty" xml:"glAccountCode"`
+	Contact           *TransactionContact           `json:"contact,omitempty" xml:"contact"`
+	Document          *TransactionDocumentReference `json:"document,omitempty" xml:"document"`
+	DocumentProcessed *TransactionDocumentProcessed `json:"document_processed,omitempty" xml:"documentProcessed"`
+	DocumentMatched   *TransactionDocumentMatched   `json:"document_matched,omitempty" xml:"documentMatched"`
+	ForeignCurrency   *TransactionForeignCurrency   `json:"foreign_currency,omitempty" xml:"foreignCurrency"`
+	VAT               *TransactionVAT               `json:"vat,omitempty" xml:"vat"`
+	Project           *ProjectInfo                  `json:"project,omitempty" xml:"project"`
+}
+
+type TransactionContact struct {
+	ID          string `json:"id,omitempty" xml:"id,attr"`
+	HID         string `json:"hid,omitempty" xml:"HID"`
+	FullName    string `json:"full_name,omitempty" xml:"fullName"`
+	ZipCode     string `json:"zip_code,omitempty" xml:"zipCode"`
+	Country     string `json:"country,omitempty" xml:"country"`
+	ContactCode string `json:"contact_code,omitempty" xml:"contactCode"`
+	CoCNumber   string `json:"coc_number,omitempty" xml:"CoCNumber"`
+	VATNumber   string `json:"vat_number,omitempty" xml:"VATNumber"`
+}
+
+type TransactionDocumentReference struct {
+	ID              string `json:"id,omitempty" xml:"id,attr"`
+	HID             string `json:"hid,omitempty" xml:"HID"`
+	Reference       string `json:"reference,omitempty" xml:"reference"`
+	Type            string `json:"type,omitempty" xml:"type"`
+	TypeDescription string `json:"type_description,omitempty" xml:"typeDescription"`
+	FolderID        string `json:"folder_id,omitempty" xml:"folderId"`
+	Folder          string `json:"folder,omitempty" xml:"folder"`
+	FolderTabID     string `json:"folder_tab_id,omitempty" xml:"folderTabId"`
+	FolderTab       string `json:"folder_tab,omitempty" xml:"folderTab"`
+	Created         string `json:"created,omitempty" xml:"created"`
+	Modified        string `json:"modified,omitempty" xml:"modified"`
+	UploadMethod    string `json:"upload_method,omitempty" xml:"uploadMethod"`
+}
+
+type TransactionDocumentProcessed struct {
+	ProcessedDate string `json:"processed_date,omitempty" xml:"processedDate"`
+	ProcessedBy   string `json:"processed_by,omitempty" xml:"processedBy"`
+}
+
+type TransactionDocumentMatched struct {
+	MatchDate string `json:"match_date,omitempty" xml:"matchDate"`
+	MatchedBy string `json:"matched_by,omitempty" xml:"matchedBy"`
+}
+
+type TransactionForeignCurrency struct {
+	AmountFC string `json:"amount_fc,omitempty" xml:"amountFC"`
+	Rate     string `json:"rate,omitempty" xml:"rate"`
+	Currency string `json:"currency,omitempty" xml:"currency"`
+}
+
+type TransactionVAT struct {
+	CodeType        string `json:"code_type,omitempty" xml:"codeType"`
+	CodeDescription string `json:"code_description,omitempty" xml:"codeDescription"`
+	CodePercentage  string `json:"code_percentage,omitempty" xml:"codePercentage"`
+}
+
+type ProjectInfo struct {
+	Code        string `json:"code,omitempty" xml:"code"`
+	Description string `json:"description,omitempty" xml:"description"`
+}
+
 type TransactionDocument struct {
 	FileName string `json:"file_name" xml:"fileName"`
 	FileData string `json:"file_data" xml:"filedata"`
@@ -125,6 +194,11 @@ type DocumentFile struct {
 	FileName string `json:"file_name" xml:"FileName"`
 	FileSize string `json:"file_size,omitempty" xml:"FileSize"`
 	FileData string `json:"file_data" xml:"FileData"`
+}
+
+type PaymentMethod struct {
+	ID          string `json:"id" xml:"ID"`
+	Description string `json:"description" xml:"Description"`
 }
 
 type XMLText struct {

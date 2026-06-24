@@ -5,7 +5,44 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"strconv"
 )
+
+type SearchDocumentsOptions struct {
+	SearchOption    string
+	SearchText      string
+	FolderID        int
+	TabID           int
+	SortOrder       string
+	StartDate       string
+	EndDate         string
+	NumberOfRecords int
+	StartRecord     int
+}
+
+func (c *Client) SearchDocuments(ctx context.Context, sessionID string, opts SearchDocumentsOptions) ([]Document, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "searchOption", Value: opts.SearchOption},
+		{Name: "searchText", Value: opts.SearchText},
+		{Name: "folderID", Value: strconv.Itoa(opts.FolderID)},
+		{Name: "tabID", Value: strconv.Itoa(opts.TabID)},
+		{Name: "sortOrder", Value: opts.SortOrder},
+		{Name: "startDate", Value: opts.StartDate},
+		{Name: "endDate", Value: opts.EndDate},
+		{Name: "numberOfRecords", Value: strconv.Itoa(opts.NumberOfRecords)},
+		{Name: "startRecord", Value: strconv.Itoa(opts.StartRecord)},
+	}
+	data, err := c.call(ctx, "Archive", "SearchDocuments", params)
+	if err != nil {
+		return nil, err
+	}
+	var env searchDocumentsEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse SearchDocuments response: %w", err)
+	}
+	return env.Body.Response.Result.Documents.Documents, nil
+}
 
 func (c *Client) FindDocument(ctx context.Context, sessionID, documentID string) (Document, error) {
 	params := []Param{
@@ -42,6 +79,34 @@ func (c *Client) DocumentFile(ctx context.Context, sessionID, documentID string)
 	return env.Body.Response.Result.File, nil
 }
 
+func (c *Client) PaymentMethods(ctx context.Context, sessionID string) ([]PaymentMethod, error) {
+	data, err := c.call(ctx, "Archive", "PaymentMethods", sessionParams(sessionID))
+	if err != nil {
+		return nil, err
+	}
+	var env archivePaymentMethodsEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse PaymentMethods response: %w", err)
+	}
+	methods := make([]PaymentMethod, 0, len(env.Body.Response.Result.PaymentMethods.Methods))
+	for _, method := range env.Body.Response.Result.PaymentMethods.Methods {
+		methods = append(methods, PaymentMethod(method))
+	}
+	return methods, nil
+}
+
+type searchDocumentsEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				Documents struct {
+					Documents []Document `xml:"Document"`
+				} `xml:"Documents"`
+			} `xml:"SearchDocumentsResult"`
+		} `xml:"SearchDocumentsResponse"`
+	} `xml:"Body"`
+}
+
 type findDocumentEnvelope struct {
 	Body struct {
 		Response struct {
@@ -52,6 +117,23 @@ type findDocumentEnvelope struct {
 			} `xml:"FindDocumentResult"`
 		} `xml:"FindDocumentResponse"`
 	} `xml:"Body"`
+}
+
+type archivePaymentMethodsEnvelope struct {
+	Body struct {
+		Response struct {
+			Result struct {
+				PaymentMethods struct {
+					Methods []archivePaymentMethod `xml:"PaymentMethod"`
+				} `xml:"PaymentMethods"`
+			} `xml:"PaymentMethodsResult"`
+		} `xml:"PaymentMethodsResponse"`
+	} `xml:"Body"`
+}
+
+type archivePaymentMethod struct {
+	ID          string `xml:"ID,attr"`
+	Description string `xml:"Description"`
 }
 
 type documentFileEnvelope struct {

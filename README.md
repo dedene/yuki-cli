@@ -32,9 +32,13 @@ yuki domains list
 yuki domains current
 yuki administrations list
 yuki accounting gl-accounts list --administration <administration-id>
+yuki accounting payment-methods list --administration <administration-id>
 yuki accounting creditor-items list --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --payment-method Creditcard
+yuki accounting transactions list --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --gl-account 550002 --limit 100 --json
 yuki accounting transactions details --administration <administration-id> --from 2026-01-01 --to 2026-01-31 --gl-account 400000 --json
 yuki accounting transactions document --administration <administration-id> --transaction <transaction-id> --output invoice.pdf
+yuki archive payment-methods list
+yuki archive documents search --search-text apple --limit 25 --json
 yuki archive documents find --document <document-id>
 yuki archive documents download --document <document-id> --output invoice.pdf
 ```
