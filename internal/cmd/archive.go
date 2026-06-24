@@ -199,6 +199,9 @@ type ArchiveDocumentsCmd struct {
 	Search           ArchiveDocumentsSearchCmd           `cmd:"" help:"Search archive documents."`
 	Find             ArchiveDocumentsFindCmd             `cmd:"" help:"Find document metadata by document ID."`
 	Bundle           ArchiveDocumentsBundleCmd           `cmd:"" help:"List documents bundled with a main document."`
+	UploadBasic      ArchiveDocumentsUploadBasicCmd      `cmd:"" name:"upload-basic" help:"Upload a document file with basic archive fields."`
+	UploadData       ArchiveDocumentsUploadDataCmd       `cmd:"" name:"upload-data" help:"Upload a document file with invoice or receipt data."`
+	UploadAttachment ArchiveDocumentsUploadAttachmentCmd `cmd:"" name:"upload-attachment" help:"Upload two linked document files."`
 	Download         ArchiveDocumentsDownloadCmd         `cmd:"" help:"Download a document file by document ID."`
 	Binary           ArchiveDocumentsBinaryCmd           `cmd:"" help:"Download raw document binary data by document ID."`
 	Image            ArchiveDocumentsImageCmd            `cmd:"" help:"Download a rendered document image by document ID."`

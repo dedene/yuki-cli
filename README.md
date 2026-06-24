@@ -96,6 +96,9 @@ yuki archive menu list
 yuki archive folders list
 yuki archive folders counts --year 2026 --json
 yuki archive folders tabs --folder 3
+yuki archive documents upload-basic --folder 1 --file invoice.pdf --administration <administration-id> --dry-run --json
+yuki archive documents upload-data --folder 1 --file invoice.pdf --administration <administration-id> --amount 42.50 --payment-method 0 --dry-run --json
+yuki archive documents upload-attachment --folder 1 --file invoice.xml --attachment invoice.pdf --administration <administration-id> --dry-run --json
 yuki archive documents list --from 2026-01-01 --to 2026-01-31 --limit 25 --json
 yuki archive documents in-folder --folder 1 --from 2026-01-01 --to 2026-01-31 --json
 yuki archive documents in-tab --tab 101 --from 2026-01-01 --to 2026-01-31 --json

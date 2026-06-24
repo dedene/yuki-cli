@@ -2313,6 +2313,10 @@ type cmdFakeClient struct {
 	documentXMLBinaryData       api.DocumentXMLBinaryData
 	documentXMLData             api.DocumentXMLData
 	documentXMLDataOperation    string
+	archiveUploadOpts           api.ArchiveUploadOptions
+	archiveAttachmentUploadOpts api.ArchiveAttachmentUploadOptions
+	archiveUploadOperation      string
+	archiveUploadResult         api.ArchiveUploadResult
 	transactionDocument         api.TransactionDocument
 	vatCodes                    []api.VATCode
 	vatReturns                  []api.VATReturnInfo
@@ -2733,6 +2737,24 @@ func (c *cmdFakeClient) DocumentXMLDataAsString(_ context.Context, _ string, doc
 		c.documentXMLData.DocumentID = documentID
 	}
 	return c.documentXMLData, nil
+}
+
+func (c *cmdFakeClient) UploadDocument(_ context.Context, _ string, opts api.ArchiveUploadOptions) (api.ArchiveUploadResult, error) {
+	c.archiveUploadOperation = "UploadDocument"
+	c.archiveUploadOpts = opts
+	return c.archiveUploadResult, nil
+}
+
+func (c *cmdFakeClient) UploadDocumentWithData(_ context.Context, _ string, opts api.ArchiveUploadOptions) (api.ArchiveUploadResult, error) {
+	c.archiveUploadOperation = "UploadDocumentWithData"
+	c.archiveUploadOpts = opts
+	return c.archiveUploadResult, nil
+}
+
+func (c *cmdFakeClient) UploadDocumentWithAttachment(_ context.Context, _ string, opts api.ArchiveAttachmentUploadOptions) (api.ArchiveUploadResult, error) {
+	c.archiveUploadOperation = "UploadDocumentWithAttachment"
+	c.archiveAttachmentUploadOpts = opts
+	return c.archiveUploadResult, nil
 }
 
 func (c *cmdFakeClient) PaymentMethods(context.Context, string) ([]api.PaymentMethod, error) {
