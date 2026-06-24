@@ -1,6 +1,9 @@
 package api
 
-import "net/http"
+import (
+	"encoding/xml"
+	"net/http"
+)
 
 const (
 	DefaultBaseURL = "https://api.yukiworks.be/ws"
@@ -282,6 +285,34 @@ type DocumentFolder struct {
 	ProcessedByYuki bool   `json:"processed_by_yuki" xml:"ProcessedByYuki"`
 }
 
+type DocumentFolderCount struct {
+	ID          string `json:"id"`
+	Description string `json:"description,omitempty"`
+	Count       string `json:"count,omitempty"`
+}
+
+func (c *DocumentFolderCount) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var raw struct {
+		IDAttr            string `xml:"ID,attr"`
+		ID                string `xml:"ID"`
+		FolderID          string `xml:"FolderID"`
+		Description       string `xml:"Description"`
+		Count             string `xml:"Count"`
+		DocumentCount     string `xml:"DocumentCount"`
+		Documents         string `xml:"Documents"`
+		FolderCount       string `xml:"FolderCount"`
+		NumberOfDocuments string `xml:"NumberOfDocuments"`
+		Total             string `xml:"Total"`
+	}
+	if err := d.DecodeElement(&raw, &start); err != nil {
+		return err
+	}
+	c.ID = firstNonEmpty(raw.IDAttr, raw.ID, raw.FolderID)
+	c.Description = raw.Description
+	c.Count = firstNonEmpty(raw.Count, raw.DocumentCount, raw.Documents, raw.FolderCount, raw.NumberOfDocuments, raw.Total)
+	return nil
+}
+
 type DocumentFolderTab struct {
 	ID              string `json:"id" xml:"ID,attr"`
 	Description     string `json:"description" xml:"Description"`
@@ -315,4 +346,13 @@ type PaymentMethod struct {
 type XMLText struct {
 	ID   string `json:"id,omitempty" xml:"ID,attr"`
 	Text string `json:"text" xml:",chardata"`
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
 }

@@ -48,6 +48,7 @@ type Client interface {
 	TransactionDocument(context.Context, string, string, string) (api.TransactionDocument, error)
 	CustomPaymentMethods(context.Context, string, string) ([]api.PaymentMethod, error)
 	DocumentFolders(context.Context, string) ([]api.DocumentFolder, error)
+	DocumentFolderCounts(context.Context, string, int) ([]api.DocumentFolderCount, error)
 	DocumentFolderTabs(context.Context, string, string) ([]api.DocumentFolderTab, error)
 	Documents(context.Context, string, api.DocumentsOptions) ([]api.Document, error)
 	DocumentsInFolder(context.Context, string, api.DocumentsInFolderOptions) ([]api.Document, error)

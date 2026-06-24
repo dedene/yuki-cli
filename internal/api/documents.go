@@ -83,6 +83,22 @@ func (c *Client) DocumentFolders(ctx context.Context, sessionID string) ([]Docum
 	return env.Body.Response.Result.DocumentFolders.Folders, nil
 }
 
+func (c *Client) DocumentFolderCounts(ctx context.Context, sessionID string, year int) ([]DocumentFolderCount, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "year", Value: strconv.Itoa(year)},
+	}
+	data, err := c.call(ctx, "Archive", "DocumentFolderCounts", params)
+	if err != nil {
+		return nil, err
+	}
+	var env documentFolderCountsEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return nil, fmt.Errorf("parse DocumentFolderCounts response: %w", err)
+	}
+	return env.Body.Response.Result.counts(), nil
+}
+
 func (c *Client) DocumentFolderTabs(ctx context.Context, sessionID, folderID string) ([]DocumentFolderTab, error) {
 	params := []Param{
 		{Name: "sessionID", Value: sessionID},
@@ -400,6 +416,48 @@ type documentFoldersEnvelope struct {
 			} `xml:"DocumentFoldersResult"`
 		} `xml:"DocumentFoldersResponse"`
 	} `xml:"Body"`
+}
+
+type documentFolderCountsEnvelope struct {
+	Body struct {
+		Response struct {
+			Result documentFolderCountsResult `xml:"DocumentFolderCountsResult"`
+		} `xml:"DocumentFolderCountsResponse"`
+	} `xml:"Body"`
+}
+
+type documentFolderCountsResult struct {
+	DocumentFolderCounts documentFolderCountsContainer `xml:"DocumentFolderCounts"`
+	DocumentFolders      documentFolderCountsContainer `xml:"DocumentFolders"`
+	DocumentFoldersList  []DocumentFolderCount         `xml:"DocumentFolder"`
+	DocumentFolderCount  []DocumentFolderCount         `xml:"DocumentFolderCount"`
+	Folders              []DocumentFolderCount         `xml:"Folder"`
+	Items                []DocumentFolderCount         `xml:"Item"`
+}
+
+func (r documentFolderCountsResult) counts() []DocumentFolderCount {
+	counts := r.DocumentFolderCounts.counts()
+	counts = append(counts, r.DocumentFolders.counts()...)
+	counts = append(counts, r.DocumentFoldersList...)
+	counts = append(counts, r.DocumentFolderCount...)
+	counts = append(counts, r.Folders...)
+	counts = append(counts, r.Items...)
+	return counts
+}
+
+type documentFolderCountsContainer struct {
+	DocumentFolders []DocumentFolderCount `xml:"DocumentFolder"`
+	DocumentCounts  []DocumentFolderCount `xml:"DocumentFolderCount"`
+	Folders         []DocumentFolderCount `xml:"Folder"`
+	Items           []DocumentFolderCount `xml:"Item"`
+}
+
+func (c documentFolderCountsContainer) counts() []DocumentFolderCount {
+	counts := append([]DocumentFolderCount{}, c.DocumentFolders...)
+	counts = append(counts, c.DocumentCounts...)
+	counts = append(counts, c.Folders...)
+	counts = append(counts, c.Items...)
+	return counts
 }
 
 type documentFolderTabsEnvelope struct {

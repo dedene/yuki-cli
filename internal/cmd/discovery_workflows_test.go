@@ -415,6 +415,37 @@ func TestArchiveFoldersListPrintsRows(t *testing.T) {
 	}
 }
 
+func TestArchiveFoldersCountsJSONUsesYear(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		folderCounts: []api.DocumentFolderCount{{
+			ID:          "7",
+			Description: "To be handled by Yuki",
+			Count:       "12",
+		}},
+	}
+
+	err := Execute(context.Background(), []string{"--json", "archive", "folders", "counts", "--year", "2026"}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.folderCountYear != 2026 {
+		t.Fatalf("folderCountYear = %d", client.folderCountYear)
+	}
+	var counts []api.DocumentFolderCount
+	if err := json.Unmarshal(out.Bytes(), &counts); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if len(counts) != 1 || counts[0].Count != "12" {
+		t.Fatalf("counts = %#v", counts)
+	}
+}
+
 func TestArchiveFoldersTabsPrintsRows(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{

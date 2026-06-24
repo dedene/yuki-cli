@@ -57,6 +57,7 @@ yuki archive currencies list
 yuki archive cost-categories list
 yuki archive menu list
 yuki archive folders list
+yuki archive folders counts --year 2026 --json
 yuki archive folders tabs --folder 3
 yuki archive documents list --from 2026-01-01 --to 2026-01-31 --limit 25 --json
 yuki archive documents in-folder --folder 1 --from 2026-01-01 --to 2026-01-31 --json

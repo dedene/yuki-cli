@@ -26,6 +26,30 @@ func TestDocumentFoldersParsesDocumentedResponse(t *testing.T) {
 	}
 }
 
+func TestDocumentFolderCountsParsesWSDLCompatibleResponse(t *testing.T) {
+	client := fixtureClientForService(t, "Archive", "DocumentFolderCounts", documentFolderCountsResponse, func(t *testing.T, body string) {
+		t.Helper()
+		if !strings.Contains(body, "<they:year>2026</they:year>") {
+			t.Fatalf("request body missing year:\n%s", body)
+		}
+	})
+
+	counts, err := client.DocumentFolderCounts(context.Background(), "session-1", 2026)
+	if err != nil {
+		t.Fatalf("DocumentFolderCounts: %v", err)
+	}
+	if len(counts) != 2 {
+		t.Fatalf("len(counts) = %d, want 2", len(counts))
+	}
+	if counts[0].ID != "7" ||
+		counts[0].Description != "To be handled by Yuki" ||
+		counts[0].Count != "12" ||
+		counts[1].ID != "1" ||
+		counts[1].Count != "4" {
+		t.Fatalf("counts = %#v", counts)
+	}
+}
+
 func TestDocumentFolderTabsParsesDocumentedResponse(t *testing.T) {
 	client := fixtureClientForService(t, "Archive", "DocumentFolderTabs", documentFolderTabsResponse, func(t *testing.T, body string) {
 		t.Helper()
@@ -164,6 +188,26 @@ const documentFoldersResponse = `<?xml version="1.0" encoding="utf-8"?>
         </DocumentFolders>
       </DocumentFoldersResult>
     </DocumentFoldersResponse>
+  </soap:Body>
+</soap:Envelope>`
+
+const documentFolderCountsResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <DocumentFolderCountsResponse xmlns="http://www.theyukicompany.com/">
+      <DocumentFolderCountsResult>
+        <DocumentFolderCounts xmlns="">
+          <DocumentFolder ID="7">
+            <Description>To be handled by Yuki</Description>
+            <Count>12</Count>
+          </DocumentFolder>
+          <DocumentFolder ID="1">
+            <Description>Purchase</Description>
+            <DocumentCount>4</DocumentCount>
+          </DocumentFolder>
+        </DocumentFolderCounts>
+      </DocumentFolderCountsResult>
+    </DocumentFolderCountsResponse>
   </soap:Body>
 </soap:Envelope>`
 

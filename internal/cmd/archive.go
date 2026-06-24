@@ -101,8 +101,9 @@ func (c *ArchiveCurrenciesListCmd) Run(rt *Runtime, globals *Globals) error {
 }
 
 type ArchiveFoldersCmd struct {
-	List ArchiveFoldersListCmd `cmd:"" help:"List archive document folders."`
-	Tabs ArchiveFoldersTabsCmd `cmd:"" help:"List tabs for an archive document folder."`
+	List   ArchiveFoldersListCmd   `cmd:"" help:"List archive document folders."`
+	Counts ArchiveFoldersCountsCmd `cmd:"" help:"Count documents per archive folder."`
+	Tabs   ArchiveFoldersTabsCmd   `cmd:"" help:"List tabs for an archive document folder."`
 }
 
 type ArchiveFoldersListCmd struct{}
@@ -130,6 +131,34 @@ func (c *ArchiveFoldersListCmd) Run(rt *Runtime, globals *Globals) error {
 		})
 	}
 	return output.Table(rt.Out, []string{"ID", "DESCRIPTION", "PROCESSED", "ICON"}, rows)
+}
+
+type ArchiveFoldersCountsCmd struct {
+	Year int `name:"year" required:"" help:"Yuki archive year value."`
+}
+
+func (c *ArchiveFoldersCountsCmd) Run(rt *Runtime, globals *Globals) error {
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	counts, err := client.DocumentFolderCounts(rt.Context, sessionID, c.Year)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, counts)
+	}
+
+	rows := make([][]string, 0, len(counts))
+	for _, count := range counts {
+		rows = append(rows, []string{
+			count.ID,
+			count.Description,
+			count.Count,
+		})
+	}
+	return output.Table(rt.Out, []string{"ID", "DESCRIPTION", "COUNT"}, rows)
 }
 
 type ArchiveFoldersTabsCmd struct {
