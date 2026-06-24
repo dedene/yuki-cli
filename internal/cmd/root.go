@@ -45,6 +45,7 @@ type Client interface {
 	DocumentBundle(context.Context, string, string) ([]api.Document, error)
 	DocumentFile(context.Context, string, string) (api.DocumentFile, error)
 	DocumentBinaryData(context.Context, string, string) (api.DocumentBinaryData, error)
+	DocumentImage(context.Context, string, string, int, int) (api.DocumentImageData, error)
 	DocumentImageCount(context.Context, string, string) (api.DocumentImageCount, error)
 	DocumentXMLDataAsBinary(context.Context, string, string) (api.DocumentXMLBinaryData, error)
 	DocumentXMLDataAsString(context.Context, string, string) (api.DocumentXMLData, error)

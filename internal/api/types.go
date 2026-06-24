@@ -201,6 +201,13 @@ type DocumentImageCount struct {
 	ImageCount int    `json:"image_count"`
 }
 
+type DocumentImageData struct {
+	DocumentID      string `json:"document_id"`
+	MaxWidth        int    `json:"max_width"`
+	MaxHeight       int    `json:"max_height"`
+	ImageDataBase64 string `json:"image_data_base64"`
+}
+
 type DocumentXMLData struct {
 	DocumentID string `json:"document_id"`
 	XML        string `json:"xml"`

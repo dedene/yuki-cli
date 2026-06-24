@@ -172,6 +172,7 @@ type ArchiveDocumentsCmd struct {
 	Bundle           ArchiveDocumentsBundleCmd           `cmd:"" help:"List documents bundled with a main document."`
 	Download         ArchiveDocumentsDownloadCmd         `cmd:"" help:"Download a document file by document ID."`
 	Binary           ArchiveDocumentsBinaryCmd           `cmd:"" help:"Download raw document binary data by document ID."`
+	Image            ArchiveDocumentsImageCmd            `cmd:"" help:"Download a rendered document image by document ID."`
 	ImageCount       ArchiveDocumentsImageCountCmd       `cmd:"" name:"image-count" help:"Count rendered images for a document."`
 	XML              ArchiveDocumentsXMLCmd              `cmd:"" name:"xml" help:"Fetch XML data for a document."`
 	XMLBinary        ArchiveDocumentsXMLBinaryCmd        `cmd:"" name:"xml-binary" help:"Download XML data as base64Binary by document ID."`

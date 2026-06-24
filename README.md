@@ -52,6 +52,7 @@ yuki archive documents modified-by-type --type 2 --modified-since 2026-01-01 --j
 yuki archive documents search --search-text apple --limit 25 --json
 yuki archive documents find --document <document-id>
 yuki archive documents bundle --document <document-id> --json
+yuki archive documents image --document <document-id> --max-width 1200 --max-height 1600 --output invoice.png
 yuki archive documents image-count --document <document-id> --json
 yuki archive documents xml --document <document-id> --output invoice.xml
 yuki archive documents xml-binary --document <document-id> --output invoice.xml

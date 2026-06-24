@@ -439,10 +439,13 @@ type cmdFakeClient struct {
 	documentBundle        []api.Document
 	documentFile          api.DocumentFile
 	documentBinaryData    api.DocumentBinaryData
+	documentImageData     api.DocumentImageData
 	documentImageCount    api.DocumentImageCount
 	documentXMLBinaryData api.DocumentXMLBinaryData
 	documentXMLData       api.DocumentXMLData
 	transactionDocument   api.TransactionDocument
+	maxWidth              int
+	maxHeight             int
 }
 
 func (c *cmdFakeClient) Authenticate(_ context.Context, accessKey string) (string, error) {
@@ -562,6 +565,16 @@ func (c *cmdFakeClient) DocumentBinaryData(_ context.Context, _ string, document
 		c.documentBinaryData.DocumentID = documentID
 	}
 	return c.documentBinaryData, nil
+}
+
+func (c *cmdFakeClient) DocumentImage(_ context.Context, _ string, documentID string, maxWidth int, maxHeight int) (api.DocumentImageData, error) {
+	c.documentID = documentID
+	c.maxWidth = maxWidth
+	c.maxHeight = maxHeight
+	if c.documentImageData.DocumentID == "" {
+		c.documentImageData.DocumentID = documentID
+	}
+	return c.documentImageData, nil
 }
 
 func (c *cmdFakeClient) DocumentImageCount(_ context.Context, _ string, documentID string) (api.DocumentImageCount, error) {
