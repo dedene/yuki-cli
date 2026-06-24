@@ -167,8 +167,13 @@ type TransactionInfo struct {
 	FullName                         string `json:"full_name,omitempty" xml:"fullName"`
 	CoCNumber                        string `json:"coc_number,omitempty" xml:"CoCNumber"`
 	VATNumber                        string `json:"vat_number,omitempty" xml:"VATNumber"`
+	ContactHID                       string `json:"contact_hid,omitempty" xml:"contactHID"`
 	ContactID                        string `json:"contact_id,omitempty" xml:"contactID"`
+	ContactCode                      string `json:"contact_code,omitempty" xml:"contactCode"`
 	ContactCountry                   string `json:"contact_country,omitempty" xml:"contactCountry"`
+	ContactZipCode                   string `json:"contact_zip_code,omitempty" xml:"contactZipCode"`
+	Project                          string `json:"project,omitempty" xml:"project"`
+	ProjectCode                      string `json:"project_code,omitempty" xml:"projectCode"`
 	GLAccountCode                    string `json:"gl_account_code,omitempty" xml:"glAccountCode"`
 	DocumentID                       string `json:"document_id,omitempty" xml:"documentID"`
 	DocumentReference                string `json:"document_reference,omitempty" xml:"documentReference"`

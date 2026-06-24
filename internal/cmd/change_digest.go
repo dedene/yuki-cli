@@ -9,6 +9,7 @@ import (
 
 type ChangeDigestCmd struct {
 	Transactions ChangeDigestTransactionsCmd `cmd:"" help:"List updated and deleted transactions."`
+	Detail       ChangeDigestDetailCmd       `cmd:"" help:"Get one changed transaction detail."`
 }
 
 type ChangeDigestTransactionsCmd struct {
@@ -61,4 +62,38 @@ func (c *ChangeDigestTransactionsCmd) Run(rt *Runtime, globals *Globals) error {
 		})
 	}
 	return output.Table(rt.Out, []string{"UPDATED", "DELETED", "DATE", "GL", "AMOUNT", "CCY", "CONTACT", "DOCUMENT", "DESCRIPTION"}, rows)
+}
+
+type ChangeDigestDetailCmd struct {
+	Administration string `help:"Administration ID. Defaults to profile/global administration."`
+	Transaction    string `name:"transaction" required:"" help:"Transaction ID."`
+}
+
+func (c *ChangeDigestDetailCmd) Run(rt *Runtime, globals *Globals) error {
+	administrationID, err := resolveAdministrationID(globals, c.Administration)
+	if err != nil {
+		return err
+	}
+
+	client, sessionID, err := authenticatedClient(rt.Context, rt, globals)
+	if err != nil {
+		return err
+	}
+	tx, err := client.ChangeDigestTransactionDetail(rt.Context, sessionID, administrationID, c.Transaction)
+	if err != nil {
+		return err
+	}
+	if globals.JSON {
+		return output.JSON(rt.Out, tx)
+	}
+	rows := [][]string{{
+		tx.TransactionDate,
+		tx.GLAccountCode,
+		tx.TransactionAmount,
+		tx.Currency,
+		tx.FullName,
+		tx.DocumentID,
+		tx.Description,
+	}}
+	return output.Table(rt.Out, []string{"DATE", "GL", "AMOUNT", "CCY", "CONTACT", "DOCUMENT", "DESCRIPTION"}, rows)
 }

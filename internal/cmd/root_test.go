@@ -1060,6 +1060,45 @@ func TestChangeDigestTransactionsJSONUsesDateRangeAndPaging(t *testing.T) {
 	}
 }
 
+func TestChangeDigestDetailJSONUsesTransactionID(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		changeDigestTransaction: api.TransactionInfo{
+			ID:                "tx-1",
+			TransactionDate:   "2021-01-01T00:00:00",
+			GLAccountCode:     "494190",
+			TransactionAmount: "0.00",
+			FullName:          "Topolino bvba",
+			DocumentID:        "doc-1",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"accounting", "change-digest", "detail",
+		"--administration", "admin-1",
+		"--transaction", "tx-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.administrationID != "admin-1" || client.transactionID != "tx-1" {
+		t.Fatalf("administration/transaction = %q/%q", client.administrationID, client.transactionID)
+	}
+	var tx api.TransactionInfo
+	if err := json.Unmarshal(out.Bytes(), &tx); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if tx.ID != "tx-1" || tx.DocumentID != "doc-1" {
+		t.Fatalf("transaction = %#v", tx)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1289,6 +1328,7 @@ type cmdFakeClient struct {
 	transactionOpts             api.TransactionDetailsOptions
 	updatedTransactions         []api.UpdatedTransaction
 	updatedTransactionsOpts     api.UpdatedAndDeletedTransactionsOptions
+	changeDigestTransaction     api.TransactionInfo
 	customMethods               []api.PaymentMethod
 	archiveMethods              []api.PaymentMethod
 	folders                     []api.DocumentFolder
@@ -1482,6 +1522,12 @@ func (c *cmdFakeClient) TransactionDocument(_ context.Context, _ string, adminis
 func (c *cmdFakeClient) UpdatedAndDeletedTransactions(_ context.Context, _ string, opts api.UpdatedAndDeletedTransactionsOptions) ([]api.UpdatedTransaction, error) {
 	c.updatedTransactionsOpts = opts
 	return c.updatedTransactions, nil
+}
+
+func (c *cmdFakeClient) ChangeDigestTransactionDetail(_ context.Context, _ string, administrationID string, transactionID string) (api.TransactionInfo, error) {
+	c.administrationID = administrationID
+	c.transactionID = transactionID
+	return c.changeDigestTransaction, nil
 }
 
 func (c *cmdFakeClient) CustomPaymentMethods(_ context.Context, _ string, administrationID string) ([]api.PaymentMethod, error) {

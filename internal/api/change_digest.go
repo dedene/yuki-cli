@@ -35,6 +35,23 @@ func (c *Client) UpdatedAndDeletedTransactions(ctx context.Context, sessionID st
 	return env.Body.Response.Result.Transactions, nil
 }
 
+func (c *Client) ChangeDigestTransactionDetail(ctx context.Context, sessionID, administrationID, transactionID string) (TransactionInfo, error) {
+	params := []Param{
+		{Name: "sessionID", Value: sessionID},
+		{Name: "administrationID", Value: administrationID},
+		{Name: "transactionID", Value: transactionID},
+	}
+	data, err := c.call(ctx, "ChangeDigest", "GetTransactionDetail", params)
+	if err != nil {
+		return TransactionInfo{}, err
+	}
+	var env changeDigestTransactionDetailEnvelope
+	if err := xml.Unmarshal(data, &env); err != nil {
+		return TransactionInfo{}, fmt.Errorf("parse GetTransactionDetail response: %w", err)
+	}
+	return env.Body.Response.Result, nil
+}
+
 type updatedAndDeletedTransactionsEnvelope struct {
 	Body struct {
 		Response struct {
@@ -42,5 +59,13 @@ type updatedAndDeletedTransactionsEnvelope struct {
 				Transactions []UpdatedTransaction `xml:"UpdatedTransaction"`
 			} `xml:"GetUpdatedAndDeletedTransactionsResult"`
 		} `xml:"GetUpdatedAndDeletedTransactionsResponse"`
+	} `xml:"Body"`
+}
+
+type changeDigestTransactionDetailEnvelope struct {
+	Body struct {
+		Response struct {
+			Result TransactionInfo `xml:"GetTransactionDetailResult"`
+		} `xml:"GetTransactionDetailResponse"`
 	} `xml:"Body"`
 }
