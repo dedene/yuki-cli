@@ -151,6 +151,11 @@ func fixtureClient(t *testing.T, operation string, response string) *Client {
 
 func fixtureClientForService(t *testing.T, service string, operation string, response string, assertBody func(*testing.T, string)) *Client {
 	t.Helper()
+	return fixtureClientForServiceWithSessionElement(t, service, operation, response, "sessionID", assertBody)
+}
+
+func fixtureClientForServiceWithSessionElement(t *testing.T, service string, operation string, response string, sessionElement string, assertBody func(*testing.T, string)) *Client {
+	t.Helper()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Cleanup(srvCloseOnce(t, r))
@@ -165,7 +170,8 @@ func fixtureClientForService(t *testing.T, service string, operation string, res
 		if err != nil {
 			t.Fatalf("read body: %v", err)
 		}
-		if !strings.Contains(string(body), "<they:sessionID>session-1</they:sessionID>") {
+		wantSession := "<they:" + sessionElement + ">session-1</they:" + sessionElement + ">"
+		if !strings.Contains(string(body), wantSession) {
 			t.Fatalf("request body missing session ID:\n%s", body)
 		}
 		if assertBody != nil {

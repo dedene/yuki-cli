@@ -288,6 +288,28 @@ type VATReturnInfo struct {
 	Modified        string `json:"modified" xml:"modified"`
 }
 
+type AdministrationIntegrationData struct {
+	CompanyName           string `json:"company_name,omitempty" xml:"CompanyName"`
+	Description           string `json:"description,omitempty" xml:"Description"`
+	MainContactName       string `json:"main_contact_name,omitempty" xml:"MainContactName"`
+	MainContactEmail      string `json:"main_contact_email,omitempty" xml:"MainContactEmail"`
+	AddressLine1          string `json:"address_line_1,omitempty" xml:"AddressLine_1"`
+	AddressLine2          string `json:"address_line_2,omitempty" xml:"AddressLine_2"`
+	Postcode              string `json:"postcode,omitempty" xml:"Postcode"`
+	City                  string `json:"city,omitempty" xml:"City"`
+	Country               string `json:"country,omitempty" xml:"Country"`
+	EmailOutgoingInvoices string `json:"email_outgoing_invoices,omitempty" xml:"EmailOutgoingInvoices"`
+	PhoneWork             string `json:"phone_work,omitempty" xml:"PhoneWork"`
+	MobileWork            string `json:"mobile_work,omitempty" xml:"MobileWork"`
+	FaxWork               string `json:"fax_work,omitempty" xml:"FaxWork"`
+	CompanyLogoB64        string `json:"company_logo_b64,omitempty" xml:"CompanyLogoB64"`
+	NavigationLogoB64     string `json:"navigation_logo_b64,omitempty" xml:"NavigationLogoB64"`
+	IBAN                  string `json:"iban,omitempty" xml:"IBAN"`
+	BankAccountName       string `json:"bank_account_name,omitempty" xml:"BankAccountName"`
+	CoCNumber             string `json:"coc_number,omitempty" xml:"CoCNumber"`
+	VATNumber             string `json:"vat_number,omitempty" xml:"VATNumber"`
+}
+
 type ProjectInfo struct {
 	Code        string `json:"code,omitempty" xml:"code"`
 	Description string `json:"description,omitempty" xml:"description"`

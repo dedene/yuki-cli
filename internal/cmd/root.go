@@ -80,6 +80,7 @@ type Client interface {
 	Menu(context.Context, string) ([]api.MenuEntry, error)
 	ActiveVATCodes(context.Context, string, string) ([]api.VATCode, error)
 	VATReturns(context.Context, string, api.VATReturnListOptions) ([]api.VATReturnInfo, error)
+	AdministrationData(context.Context, string, string) (api.AdministrationIntegrationData, error)
 }
 
 type Runtime struct {
@@ -109,6 +110,7 @@ type CLI struct {
 	Accounting      AccountingCmd      `cmd:"" help:"Read accounting information."`
 	Archive         ArchiveCmd         `cmd:"" help:"Read archive document information."`
 	VAT             VATCmd             `cmd:"" name:"vat" help:"Read VAT information."`
+	Integration     IntegrationCmd     `cmd:"" help:"Read integration information."`
 }
 
 func Execute(ctx context.Context, args []string, rt Runtime) (err error) {

@@ -62,6 +62,7 @@ yuki accounting projects list-with-id --administration <administration-id> --sea
 yuki accounting projects balance --administration <administration-id> --project-code DOS1 --from 2018-01-01 --to 2020-12-31 --json
 yuki vat codes active --administration <administration-id> --json
 yuki vat returns list --administration <administration-id> --year 2023 --modified-after 2021-01-01 --json
+yuki integration administration-data --administration <administration-id> --json
 yuki archive payment-methods list
 yuki archive currencies list
 yuki archive cost-categories list

@@ -1300,6 +1300,42 @@ func TestVATReturnsListJSONUsesScope(t *testing.T) {
 	}
 }
 
+func TestIntegrationAdministrationDataJSONUsesAdministration(t *testing.T) {
+	var out bytes.Buffer
+	client := &cmdFakeClient{
+		sessionID: "session-1",
+		administrationData: api.AdministrationIntegrationData{
+			CompanyName:      "Highpro BV",
+			MainContactEmail: "connections@yuki.be",
+			City:             "Antwerpen",
+			Country:          "BE",
+		},
+	}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"integration", "administration-data",
+		"--administration", "admin-1",
+	}, Runtime{
+		Out:       &out,
+		Store:     &cmdFakeStore{key: "stored-key"},
+		NewClient: func(api.Config) Client { return client },
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if client.administrationID != "admin-1" {
+		t.Fatalf("administrationID = %q", client.administrationID)
+	}
+	var data api.AdministrationIntegrationData
+	if err := json.Unmarshal(out.Bytes(), &data); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if data.CompanyName != "Highpro BV" || data.MainContactEmail != "connections@yuki.be" {
+		t.Fatalf("data = %#v", data)
+	}
+}
+
 func TestArchiveDocumentsFindPrintsDocument(t *testing.T) {
 	var out bytes.Buffer
 	client := &cmdFakeClient{
@@ -1567,6 +1603,7 @@ type cmdFakeClient struct {
 	vatCodes                    []api.VATCode
 	vatReturns                  []api.VATReturnInfo
 	vatReturnOpts               api.VATReturnListOptions
+	administrationData          api.AdministrationIntegrationData
 	maxWidth                    int
 	maxHeight                   int
 }
@@ -1899,4 +1936,9 @@ func (c *cmdFakeClient) ActiveVATCodes(_ context.Context, _ string, administrati
 func (c *cmdFakeClient) VATReturns(_ context.Context, _ string, opts api.VATReturnListOptions) ([]api.VATReturnInfo, error) {
 	c.vatReturnOpts = opts
 	return c.vatReturns, nil
+}
+
+func (c *cmdFakeClient) AdministrationData(_ context.Context, _ string, administrationID string) (api.AdministrationIntegrationData, error) {
+	c.administrationID = administrationID
+	return c.administrationData, nil
 }
