@@ -9,6 +9,14 @@ A CLI for the Yuki accounting SOAP API. It is built for agents and scripts first
 
 Inspect domains, administrations, contacts, invoices, expenses, ledgers, VAT, projects, and document archives from the command line. Secure keyring auth, dry-run mutating commands, and JSON output are built in.
 
+## Agent Skill
+
+This CLI is available as an [open agent skill](https://skills.sh/) for AI assistants including [Claude Code](https://claude.ai/code), [Codex](https://github.com/openai/codex), Cursor, GitHub Copilot, OpenCode, and other [supported agents](https://github.com/vercel-labs/skills#supported-agents).
+
+```bash
+npx skills add dedene/yuki-cli
+```
+
 ## Installation
 
 ### Homebrew

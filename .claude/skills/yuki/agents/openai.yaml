@@ -1,0 +1,4 @@
+interface:
+  display_name: "Yuki CLI"
+  short_description: "Inspect Yuki accounting data from the CLI."
+  default_prompt: "Use $yuki to inspect Yuki accounting data safely from the CLI."
