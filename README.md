@@ -1,10 +1,33 @@
-# yuki-cli
+# 🧾 yuki-cli - Yuki accounting in your terminal
 
-Go CLI for Yuki accounting SOAP webservices.
+[![CI](https://github.com/dedene/yuki-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/dedene/yuki-cli/actions/workflows/ci.yml)
+[![Go 1.26+](https://img.shields.io/badge/go-1.26+-00ADD8.svg)](https://go.dev/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dedene/yuki-cli)](https://goreportcard.com/report/github.com/dedene/yuki-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Build
+A CLI for the Yuki accounting SOAP API. It is built for agents and scripts first, with table output for humans when you need it.
+
+Inspect domains, administrations, contacts, invoices, expenses, ledgers, VAT, projects, and document archives from the command line. Secure keyring auth, dry-run mutating commands, and JSON output are built in.
+
+## Installation
+
+### Homebrew
 
 ```bash
+brew install dedene/tap/yuki
+```
+
+### Go
+
+```bash
+go install github.com/dedene/yuki-cli/cmd/yuki@latest
+```
+
+### Build from source
+
+```bash
+git clone https://github.com/dedene/yuki-cli.git
+cd yuki-cli
 make build
 ./bin/yuki --help
 ```

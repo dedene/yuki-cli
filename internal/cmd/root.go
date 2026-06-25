@@ -174,7 +174,7 @@ func Execute(ctx context.Context, args []string, rt Runtime) (err error) {
 	parser, err := kong.New(
 		cli,
 		kong.Name("yuki"),
-		kong.Description("CLI for Yuki accounting SOAP webservices."),
+		kong.Description("Agent-friendly CLI for Yuki accounting SOAP webservices."),
 		kong.Writers(rt.Out, rt.Err),
 		kong.ConfigureHelp(helpOptions()),
 		kong.Help(helpPrinter()),

@@ -1,0 +1,83 @@
+version: 2
+
+project_name: yuki
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: yuki
+    main: ./cmd/yuki
+    binary: yuki
+    env:
+      - CGO_ENABLED=0
+    targets:
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - windows_arm64
+    ldflags:
+      - -s -w
+      - -X github.com/dedene/yuki-cli/internal/cmd.Version={{ .Version }}
+      - -X github.com/dedene/yuki-cli/internal/cmd.Commit={{ .ShortCommit }}
+      - -X github.com/dedene/yuki-cli/internal/cmd.Date={{ .Date }}
+
+  - id: yuki_darwin
+    main: ./cmd/yuki
+    binary: yuki
+    env:
+      - CGO_ENABLED=1
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+    ldflags:
+      - -s -w
+      - -X github.com/dedene/yuki-cli/internal/cmd.Version={{ .Version }}
+      - -X github.com/dedene/yuki-cli/internal/cmd.Commit={{ .ShortCommit }}
+      - -X github.com/dedene/yuki-cli/internal/cmd.Date={{ .Date }}
+
+archives:
+  - ids:
+      - yuki
+      - yuki_darwin
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+brews:
+  - name: yuki
+    repository:
+      owner: dedene
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/dedene/yuki-cli
+    description: Agent-friendly CLI for Yuki accounting SOAP webservices
+    license: MIT
+    install: |
+      bin.install "yuki"
+    test: |
+      system "#{bin}/yuki", "version"
+
+release:
+  github:
+    owner: dedene
+    name: yuki-cli
+  draft: false
+  prerelease: auto
