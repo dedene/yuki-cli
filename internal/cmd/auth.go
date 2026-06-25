@@ -31,7 +31,7 @@ func (c *AuthLoginCmd) Run(rt *Runtime, globals *Globals) error {
 			return errors.New("missing --access-key in --no-input mode")
 		}
 		if !term.IsTerminal(int(os.Stdin.Fd())) {
-			return errors.New("no TTY available; pass --access-key or set YUKI_ACCESS_KEY")
+			return errors.New("no TTY available; run 'yuki auth login' interactively, or pass --access-key from a secret manager for non-interactive use")
 		}
 		fmt.Fprint(rt.Err, "Yuki access key: ")
 		data, err := term.ReadPassword(int(os.Stdin.Fd()))
@@ -40,6 +40,9 @@ func (c *AuthLoginCmd) Run(rt *Runtime, globals *Globals) error {
 			return fmt.Errorf("read access key: %w", err)
 		}
 		accessKey = strings.TrimSpace(string(data))
+	}
+	if accessKey == "" {
+		return errors.New("missing Yuki access key")
 	}
 
 	store, err := rt.store()
@@ -78,7 +81,7 @@ func (c *AuthSessionClientCmd) Run(rt *Runtime, globals *Globals) error {
 		accessKey, _, sourceErr = resolveAccessKey(rt.Context, rt, globals.Profile)
 		if sourceErr != nil {
 			if errors.Is(sourceErr, auth.ErrAccessKeyNotFound) {
-				return fmt.Errorf("%w; pass --access-key, run 'yuki auth login --access-key <key>', or set %s", sourceErr, auth.AccessKeyEnv)
+				return fmt.Errorf("%w; run 'yuki auth login' to enter it securely, pass --access-key for non-interactive use, or set %s", sourceErr, auth.AccessKeyEnv)
 			}
 			return sourceErr
 		}
@@ -175,7 +178,7 @@ func (c *AuthStatusCmd) Run(rt *Runtime, globals *Globals) error {
 		_, err = fmt.Fprintf(rt.Out, "Authenticated via %s for profile %q.\n", source, globals.Profile)
 		return err
 	}
-	_, err = fmt.Fprintf(rt.Out, "Not authenticated. Run 'yuki auth login --access-key <key>' or set %s.\n", auth.AccessKeyEnv)
+	_, err = fmt.Fprintf(rt.Out, "Not authenticated. Run 'yuki auth login' to enter an access key securely, or set %s for agent/CI runs.\n", auth.AccessKeyEnv)
 	return err
 }
 

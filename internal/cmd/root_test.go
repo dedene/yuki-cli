@@ -66,6 +66,78 @@ func TestAuthStatusJSONUsesEnvironmentWithoutOpeningStore(t *testing.T) {
 	}
 }
 
+func TestAuthLoginHelpDocumentsSecurePrompt(t *testing.T) {
+	var out bytes.Buffer
+
+	err := Execute(context.Background(), []string{"auth", "login", "--help"}, Runtime{Out: &out})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "Omit to prompt") || !strings.Contains(got, "securely") {
+		t.Fatalf("auth login help does not document secure prompt:\n%s", got)
+	}
+}
+
+func TestAuthLoginStoresTrimmedAccessKey(t *testing.T) {
+	var out bytes.Buffer
+	store := &cmdFakeStore{}
+
+	err := Execute(context.Background(), []string{
+		"--json",
+		"--profile", "work",
+		"auth", "login",
+		"--access-key", "  flag-key  ",
+	}, Runtime{
+		Out:   &out,
+		Store: store,
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if store.setProfile != "work" || store.setKey != "flag-key" {
+		t.Fatalf("stored profile/key = %q/%q", store.setProfile, store.setKey)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(out.Bytes(), &payload); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	if payload["status"] != "saved" || payload["profile"] != "work" {
+		t.Fatalf("payload = %#v", payload)
+	}
+}
+
+func TestAuthStatusSuggestsSecureLogin(t *testing.T) {
+	var out bytes.Buffer
+
+	err := Execute(context.Background(), []string{"auth", "status"}, Runtime{
+		Out:   &out,
+		Store: &cmdFakeStore{err: auth.ErrAccessKeyNotFound},
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "yuki auth login") || strings.Contains(got, "--access-key <key>") {
+		t.Fatalf("auth status guidance should prefer secure login:\n%s", got)
+	}
+}
+
+func TestMissingAccessKeySuggestsSecureLogin(t *testing.T) {
+	var out bytes.Buffer
+
+	err := Execute(context.Background(), []string{"domains", "list"}, Runtime{
+		Out:   &out,
+		Store: &cmdFakeStore{err: auth.ErrAccessKeyNotFound},
+	})
+	if err == nil {
+		t.Fatal("Execute succeeded, want missing access key error")
+	}
+	if !strings.Contains(err.Error(), "yuki auth login") || strings.Contains(err.Error(), "--access-key <key>") {
+		t.Fatalf("missing auth guidance should prefer secure login: %v", err)
+	}
+}
+
 func TestAuthLogoutReportsMissingStoredAccessKey(t *testing.T) {
 	var out bytes.Buffer
 
@@ -2201,11 +2273,18 @@ func TestArchiveDocumentsXMLDataJSONPrintsEmbeddedXMLData(t *testing.T) {
 }
 
 type cmdFakeStore struct {
-	key string
-	err error
+	key        string
+	err        error
+	setProfile string
+	setKey     string
 }
 
-func (s *cmdFakeStore) SetAccessKey(context.Context, string, string) error {
+func (s *cmdFakeStore) SetAccessKey(_ context.Context, profile string, key string) error {
+	if s.err != nil {
+		return s.err
+	}
+	s.setProfile = profile
+	s.setKey = key
 	return nil
 }
 

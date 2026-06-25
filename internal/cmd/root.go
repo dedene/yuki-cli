@@ -291,7 +291,7 @@ func authenticatedSession(ctx context.Context, rt *Runtime, globals *Globals) (C
 	accessKey, _, err := resolveAccessKey(ctx, rt, globals.Profile)
 	if err != nil {
 		if errors.Is(err, auth.ErrAccessKeyNotFound) {
-			return nil, "", config.Profile{}, fmt.Errorf("%w; run 'yuki auth login --access-key <key>' or set %s", err, auth.AccessKeyEnv)
+			return nil, "", config.Profile{}, fmt.Errorf("%w; run 'yuki auth login' to enter it securely, or set %s for agent/CI runs", err, auth.AccessKeyEnv)
 		}
 		return nil, "", config.Profile{}, err
 	}

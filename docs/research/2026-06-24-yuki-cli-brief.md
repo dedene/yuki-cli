@@ -55,7 +55,7 @@ The CLI should be useful to humans at a terminal and reliable for agents/scripts
 
 ## Initial v0 Scope
 
-- `yuki auth login --access-key ...` stores the key locally; `auth doctor` performs the live validation call.
+- `yuki auth login` prompts for the access key securely and stores it locally; `auth doctor` performs the live validation call.
 - `yuki auth status`
 - `yuki auth logout`
 - `yuki auth doctor`

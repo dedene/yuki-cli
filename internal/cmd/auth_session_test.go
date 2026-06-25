@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/dedene/yuki-cli/internal/api"
+	"github.com/dedene/yuki-cli/internal/auth"
 )
 
 func TestAuthSessionClientJSONUsesStoredAccessKey(t *testing.T) {
@@ -35,6 +37,22 @@ func TestAuthSessionClientJSONUsesStoredAccessKey(t *testing.T) {
 	}
 	if payload["session_id"] != "session-client" {
 		t.Fatalf("session_id = %q", payload["session_id"])
+	}
+}
+
+func TestAuthSessionClientMissingAccessKeySuggestsSecureLogin(t *testing.T) {
+	err := Execute(context.Background(), []string{
+		"auth", "session", "client",
+		"--client-id", "client-1",
+		"--client-secret", "secret-1",
+	}, Runtime{
+		Store: &cmdFakeStore{err: auth.ErrAccessKeyNotFound},
+	})
+	if err == nil {
+		t.Fatal("Execute succeeded, want missing access key error")
+	}
+	if !strings.Contains(err.Error(), "yuki auth login") || strings.Contains(err.Error(), "--access-key <key>") {
+		t.Fatalf("missing auth guidance should prefer secure login: %v", err)
 	}
 }
 

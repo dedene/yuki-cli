@@ -14,17 +14,23 @@ make build
 Store a Yuki WebserviceAccessKey in the OS keyring:
 
 ```bash
-yuki auth login --access-key <key>
+yuki auth login
 yuki auth status
 yuki auth doctor
 ```
 
-For CI or agent runs, use:
+`yuki auth login` prompts for the access key without echoing it, so the key does not end up in shell history. For non-interactive agent or CI runs, use environment variables provisioned by your password manager or CI secret store:
 
 ```bash
-YUKI_ACCESS_KEY=<key> yuki auth status --json
-yuki auth session client --client-id <client-id> --client-secret <client-secret> --json
-yuki auth session username --username user@example.com --password <password> --json
+yuki auth login --access-key "$YUKI_ACCESS_KEY"
+yuki auth status --json
+```
+
+For one-shot session IDs, omit secret flags to enter them securely:
+
+```bash
+yuki auth session client --client-id <client-id> --json
+yuki auth session username --username user@example.com --json
 ```
 
 ## Read-Only Workflows
